@@ -76,13 +76,7 @@ App.Itinerary = (function () {
       '</section>';
 
     view.onclick = function (e) { onClick(e, trip, readOnly); };
-    view.onchange = function (e) {
-      if (e.target && e.target.id === 'memberFilter') {
-        filterMember = e.target.value;
-        editMode = false;      // 篩選中不能調順序，編輯工具一併收起來
-        App.render();
-      }
-    };
+    view.onchange = null;
   }
 
   function dayTabs(trip) {
@@ -102,19 +96,16 @@ App.Itinerary = (function () {
       var d = S.parseDate(ds);
       text += ' · ' + ds + '（週' + WEEK[d.getDay()] + '）';
     }
+    // 數量跟日期放在同一行，不要夾在按鈕中間
     var countText = filterMember
-      ? shownCount + ' / ' + totalCount + ' 個'
-      : totalCount + ' 個';
+      ? shownCount + ' / ' + totalCount + ' 個行程點'
+      : totalCount + ' 個行程點';
 
     // 只有真的有「分頭行動」的行程時才顯示篩選，平常不佔手機頂部的位置
     var filterHtml = hasGrouping(trip)
-      ? '<select id="memberFilter" class="member-filter" title="只看某個人的行程">' +
-          '<option value="">全部的人</option>' +
-          trip.members.map(function (m) {
-            return '<option value="' + U.esc(m.id) + '"' + (m.id === filterMember ? ' selected' : '') + '>' +
-              '只看 ' + U.esc(m.name) + '</option>';
-          }).join('') +
-        '</select>'
+      ? btn('filter', 'people',
+            filterMember ? '目前只看 ' + nameOf(trip, filterMember) + '，按一下改回全部' : '只看某個人的行程',
+            '', filterMember ? 'on' : '')
       : '';
 
     /* 一般狀態只有兩顆圖示：編輯（✎）和新增（＋）。
@@ -137,13 +128,15 @@ App.Itinerary = (function () {
     }
 
     return '<div class="day-head' + (editMode ? ' is-editing' : '') + '">' +
-      '<h3>' + U.esc(text) + '</h3>' +
+      '<h3>' + U.esc(text) + '<span class="day-count">' + countText + '</span></h3>' +
       '<div class="day-head-side">' +
         filterHtml +
-        '<span class="day-count">' + countText + '</span>' +
         tools +
       '</div>' +
-      (filterMember ? '<div class="filter-note">篩選中只能瀏覽。要編輯或調整順序請先切回「全部的人」。</div>' : '') +
+      (filterMember
+        ? '<div class="filter-note">目前只看「' + U.esc(nameOf(trip, filterMember)) +
+          '」的行程，篩選中沒有辦法編輯。按上面的人像圖示可以改回全部。</div>'
+        : '') +
     '</div>';
   }
 
@@ -167,6 +160,18 @@ App.Itinerary = (function () {
       cost = '<span class="tl-cost">' + U.money(App.Settle.toCents(it.amount), it.currency || trip.baseCurrency) + '</span>' +
         (linked ? '<span class="tag tag-ok">已加入分帳</span>' : '');
     }
+
+    /* 地圖／訂房連結改成一顆地圖釘圖示，跟地點放在同一行——
+       原本的「開啟連結 ↗」自己佔一行，手機上很浪費高度。*/
+    var mapLink = it.link
+      ? '<a class="icon-btn icon-sm" href="' + U.esc(safeUrl(it.link)) + '"' +
+        ' target="_blank" rel="noopener noreferrer"' +
+        ' title="在新分頁打開地圖或連結" aria-label="在新分頁打開地圖或連結">' +
+        U.icon('map') + '</a>'
+      : '';
+    var placeRow = (it.place || mapLink)
+      ? '<div class="tl-place">' + (it.place ? U.esc(it.place) : '') + mapLink + '</div>'
+      : '';
 
     var party = partyOf(trip, it);
     var partyTag = party.isAll ? ''
@@ -203,10 +208,9 @@ App.Itinerary = (function () {
       '<span class="tl-rail" aria-hidden="true"></span>' +
       '<div class="tl-body">' +
         '<div class="tl-title">' + U.esc(it.title) + partyTag + '</div>' +
-        (it.place ? '<div class="tl-place">' + U.esc(it.place) + '</div>' : '') +
+        placeRow +
         img +
         (it.note ? '<div class="tl-note">' + U.esc(it.note) + '</div>' : '') +
-        (it.link ? '<div class="tl-link"><a href="' + U.esc(safeUrl(it.link)) + '" target="_blank" rel="noopener noreferrer">開啟連結 ↗</a></div>' : '') +
         (cost ? '<div class="tl-costline">' + cost + '</div>' : '') +
       '</div>' +
       actions +
@@ -257,6 +261,7 @@ App.Itinerary = (function () {
       editMode = !editMode;
       return App.render();
     }
+    if (act === 'filter') return pickFilter(trip);
 
     var day = trip.days[activeDay];
     var id = btn.getAttribute('data-id');
@@ -301,6 +306,31 @@ App.Itinerary = (function () {
       });
     }
     if (act === 'to-expense') return toExpense(trip, day.items[idx]);
+  }
+
+  /** 只看某個人的行程。用視窗選，頁面上就不用放一個下拉選單 */
+  function pickFilter(trip) {
+    U.modal({
+      title: '只看誰的行程',
+      submitText: '套用',
+      fields: [{
+        name: 'who', label: '看誰的行程', type: 'select', value: filterMember,
+        options: [{ value: '', label: '全部的人' }].concat(
+          trip.members.map(function (m) { return { value: m.id, label: '只看 ' + m.name }; })),
+        hint: '篩選中只能瀏覽，要編輯請先改回「全部的人」。'
+      }]
+    }).then(function (v) {
+      if (!v) return;
+      filterMember = v.who;
+      editMode = false;        // 篩選中不能調順序，編輯工具一併收起來
+      App.render();
+    });
+  }
+
+  /** 用 id 找成員名字 */
+  function nameOf(trip, id) {
+    var m = trip.members.filter(function (x) { return x.id === id; })[0];
+    return m ? m.name : '';
   }
 
   function swap(arr, i, j) {

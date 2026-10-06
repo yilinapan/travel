@@ -62,13 +62,9 @@ App.Checklist = (function () {
     var pct = total ? Math.round(done / total * 100) : 0;
 
     var filterHtml = hasOwners(trip)
-      ? '<select id="packFilter" class="member-filter" title="只看某個人要帶的東西">' +
-          '<option value="">全部的人</option>' +
-          trip.members.map(function (m) {
-            return '<option value="' + U.esc(m.id) + '"' + (m.id === filterMember ? ' selected' : '') + '>' +
-              '只看 ' + U.esc(m.name) + '</option>';
-          }).join('') +
-        '</select>'
+      ? btn('filter', 'people',
+            filterMember ? '目前只看 ' + nameOf(trip, filterMember) + ' 要帶的東西，按一下改回全部' : '只看某個人要帶的東西',
+            '', filterMember ? 'on' : '')
       : '';
 
     view.innerHTML =
@@ -84,7 +80,8 @@ App.Checklist = (function () {
         '</div>' +
         '<div class="progress-wrap">' +
           '<div class="progress"><div class="progress-bar" style="width:' + pct + '%"></div></div>' +
-          '<div class="progress-text">已完成 <strong>' + done + '</strong> / ' + total + '（' + pct + '%）</div>' +
+          '<div class="progress-text">已完成 <strong>' + done + '</strong> / ' + total + '（' + pct + '%）' +
+            (filterMember ? '，目前只看「' + U.esc(nameOf(trip, filterMember)) + '」要帶的' : '') + '</div>' +
         '</div>' +
         (trip.checklist.length === 0
           ? U.empty('清單是空的。' + (readOnly ? '' : '按右上角的 ＋ 自己新增分類，或直接載入內建的預設清單。'),
@@ -93,12 +90,7 @@ App.Checklist = (function () {
       '</section>';
 
     view.onclick = function (e) { onClick(e, trip, readOnly); };
-    view.onchange = function (e) {
-      if (e.target && e.target.id === 'packFilter') {
-        filterMember = e.target.value;
-        App.render();
-      }
-    };
+    view.onchange = null;
   }
 
   function groupBlock(trip, g, readOnly) {
@@ -152,6 +144,7 @@ App.Checklist = (function () {
       S.touch(trip);
       return App.render();
     }
+    if (act === 'filter') return pickFilter(trip);
     if (act === 'add-group') return editGroup(trip, null);
     if (act === 'edit-group') return editGroup(trip, g);
     if (act === 'del-group') {
@@ -209,6 +202,30 @@ App.Checklist = (function () {
       U.toast('預設清單已載入');
       return App.render();
     }
+  }
+
+  /** 只看某個人要帶的東西。用視窗選，標題列就不用放一個下拉選單 */
+  function pickFilter(trip) {
+    U.modal({
+      title: '只看誰要帶的',
+      submitText: '套用',
+      fields: [{
+        name: 'who', label: '看誰的清單', type: 'select', value: filterMember,
+        options: [{ value: '', label: '全部的人' }].concat(
+          trip.members.map(function (m) { return { value: m.id, label: '只看 ' + m.name }; })),
+        hint: '不勾「誰要帶」的項目是每個人都要帶，所以篩選時都會出現。'
+      }]
+    }).then(function (v) {
+      if (!v) return;
+      filterMember = v.who;
+      App.render();
+    });
+  }
+
+  /** 用 id 找成員名字 */
+  function nameOf(trip, id) {
+    var m = trip.members.filter(function (x) { return x.id === id; })[0];
+    return m ? m.name : '';
   }
 
   function groupOf(trip, id) {

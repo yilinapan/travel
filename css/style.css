@@ -78,6 +78,16 @@
   }
 }
 
+/* =====================================================================
+   版面與元件
+   配色在上面的 :root，這一區不碰顏色值，只用變數。
+
+   兩條規則，改東西前先看：
+   ① 一般內容不包卡片。靠「區塊標題 + 留白 + 細分隔線」分段。
+   ② 四個分頁上的按鈕一律是圖示鈕（.icon-btn），沒有底色、沒有中文字。
+      有文字的 .btn 只出現在彈出視窗與設定面板。
+   ===================================================================== */
+
 * { box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -89,39 +99,67 @@ body {
   font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", -apple-system,
                BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   font-size: 15px;
-  line-height: 1.65;
+  line-height: 1.7;
   -webkit-font-smoothing: antialiased;
 }
 
 h1, h2, h3, h4 { margin: 0; line-height: 1.35; }
 a { color: var(--brand); }
 
-/* ---------- 頂部：旅程名稱當主角，操作鈕收在右上 ---------- */
-.topbar {
-  background: var(--bg);
-  border-bottom: 1px solid var(--line);
-}
-.topbar-inner {
-  max-width: var(--maxw); margin: 0 auto;
-  padding: 30px 22px 22px;
-  display: flex; align-items: flex-start; gap: 14px;
-}
-.head-main { flex: 1; min-width: 0; }
-.eyebrow {
-  font-size: 10.5px; letter-spacing: .24em; text-transform: uppercase;
-  color: var(--brand); font-weight: 600;
-}
-#headerTitle {
-  font-size: 29px; font-weight: 300; letter-spacing: -.01em;
-  margin: 8px 0 9px; line-height: 1.25;
-}
-.head-meta {
-  display: flex; gap: 17px; flex-wrap: wrap;
-  font-size: 12.5px; color: var(--text-soft);
+/* 鍵盤操作一定看得到焦點框；滑鼠點擊不會出現 */
+:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 6px; }
+
+/* 數字一律等寬，上下列才對得齊（金額、時間、日期） */
+.tl-time, .table td, .table th, .net, .transfers .amt, .total, .hm-item, .hm-range,
+.hm-amount, .trip-row-range, .trip-row-stats, .progress-text, .exp-sub, .day-tab, .count {
   font-variant-numeric: tabular-nums;
 }
-.head-meta b { font-weight: 500; color: var(--text); }
 
+/* =====================================================================
+   頂部：旅程頁顯示完整摘要，其他分頁只留精簡標題
+   ===================================================================== */
+.topbar { position: relative; background: var(--bg); border-bottom: 1px solid var(--line); }
+
+/* 低高度封面：用這趟旅程第一張現有的行程圖片，沒有圖片就整塊不出現。
+   下緣用底色漸層收掉，照片不會硬生生切一條邊。 */
+.topbar-cover {
+  position: relative;
+  height: 112px;
+  background-size: cover;
+  background-position: center;
+}
+.topbar-cover::after {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 30%, var(--bg));
+}
+.topbar-cover[hidden] { display: none; }
+/* 暮楓底下照片要壓暗一階，不然一張亮圖會把整個頁首拉走 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .topbar-cover::after {
+    background: linear-gradient(to bottom, rgba(29,21,17,.45), rgba(29,21,17,.5) 30%, var(--bg));
+  }
+}
+
+.topbar-inner {
+  max-width: var(--maxw); margin: 0 auto;
+  padding: 18px 20px 14px;
+}
+.topbar.is-compact .topbar-inner { padding: 13px 20px 11px; }
+
+/* 文字四層：① 旅程名稱 ② 區塊標題 ③ 一般內容 ④ 日期、地點與補充 */
+#headerTitle { font-size: 26px; font-weight: 300; letter-spacing: -.01em; line-height: 1.25; }
+.topbar.is-compact #headerTitle { font-size: 19px; font-weight: 400; }
+
+/* 日期、天數、人數、金額分成幾段，不要擠成一條難讀的字 */
+.head-meta {
+  display: flex; align-items: baseline; flex-wrap: wrap;
+  gap: 4px 14px; margin-top: 7px;
+  font-size: 13px; color: var(--muted);
+}
+.head-meta:empty { display: none; }
+.hm-range { color: var(--text-soft); }
+.hm-item b { font-weight: 600; color: var(--text); }
+.hm-amount { color: var(--gold); font-weight: 600; }
 
 .readonly-bar {
   background: var(--warn-soft); color: var(--warn);
@@ -129,108 +167,153 @@ a { color: var(--brand); }
   padding: 9px 16px; font-size: 14px; text-align: center;
 }
 
-/* ---------- 分頁列：純文字，靠底線標示目前位置 ---------- */
+/* =====================================================================
+   分頁列：純文字，靠底線標示目前位置
+   ===================================================================== */
 .tabs {
   position: sticky; top: 0; z-index: 20;
   background: var(--bg);
   border-bottom: 1px solid var(--line);
   display: flex; gap: 26px;
   max-width: var(--maxw); margin: 0 auto;
-  padding: 0 22px;
+  padding: 0 20px;
   overflow-x: auto; scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
   flex: none;
   appearance: none; border: 0; background: none; cursor: pointer;
-  font: inherit; font-size: 14px; font-weight: 400;
+  font: inherit; font-size: 14.5px; font-weight: 400;
   color: var(--muted);
-  padding: 13px 0 12px;
+  padding: 12px 0 11px;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px; white-space: nowrap;
 }
 .tab:hover { color: var(--text); }
 .tab.on { color: var(--text); border-bottom-color: var(--brand); font-weight: 500; }
 
-/* ---------- 版面 ---------- */
-.view { max-width: var(--maxw); margin: 0 auto; padding: 16px 16px 48px; }
+/* =====================================================================
+   版面：內容直接攤在底色上，不包卡片
+   ===================================================================== */
+.view { max-width: var(--maxw); margin: 0 auto; padding: 10px 20px 86px; }
 
-/* 預設不用卡片，內容直接攤在底色上，靠標題與細線分段（秋 1 的作法） */
-.block {
-  background: none; border: 0; box-shadow: none;
-  padding: 0; margin-bottom: 38px;
-}
-/* 只有需要被一眼看到的區塊才做成卡片 */
+.block { background: none; border: 0; box-shadow: none; padding: 0; margin-bottom: 34px; }
+.block:last-child { margin-bottom: 0; }
+/* 保留定義給真的需要被框起來的東西；四個分頁目前都不用它 */
 .block.is-card {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 19px 20px;
+  background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius); padding: 18px;
 }
+
+/* 區塊主標題列 */
 .block-head {
-  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
-  margin-bottom: 14px; padding-bottom: 11px;
+  display: flex; align-items: center; gap: 8px 10px; flex-wrap: wrap;
+  margin: 26px 0 10px; padding-bottom: 7px;
   border-bottom: 1px solid var(--line);
 }
-.block.is-card > .block-head { border-bottom: 0; padding-bottom: 0; }
-/* 主標：大、深色，一眼看得出是這一頁的主題 */
+.block > .block-head:first-child { margin-top: 4px; }
+/* min-width: max-content 讓標題不會被右邊的控制項擠扁 */
 .block-head h2 {
-  font-size: 19px; font-weight: 500; letter-spacing: -.005em;
-  color: var(--text);
-  /* min-width: max-content 讓標題不會被右邊的控制項擠扁；
-     放不下時是控制項換行，不是標題被切掉 */
   flex: 1 1 auto; min-width: max-content;
+  font-size: 18px; font-weight: 500; letter-spacing: .005em; color: var(--text);
 }
-.block-head-tag {
-  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
-  color: var(--muted); border: 1px solid var(--line);
-  border-radius: 20px; padding: 1px 9px;
+
+/* 區塊小標題列（比主標小一級） */
+.sec-head {
+  display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap;
+  margin: 26px 0 8px; padding-bottom: 6px;
+  border-bottom: 1px solid var(--line-2);
 }
+.sec-head:first-of-type { margin-top: 6px; }
+.sec-title { flex: none; font-size: 14px; font-weight: 600; color: var(--text); }
+.sec-hint { font-size: 12.5px; color: var(--muted); }
+.sec-head .spacer, .block-head .spacer { flex: 1; }
+.sec-head + .chip-row, .sec-head + .table, .sec-head + .empty { margin-top: 2px; }
+
+/* 更小一級的小標，例如「每個人的明細」 */
+.sub {
+  font-size: 13px; font-weight: 600; color: var(--text-soft);
+  margin: 24px 0 4px; letter-spacing: .02em;
+}
+
 .count {
   display: inline-block; margin-left: 7px;
-  background: var(--surface-2); color: var(--text-soft);
-  border-radius: 20px; padding: 1px 9px; font-size: 12px; font-weight: 600;
+  color: var(--muted); font-size: 13px; font-weight: 400;
 }
-.total { font-weight: 700; color: var(--brand); }
-.sub-hint { font-weight: 400; font-size: 12px; color: var(--muted); }
+.total { font-weight: 600; color: var(--gold); font-size: 14px; }
 .muted { color: var(--muted); font-size: 13px; margin: 6px 0; }
 .muted.pad { padding: 0 2px 8px; }
 .small { font-size: 13px; }
 .right { text-align: right; }
 .nowrap { white-space: nowrap; }
 
-/* ---------- 按鈕 ---------- */
-.btn {
-  appearance: none; cursor: pointer; font: inherit;
-  font-size: 14px; font-weight: 600;
-  padding: 8px 15px; border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  transition: filter .12s, background .12s;
-}
-.btn:active { transform: translateY(1px); }
-.btn-primary { background: var(--brand); color: var(--brand-ink); }
-.btn-primary:hover { filter: brightness(1.08); }
-.btn-ghost { background: var(--surface-2); color: var(--text); border-color: var(--line); }
-.btn-ghost:hover { background: var(--line); }
-.btn-danger-ghost { background: none; color: var(--danger); border-color: var(--danger); }
-.btn-sm { padding: 5px 11px; font-size: 13px; }
-.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+/* =====================================================================
+   按鈕
 
+   四個分頁上「只有圖示鈕」。沒有底色、沒有中文字、全站同一個大小。
+   有文字的 .btn 只出現在彈出視窗與設定面板（那裡是最後確認，看錯會出事）。
+   ===================================================================== */
+
+/* ---- 圖示鈕：頁面上唯一的按鈕 ---- */
 .icon-btn {
   appearance: none; background: none; border: 0; cursor: pointer;
-  font-size: 15px; line-height: 1;
-  padding: 6px; border-radius: 6px; color: var(--text-soft);
+  display: inline-flex; align-items: center; justify-content: center;
+  /* 看不到底色不代表點不到：點擊範圍一律 44×44 */
+  width: 44px; height: 44px; padding: 0;
+  border-radius: 10px; color: var(--text-soft);
+  transition: color .12s, background .12s;
 }
-.icon-btn:hover { background: var(--surface-2); }
-.icon-btn:disabled { opacity: .25; cursor: default; }
-.icon-btn:disabled:hover { background: none; }
+.icon-btn:hover { background: var(--surface-2); color: var(--brand); }
+.icon-btn:active { background: var(--line-2); color: var(--brand); }
+.icon-btn:disabled { opacity: .22; cursor: default; }
+.icon-btn:disabled:hover { background: none; color: var(--text-soft); }
+/* 目前開著的切換鈕（例如行程頁的「編輯中」）。
+   做成圓的，看起來是「現在的狀態」而不是一塊按鈕 */
+.icon-btn.on { color: var(--brand-ink); background: var(--brand); border-radius: 50%; }
+.icon-btn.on:hover { background: var(--brand); color: var(--brand-ink); }
 
-/* ---------- 提示框 ---------- */
+/* 標籤裡的小圖示鈕（成員標籤的刪除） */
+.icon-btn.icon-sm { width: 34px; height: 34px; border-radius: 50%; }
+.icon-btn.icon-sm .ic { width: 15px; height: 15px; }
+.icon-btn.icon-sm:hover { background: var(--danger-soft); color: var(--danger); }
+
+/* 刪除鈕跟隔壁多留一點距離，手機才不會誤按 */
+.icon-btn.is-del { margin-left: 6px; }
+.icon-btn.is-del:hover, .icon-btn.is-del:active { color: var(--danger); background: var(--danger-soft); }
+
+/* 一排圖示鈕 */
+.act-row { display: flex; align-items: center; gap: 1px; flex: none; }
+.act-row.right { justify-content: flex-end; }
+
+/* ---- 文字鈕：只在彈出視窗與設定面板 ---- */
+.btn {
+  appearance: none; cursor: pointer; font: inherit;
+  font-size: 14px; font-weight: 500;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 40px; padding: 8px 17px;
+  border-radius: 999px; border: 1px solid transparent;
+  transition: background .12s, border-color .12s, color .12s;
+  text-decoration: none; white-space: nowrap;
+}
+.btn:disabled { opacity: .4; cursor: default; }
+.btn-primary { background: var(--brand); color: var(--brand-ink); border-color: var(--brand); }
+.btn-primary:hover:not(:disabled) { filter: brightness(1.08); }
+.btn-danger { background: var(--danger); color: var(--brand-ink); border-color: var(--danger); }
+.btn-danger:hover:not(:disabled) { filter: brightness(1.12); }
+.btn-ghost { background: none; color: var(--text); border-color: var(--line); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-2); border-color: var(--muted); }
+.btn-danger-ghost { background: none; color: var(--danger); border-color: var(--danger); }
+.btn-danger-ghost:hover { background: var(--danger-soft); }
+.btn-sm { min-height: 34px; padding: 5px 13px; font-size: 13px; }
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* =====================================================================
+   提示與空狀態：不做成方框卡片
+   ===================================================================== */
 .notice {
   background: var(--brand-soft); color: var(--text);
-  border: 1px solid var(--line); border-left: 4px solid var(--brand);
-  border-radius: var(--radius-sm);
+  border: 0; border-left: 2px solid var(--brand);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   padding: 11px 14px; font-size: 13.5px; margin-bottom: 16px;
 }
 .notice-warn { background: var(--warn-soft); border-left-color: var(--warn); }
@@ -238,231 +321,277 @@ a { color: var(--brand); }
 
 .empty {
   color: var(--muted); font-size: 14px; text-align: center;
-  padding: 28px 16px;
-  background: var(--surface-2); border-radius: var(--radius-sm);
-  border: 1px dashed var(--line);
+  padding: 24px 16px; background: none; border: 0;
 }
 .empty-act { margin-top: 12px; }
 
-/* ---------- 旅程卡片 ---------- */
-.trip-list { display: grid; gap: 10px; }
-.trip-card {
-  display: flex; align-items: stretch; gap: 8px;
-  border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--surface);
-  overflow: hidden;
+/* =====================================================================
+   旅程清單：列表式，不用方框卡片
+   ===================================================================== */
+.trip-list { display: block; }
+.trip-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 13px 0 13px 13px;
+  border-bottom: 1px solid var(--line-2);
+  border-left: 2px solid transparent;
 }
-.trip-card {
-  background: var(--surface); border-color: var(--line);
+.trip-row:last-child { border-bottom: 0; }
+.trip-row:hover { background: var(--surface-2); }
+.trip-row.is-current { border-left-color: var(--brand); }
+.trip-row-main { flex: 1; min-width: 0; cursor: pointer; }
+.trip-row-title {
+  font-size: 16.5px; font-weight: 500;
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
 }
-.trip-card.is-current {
-  border-color: var(--line);
-  box-shadow: inset 3px 0 0 var(--brand);
-}
-.trip-card-main { flex: 1; min-width: 0; padding: 13px 15px; cursor: pointer; }
-.trip-card-main:hover h3 { color: var(--brand); }
-.trip-card-main h3 { font-size: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.trip-card-side { display: flex; flex-direction: column; justify-content: center; padding-right: 8px; gap: 2px; }
-.trip-meta { color: var(--text-soft); font-size: 13px; margin-top: 2px; }
-.trip-stats {
-  display: flex; gap: 12px; flex-wrap: wrap;
-  margin-top: 7px; font-size: 12.5px; color: var(--muted);
-}
+.trip-row-main:hover .trip-row-title { color: var(--brand); }
+.trip-row-range { font-size: 13px; color: var(--text-soft); margin-top: 2px; }
+.trip-row-stats { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+
 .pill {
   background: none; color: var(--brand);
   border: 1px solid var(--brand);
-  font-size: 10.5px; font-weight: 500; padding: 0 8px; border-radius: 20px;
+  font-size: 10.5px; font-weight: 500; padding: 0 8px; border-radius: 999px;
 }
 
-/* ---------- 成員標籤 ---------- */
+/* =====================================================================
+   成員標籤
+   ===================================================================== */
 .chip-row { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 10px; }
 .chip {
-  display: inline-flex; align-items: center; gap: 4px;
+  display: inline-flex; align-items: center; gap: 2px;
+  min-height: 38px;
   background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: 20px; padding: 4px 6px 4px 13px; font-size: 14px;
+  border-radius: 999px; padding: 2px 4px 2px 14px; font-size: 14px;
 }
-.chip-x {
-  appearance: none; background: none; border: 0; cursor: pointer;
-  color: var(--muted); font-size: 12px; padding: 2px 5px; border-radius: 50%;
-}
-.chip-x:hover { background: var(--danger-soft); color: var(--danger); }
 
-/* ---------- 表格 ---------- */
-.table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0 4px; }
+/* =====================================================================
+   表格（電腦版；手機版在檔案最下面改成堆疊式）
+   ===================================================================== */
+.table { width: 100%; border-collapse: collapse; font-size: 14px; margin: 4px 0; }
 .table th {
   text-align: left; font-size: 12px; font-weight: 600; color: var(--muted);
   padding: 7px 8px; border-bottom: 1px solid var(--line); white-space: nowrap;
 }
 .table th.right { text-align: right; }
-.table td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.table td { padding: 8px; border-bottom: 1px solid var(--line-2); vertical-align: middle; }
 .table tr:last-child td { border-bottom: 0; }
-.exp-title { font-weight: 600; }
+.table .act-row { justify-content: flex-end; }
+.exp-title { font-weight: 500; }
 .exp-sub { font-size: 12px; color: var(--muted); }
+.exp-note { font-size: 12.5px; color: var(--text-soft); margin-top: 2px; white-space: pre-wrap; }
+/* 指定項目：用縮排加細線表示「附屬於上一行」，比箭頭符號穩
+   （↓→ 這類箭頭在部分中文字型下會變成豆腐字）*/
+.exp-extra {
+  font-size: 12.5px; color: var(--muted); margin-top: 3px;
+  padding-left: 10px; border-left: 2px solid var(--line-2);
+}
+.muted-cell { color: var(--muted); font-size: 13px; }
+
 .tag {
-  display: inline-block; font-size: 11px; font-weight: 600;
+  display: inline-block; font-size: 11px; font-weight: 500;
   background: var(--surface-2); color: var(--muted);
   border: 1px solid var(--line); border-radius: 4px; padding: 0 5px;
 }
 .tag-ok { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
 
-/* ---------- 行程時間軸 ---------- */
-.day-tabs {
-  display: flex; gap: 3px; flex-wrap: wrap; margin: 2px 0 0;
-}
+/* =====================================================================
+   行程：天數列 + 時間軸
+   ===================================================================== */
+.day-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 4px 0 0; }
 .day-tab {
   appearance: none; cursor: pointer; font: inherit;
   flex: 0 0 auto;
   background: none; border: 1px solid transparent;
-  border-radius: 3px; padding: 5px 13px;
+  border-radius: 999px; min-height: 32px; padding: 4px 13px;
   font-size: 12.5px; color: var(--muted);
-  font-variant-numeric: tabular-nums;
 }
-.day-tab:hover { color: var(--text); }
+.day-tab:hover { color: var(--text); background: var(--surface-2); }
 .day-tab.on { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); font-weight: 500; }
 
 .day-head {
-  display: flex; align-items: baseline; gap: 10px 12px; flex-wrap: wrap;
-  padding: 24px 0 12px; border-bottom: 1px solid var(--line); margin-bottom: 4px;
+  display: flex; align-items: center; gap: 6px 10px; flex-wrap: wrap;
+  padding: 16px 0 6px; border-bottom: 1px solid var(--line); margin-bottom: 2px;
 }
 /* 日期要完整顯示，不可以被右邊的控制項擠到換行 */
 .day-head h3 { font-size: 17px; font-weight: 500; flex: 1 0 100%; }
 @media (min-width: 620px) { .day-head h3 { flex: 1 1 auto; } }
-.day-head-side { flex: 1; justify-content: flex-end; }
+/* flex-basis 用 auto：basis 0 的話控制項只分到半排寬度，按鈕會莫名其妙換行 */
+.day-head-side {
+  display: flex; align-items: center; flex-wrap: wrap;
+  gap: 4px; flex: 1 1 auto; justify-content: flex-end;
+}
+.day-count { font-size: 12.5px; color: var(--muted); margin-right: 2px; white-space: nowrap; }
+/* 編輯模式：整排工具加一層很淡的底，一眼看得出現在「在改東西」 */
+.day-head.is-editing { border-bottom-color: var(--brand); }
 
-/* 沒有標題、只有按鈕的那一行，不要畫分隔線 */
-.block-head-bare { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
-.day-head-side { display: flex; align-items: center; gap: 10px; }
-.day-head-side .muted { margin: 0; }
+.filter-note {
+  flex-basis: 100%; font-size: 12px; color: var(--muted);
+  background: var(--surface-2); border-radius: 6px; padding: 5px 10px; margin-top: 2px;
+}
 
+/* ---- 時間軸 ----
+   左：時間（楓紅）｜中：節點與淡色垂直線｜右：標題、地點、圖片、備註 */
 .timeline { list-style: none; margin: 0; padding: 0; }
 .tl-item {
   display: grid;
-  grid-template-columns: 62px 1fr auto;
-  gap: 18px; align-items: start;
-  padding: 21px 0; border-bottom: 1px solid var(--line-2);
+  grid-template-columns: 46px 11px minmax(0, 1fr) auto;
+  gap: 0 10px; align-items: start;
+  padding: 16px 0;
 }
-.tl-item:last-child { border-bottom: 0; }
 
-/* 左欄：時間在上、類型在下，是這一列唯一的彩色 */
 .tl-when { padding-top: 1px; }
-.tl-time {
-  font-size: 13px; font-weight: 500; letter-spacing: .02em;
-  font-variant-numeric: tabular-nums; color: var(--brand);
-}
+.tl-time { font-size: 13px; font-weight: 500; letter-spacing: .02em; color: var(--brand); }
 .tl-kind { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.tl-kind.type-fly  { color: var(--brand); }
+
+/* 節點與垂直線。第一筆的線從節點往下、最後一筆的線到節點為止 */
+.tl-rail { position: relative; align-self: stretch; }
+.tl-rail::before {
+  content: ""; position: absolute; left: 50%; margin-left: -.5px; width: 1px;
+  top: -16px; bottom: -16px; background: var(--line);
+}
+.tl-item:first-child .tl-rail::before { top: 9px; }
+.tl-item:last-child .tl-rail::before { bottom: auto; height: 25px; }
+.tl-item:first-child:last-child .tl-rail::before { display: none; }
+.tl-rail::after {
+  content: ""; position: absolute; left: 50%; top: 5px;
+  width: 9px; height: 9px; margin-left: -4.5px;
+  border-radius: 50%; background: var(--brand);
+  box-shadow: 0 0 0 3px var(--bg);
+}
+/* 分頭行動的那幾段，節點改成低彩度的綠，一眼看得出不是全員 */
+.tl-item.tl-split .tl-rail::after { background: var(--ok); }
 
 .tl-body { min-width: 0; }
-.tl-title { font-weight: 600; }
+.tl-title { font-weight: 600; color: var(--text); }
 .tl-place, .tl-note, .tl-link, .tl-costline { font-size: 13px; margin-top: 2px; }
-.tl-place { color: var(--text-soft); }
-/* 備註左邊一條細槓，跟地點區隔開（秋 1 的做法） */
+.tl-place { color: var(--muted); }
+/* 備註左邊一條細槓，跟地點區隔開 */
 .tl-note {
-  color: var(--muted); white-space: pre-wrap;
-  margin-top: 7px; padding-left: 12px;
-  border-left: 2px solid var(--line);
+  color: var(--text-soft); white-space: pre-wrap;
+  margin-top: 7px; padding-left: 11px;
+  border-left: 2px solid var(--line-2);
 }
-.tl-cost { color: var(--brand); font-weight: 600; }
-.tl-actions {
-  display: flex; align-items: center; gap: 1px; flex-wrap: wrap;
-  justify-content: flex-end; opacity: .45; transition: opacity .12s;
+.tl-costline { margin-top: 5px; display: flex; align-items: center; gap: 7px; flex-wrap: wrap; }
+.tl-cost { color: var(--gold); font-weight: 600; }
+.tl-party {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 8px; vertical-align: middle;
+  font-size: 11.5px; font-weight: 500;
+  background: var(--brand-soft); color: var(--brand);
+  border-radius: 999px; padding: 1px 9px; white-space: nowrap;
 }
-.tl-item:hover .tl-actions, .tl-actions:focus-within { opacity: 1; }
-@media (hover: none) { .tl-actions { opacity: .75; } }
+.tl-party .ic { opacity: .8; }
 
-/* ---------- 結算 ---------- */
-.transfers { list-style: none; margin: 0 0 6px; padding: 0; }
+/* 編輯工具：平常整排不存在，按下「編輯」才出現 */
+.tl-actions { display: flex; align-items: center; gap: 1px; flex-wrap: wrap; justify-content: flex-end; }
+
+/* 行程圖片：統一 16:9 預覽，不讓一張圖吃掉整個手機畫面 */
+.tl-image { margin: 8px 0 2px; max-width: 420px; }
+.tl-image a {
+  display: block; overflow: hidden;
+  border: 1px solid var(--line); border-radius: var(--radius);
+  background: var(--surface-2);
+}
+.tl-image img {
+  display: block; width: 100%; aspect-ratio: 16 / 9;
+  object-fit: cover; background: var(--surface-2);
+}
+.img-bad { font-size: 12px; color: var(--danger); }
+
+.member-filter {
+  font: inherit; font-size: 13px; min-height: 36px; padding: 4px 8px;
+  background: var(--surface-2); color: var(--text);
+  border: 1px solid var(--line); border-radius: 8px; max-width: 150px;
+}
+
+/* =====================================================================
+   結算
+   ===================================================================== */
+.transfers { list-style: none; margin: 0 0 4px; padding: 0; }
 .transfers li {
   display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
-  background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  padding: 11px 14px; margin-bottom: 8px; font-size: 15px;
+  background: none; border: 0; border-bottom: 1px solid var(--line-2);
+  padding: 8px 2px; font-size: 15px;
 }
-.transfers .arrow { color: var(--brand); font-weight: 700; }
-.transfers .amt { margin-left: auto; font-weight: 800; color: var(--brand); font-size: 16px; }
+.transfers li:last-child { border-bottom: 0; }
+.transfers .arrow { color: var(--brand); font-weight: 600; }
+.transfers .amt { margin-left: auto; font-weight: 700; color: var(--gold); font-size: 16px; }
+.settle-btn { flex: none; }
+
 .all-clear {
   background: var(--ok-soft); color: var(--ok);
-  border-radius: var(--radius-sm); padding: 14px; text-align: center; font-weight: 600;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  border-radius: var(--radius-sm); padding: 14px; text-align: center; font-weight: 500;
 }
 .net { font-weight: 600; font-size: 13px; white-space: nowrap; }
 .net-plus { color: var(--ok); }
 .net-minus { color: var(--danger); }
+.net-zero { color: var(--muted); }
 
-/* ---------- 打包清單 ---------- */
-.progress-wrap { margin-bottom: 18px; }
+/* =====================================================================
+   打包清單
+   ===================================================================== */
+.progress-wrap { margin: 4px 0 16px; }
 .progress {
-  height: 9px; background: var(--surface-2); border-radius: 20px;
-  overflow: hidden; border: 1px solid var(--line);
+  height: 6px; background: var(--surface-2); border-radius: 999px;
+  overflow: hidden; border: 0;
 }
-.progress-bar { height: 100%; background: var(--brand); transition: width .25s ease; }
-.progress-text { font-size: 13px; color: var(--text-soft); margin-top: 6px; }
+.progress-bar { height: 100%; background: var(--ok); transition: width .25s ease; }
+.progress-text { font-size: 13px; color: var(--text-soft); margin-top: 7px; }
 
-.cl-group { border-top: 1px solid var(--line); padding-top: 12px; margin-top: 12px; }
+.cl-group { border-top: 1px solid var(--line-2); padding-top: 10px; margin-top: 10px; }
 .cl-group:first-of-type { border-top: 0; margin-top: 0; }
-.cl-group-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.cl-group-head h3 { font-size: 15px; flex: 1; }
-.cl-group-act { display: flex; gap: 1px; }
+.cl-group-head { display: flex; align-items: center; gap: 6px; margin-bottom: 2px; }
+.cl-group-head h3 {
+  font-size: 14.5px; font-weight: 600; flex: 1;
+  display: flex; align-items: center; gap: 7px; min-width: 0;
+}
+.cl-group-act { display: flex; align-items: center; gap: 1px; flex: none; }
 .cl-items { list-style: none; margin: 0; padding: 0; }
-.cl-item {
-  display: flex; align-items: center; gap: 6px;
-  padding: 3px 0; border-bottom: 1px solid transparent;
-}
-.cl-item:hover { border-bottom-color: var(--line); }
-.cl-check { flex: 1; display: flex; align-items: center; gap: 9px; cursor: pointer; padding: 4px 0; }
-.cl-check input { width: 17px; height: 17px; accent-color: var(--brand); flex: none; }
+.cl-item { display: flex; align-items: center; gap: 2px; }
+.cl-check { flex: 1; display: flex; align-items: center; gap: 10px; cursor: pointer; padding: 6px 0; min-width: 0; }
+.cl-check input { width: 18px; height: 18px; accent-color: var(--brand); flex: none; }
 .cl-item.done .cl-check span { text-decoration: line-through; color: var(--muted); }
-
-/* ---------- 分頭行動 ---------- */
-.tl-split { position: relative; padding-left: 13px; }
-.tl-split:before {
-  content: ""; position: absolute; left: 0; top: 18px; bottom: 18px;
-  width: 2px; background: var(--ok); border-radius: 2px;
+.cl-who {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 8px; font-size: 11px; font-weight: 500;
+  background: var(--ok-soft); color: var(--ok);
+  border-radius: 999px; padding: 1px 9px; vertical-align: middle;
 }
+.cl-who .ic { opacity: .8; }
+.cl-item.done .cl-who { opacity: .55; }
+/* 只有某幾個人要帶的項目，左邊加一道細線 */
+.cl-own { padding-left: 9px; border-left: 2px solid var(--ok-soft); }
+/* 使用者自己填的分類圖示仍是 emoji；調成灰階，不跟主色搶注意力 */
+.cl-emoji { filter: grayscale(1); opacity: .6; font-size: 15px; }
 
-.tl-party {
-  display: inline-block; margin-left: 8px;
-  font-size: 11.5px; font-weight: 600; vertical-align: middle;
-  background: var(--brand-soft); color: var(--brand);
-  border-radius: 20px; padding: 1px 9px; white-space: nowrap;
-}
-.member-filter {
-  font: inherit; font-size: 13px; padding: 4px 8px;
-  background: var(--surface); color: var(--text);
-  border: 1px solid var(--line); border-radius: 6px; max-width: 150px;
-}
+/* 區塊標題列右側的控制項收成一組，放不下時一起換行 */
+.head-tools { display: flex; align-items: center; gap: 4px; margin-left: auto; flex-wrap: wrap; }
+.head-tools .member-filter { max-width: 130px; }
 
-/* ---------- 設定面板 ---------- */
+/* =====================================================================
+   設定面板（這裡的按鈕一律有文字，清楚比精簡重要）
+   ===================================================================== */
 .modal-wide { max-width: 560px; }
-.set-sec { padding-bottom: 18px; margin-bottom: 18px; border-bottom: 1px solid var(--line); }
+.set-sec { padding-bottom: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--line-2); }
 .set-sec:last-child { border-bottom: 0; margin-bottom: 0; padding-bottom: 0; }
-.set-title { font-size: 15px; display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
+.set-title { font-size: 15px; font-weight: 600; display: flex; align-items: center; gap: 9px; margin-bottom: 4px; }
 .pill-sm {
-  font-size: 11px; font-weight: 600; padding: 1px 9px; border-radius: 20px;
+  font-size: 11px; font-weight: 500; padding: 1px 9px; border-radius: 999px;
   background: var(--surface-2); color: var(--muted); border: 1px solid var(--line);
 }
 .pill-sm.on { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
 
-/* ---------- 同步狀態 ---------- */
-.sync-status { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+/* 同步狀態：成功才用綠色，其餘都低調 */
+.sync-status { font-size: 11.5px; color: var(--muted); margin-top: 6px; }
 .sync-ok { color: var(--ok); }
-.sync-saving, .sync-loading { color: var(--brand); }
+.sync-saving, .sync-loading { color: var(--muted); }
 .sync-pending { color: var(--warn); }
 .sync-error, .sync-conflict { color: var(--danger); font-weight: 600; }
 
-/* ---------- 行程的示意圖 ---------- */
-.tl-image { margin: 6px 0 2px; }
-.tl-image img {
-  max-width: 100%; width: 260px; height: auto;
-  border-radius: var(--radius-sm); border: 1px solid var(--line);
-  display: block; background: var(--surface-2);
-}
-.img-bad { font-size: 12px; color: var(--danger); }
-
-/* ---------- 支出的備註與指定項目 ---------- */
-.exp-note { font-size: 12.5px; color: var(--text-soft); margin-top: 1px; white-space: pre-wrap; }
-.exp-extra { font-size: 12.5px; color: var(--brand); margin-top: 1px; }
-
-/* ---------- 指定項目的編輯列 ---------- */
+/* =====================================================================
+   指定項目的編輯列
+   ===================================================================== */
 .extras { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
 .extra-row {
   border: 1px solid var(--line); border-radius: var(--radius-sm);
@@ -472,18 +601,17 @@ a { color: var(--brand); }
 .extra-top .extra-label { flex: 1 1 auto; min-width: 0; }
 .extra-top .extra-amount { flex: 0 0 90px; }
 .extra-row input {
-  font: inherit; font-size: 14px; padding: 6px 9px;
+  font: inherit; font-size: 14px; padding: 7px 9px;
   background: var(--surface); color: var(--text);
-  border: 1px solid var(--line); border-radius: 6px;
+  border: 1px solid var(--line); border-radius: 7px;
 }
 .extra-members { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-.check-sm { padding: 3px 10px; font-size: 13px; }
+.check-sm { padding: 3px 11px; font-size: 13px; min-height: 32px; }
 .check-sm input { width: 14px; height: 14px; }
 
-.field-note label { margin-bottom: 3px; }
-.note-text { font-size: 14px; color: var(--text-soft); white-space: pre-wrap; line-height: 1.6; }
-
-/* ---------- 跳出視窗 ---------- */
+/* =====================================================================
+   跳出視窗（視窗、表單欄位、圖片保留圓角）
+   ===================================================================== */
 .modal-back {
   position: fixed; inset: 0; z-index: 100;
   background: rgba(59,35,23,.46);   /* 深咖啡半透明，不用黑 */
@@ -503,17 +631,17 @@ a { color: var(--brand); }
 
 .modal-head {
   display: flex; align-items: center; gap: 10px;
-  padding: 14px 16px; border-bottom: 1px solid var(--line);
+  padding: 10px 8px 10px 18px; border-bottom: 1px solid var(--line-2);
 }
-.modal-head h3 { font-size: 16px; flex: 1; }
-.modal-body { padding: 16px; overflow-y: auto; }
+.modal-head h3 { font-size: 16px; font-weight: 600; flex: 1; }
+.modal-body { padding: 18px; overflow-y: auto; }
 .modal-foot {
   display: flex; align-items: center; gap: 8px;
-  padding: 12px 16px; border-top: 1px solid var(--line);
+  padding: 12px 16px; border-top: 1px solid var(--line-2);
 }
 .spacer { flex: 1; }
 
-.field { margin-bottom: 14px; }
+.field { margin-bottom: 15px; }
 .field:last-child { margin-bottom: 0; }
 .field label {
   display: block; font-size: 13px; font-weight: 600;
@@ -522,7 +650,7 @@ a { color: var(--brand); }
 .req { color: var(--danger); }
 .field input, .field select, .field textarea, .share-url {
   width: 100%; font: inherit; font-size: 15px;
-  padding: 9px 11px;
+  padding: 10px 11px;
   background: var(--surface); color: var(--text);
   border: 1px solid var(--line); border-radius: var(--radius-sm);
 }
@@ -531,19 +659,24 @@ a { color: var(--brand); }
 }
 .field textarea { resize: vertical; }
 .hint { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.field-note label { margin-bottom: 3px; }
+.note-text { font-size: 14.5px; color: var(--text-soft); white-space: pre-wrap; line-height: 1.75; }
 
 .checks { display: flex; flex-wrap: wrap; gap: 6px; }
 .check {
-  display: inline-flex; align-items: center; gap: 6px;
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 38px;
   background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: 20px; padding: 6px 13px; cursor: pointer; font-size: 14px;
+  border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 14px;
 }
 .check input { width: 16px; height: 16px; accent-color: var(--brand); }
 .check:has(input:checked) { background: var(--brand-soft); border-color: var(--brand); }
 
 .share-url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
 
-/* ---------- 浮動提示 ---------- */
+/* =====================================================================
+   浮動提示
+   ===================================================================== */
 .toast-box {
   position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
   z-index: 200; display: flex; flex-direction: column; gap: 8px; align-items: center;
@@ -556,181 +689,42 @@ a { color: var(--brand); }
   box-shadow: 0 6px 24px rgba(var(--shadow-rgb),.26);
   transition: opacity .4s, transform .4s;
 }
-.toast-bad { background: var(--danger); }
+.toast-bad { background: var(--danger); color: var(--brand-ink); }
 .toast.out { opacity: 0; transform: translateY(8px); }
-
-/* ---------- 頁尾 ---------- */
-.foot {
-  max-width: var(--maxw); margin: 0 auto;
-  padding: 20px 16px 40px; color: var(--muted); font-size: 12.5px; text-align: center;
-}
-.foot p { margin: 4px 0; }
-.foot code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
-
-/* ---------- 手機調整 ---------- */
-@media (max-width: 560px) {
-  .topbar-inner { padding: 22px 18px 18px; }
-  #headerTitle { font-size: 25px; margin: 7px 0 8px; }
-  .head-meta { gap: 13px; font-size: 12px; }
-  .tabs { padding: 0 18px; gap: 22px; }
-  .view { padding: 14px 18px 48px; }
-  .block { margin-bottom: 30px; }
-  .block.is-card { padding: 16px 15px; }
-
-  /* 窄螢幕：操作鈕換到下一行，內容才有完整寬度 */
-  .tl-item { grid-template-columns: 54px 1fr; gap: 14px; }
-  .tl-actions { grid-column: 2 / -1; justify-content: flex-start; margin-top: 4px; }
-
-  .trip-stats { gap: 9px; }
-  .table { font-size: 13px; }
-  .table th, .table td { padding: 7px 5px; }
-}
-
-.filter-note {
-  flex-basis: 100%; font-size: 12px; color: var(--muted);
-  background: var(--surface-2); border-radius: 6px; padding: 5px 10px; margin-top: 2px;
-}
-
-/* =====================================================================
-   秋 1「和紙」的排版細節
-   顏色在檔案最上面的 :root，這一區只處理字體與線條的質感。
-   ===================================================================== */
-
-/* 數字一律等寬，上下列才對得齊（金額、時間、日期） */
-.tl-time, .table td, .table th, .net, .transfers .amt, .total,
-.trip-stats, .progress-text, .day-d, .exp-sub {
-  font-variant-numeric: tabular-nums;
-}
-
-/* 時間用楓紅，是時間軸上唯一的彩色，一眼抓得到節奏 */
-.tl-time { color: var(--brand); font-weight: 500; }
-
-/* 標題字重放輕一點，少一些壓迫感 */
-.block-head h2 { font-weight: 500; letter-spacing: .01em; }
-.trip-card-main h3 { font-weight: 500; }
-.day-head h3 { font-weight: 500; }
-
-/* 區塊小標改成間距較開的灰字，像書的章節標 */
-.sub-hint { letter-spacing: 0; text-transform: none; font-size: 12px; }
-
-/* 金額用銀杏黃，跟楓紅的「重點」區隔開 */
-.tl-cost { color: var(--gold); }
-
-/* 線條細一點、暖一點 */
-.table td, .table th { border-bottom-color: var(--line-2); }
-.tl-item { border-bottom-color: var(--line-2); }
-.cl-item:hover { border-bottom-color: var(--line); }
-
-/* 當天日期底下那條線用楓紅，分段更清楚 */
-
-
-/* 小標與上一段之間要留白，不然會黏在一起 */
-
-/* ---------- 已結清 ---------- */
-.settle-btn { margin-left: 10px; flex: none; }
-.net-zero { color: var(--ok); }
-.muted-cell { color: var(--muted); font-size: 13px; }
-
 
 /* =====================================================================
    說明圓圈：長句收起來，點一下（電腦滑過去）才顯示
    ===================================================================== */
 .hint-dot {
-  appearance: none; cursor: pointer; font: inherit;
+  appearance: none; cursor: pointer; font: inherit; position: relative;
   display: inline-flex; align-items: center; justify-content: center;
-  width: 16px; height: 16px; padding: 0; margin-left: 5px;
+  width: 18px; height: 18px; padding: 0; margin-left: 5px;
   border-radius: 50%; border: 1px solid var(--line);
-  background: var(--surface-2); color: var(--muted);
-  font-size: 10.5px; font-weight: 700; line-height: 1;
+  background: none; color: var(--muted);
+  font-size: 11px; font-weight: 700; line-height: 1;
   vertical-align: middle; flex: none;
+}
+/* 看得到的是一個小圓圈，手指點得到的範圍放大到 40×40 */
+.hint-dot::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 40px; height: 40px; transform: translate(-50%, -50%);
 }
 .hint-dot:hover, .hint-dot:focus-visible {
   background: var(--brand); border-color: var(--brand); color: var(--brand-ink); outline: none;
 }
-/* 提示泡泡與浮動訊息共用同一套外觀：深咖啡底、同樣的圓角與陰影 */
+/* 區塊標題旁邊的說明圓圈，要跟標題的基線對齊 */
+.block-head .hint-dot, .sec-head .hint-dot { vertical-align: -2px; }
+
 .hint-bubble {
   position: absolute; z-index: 300;
   background: var(--deep); color: var(--deep-ink);
   border-radius: var(--radius-sm); padding: 11px 16px;
-  font-size: 13.5px; line-height: 1.6;
+  font-size: 13.5px; line-height: 1.65;
   box-shadow: 0 6px 24px rgba(var(--shadow-rgb),.26);
 }
 
-/* 同步狀態移到頁首標題下方 */
-.sync-status { margin-top: 7px; }
-
-
 /* =====================================================================
-   區塊標題列：標題在左、「＋」在右
-   主標（block-head h2）比小標（sec-title）大一級，層次才看得出來
-   ===================================================================== */
-.sec-head {
-  display: flex; align-items: baseline; gap: 10px;
-  margin: 30px 0 11px; padding-bottom: 9px;
-  border-bottom: 1px solid var(--line);
-}
-.sec-head:first-of-type { margin-top: 4px; }
-.sec-title { font-size: 14px; font-weight: 600; color: var(--text); flex: none; }
-.sec-hint { font-size: 12px; color: var(--muted); }
-.sec-head .spacer { flex: 1; }
-.sec-head .btn-sm { align-self: center; }
-
-.icon-add {
-  appearance: none; cursor: pointer; font: inherit;
-  width: 28px; height: 28px; flex: none; align-self: center;
-  display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--line); border-radius: 50%;
-  background: var(--surface); color: var(--brand);
-  font-size: 15px; line-height: 1; padding: 0;
-}
-.icon-add:hover { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
-
-/* 小標底下的內容要有呼吸空間 */
-.sec-head + .chip-row, .sec-head + .table, .sec-head + .empty { margin-top: 2px; }
-
-/* =====================================================================
-   旅程清單：列表式，不用方框卡片
-   ===================================================================== */
-.trip-list { display: block; }
-.trip-row {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 16px 0 16px 14px;
-  border-bottom: 1px solid var(--line-2);
-  border-left: 3px solid transparent;
-}
-.trip-row:last-child { border-bottom: 0; }
-.trip-row:hover { background: var(--surface-2); }
-.trip-row.is-current { border-left-color: var(--brand); }
-.trip-row-main { flex: 1; min-width: 0; cursor: pointer; }
-.trip-row-title {
-  font-size: 17px; font-weight: 500;
-  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
-}
-.trip-row-main:hover .trip-row-title { color: var(--brand); }
-.trip-row-range {
-  font-size: 12.5px; color: var(--text-soft); margin-top: 3px;
-  font-variant-numeric: tabular-nums;
-}
-.trip-row-stats { font-size: 12px; color: var(--muted); margin-top: 4px; }
-.trip-row-side { display: flex; flex-direction: column; gap: 2px; flex: none; opacity: .5; }
-.trip-row:hover .trip-row-side { opacity: 1; }
-@media (hover: none) { .trip-row-side { opacity: .8; } }
-
-/* ---------- 單色線條圖示 ---------- */
-.ic { display: block; flex: none; }
-.btn .ic, .act .ic { display: inline-block; vertical-align: -2px; }
-.act .ic { display: block; margin: 0 auto; }
-.icon-btn { display: inline-flex; align-items: center; justify-content: center; }
-.tl-party { display: inline-flex; align-items: center; gap: 4px; }
-.tl-party .ic { opacity: .8; }
-
-/* 使用者自己填的分類圖示仍是 emoji；調成灰階，不跟主色搶注意力 */
-.cl-group-head h3 { display: flex; align-items: center; gap: 7px; }
-.cl-emoji { filter: grayscale(1); opacity: .65; font-size: 15px; }
-
-/* =====================================================================
-   右下角工具鈕：平常只是一顆小點，點開才展開三個動作
-   不佔整排位置，也不搶注意力
+   右下角工具鈕：浮在內容上，所以留一層淡米底才看得到；不是白色
    ===================================================================== */
 #headerActions {
   position: fixed; right: 16px; z-index: 26;
@@ -739,66 +733,132 @@ a { color: var(--brand); }
 }
 .tool-btn {
   appearance: none; cursor: pointer; font: inherit;
-  width: 38px; height: 38px; padding: 0;
   display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; padding: 0;
   border: 1px solid var(--line); border-radius: 50%;
-  background: var(--surface); color: var(--muted);
+  background: var(--surface-2); color: var(--text-soft);
   box-shadow: 0 2px 10px rgba(var(--shadow-rgb),.10);
-  opacity: .72; transition: opacity .15s, color .15s;
+  transition: color .15s, border-color .15s, background .15s;
 }
-.tool-btn:hover, .tool-btn[aria-expanded="true"] { opacity: 1; color: var(--brand); border-color: var(--brand); }
-.tool-dots { font-size: 19px; line-height: 1; letter-spacing: 0; }
+.tool-btn:hover, .tool-btn[aria-expanded="true"] {
+  color: var(--brand); border-color: var(--brand); background: var(--brand-soft);
+}
 
 .tool-menu {
-  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 2px;
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 6px;
   box-shadow: 0 6px 26px rgba(var(--shadow-rgb),.16);
 }
 .tool-menu[hidden] { display: none; }
+/* 選單裡是「項目」不是按鈕，要有文字才知道在選什麼 */
 .tool-item {
   appearance: none; border: 0; background: none; cursor: pointer; font: inherit;
-  display: flex; align-items: center; gap: 9px;
-  padding: 8px 14px 8px 11px; border-radius: var(--radius-sm);
+  display: flex; align-items: center; gap: 10px;
+  min-height: 44px; padding: 8px 16px 8px 12px; border-radius: var(--radius-sm);
   font-size: 14px; color: var(--text); white-space: nowrap;
 }
 .tool-item:hover { background: var(--surface-2); color: var(--brand); }
 .tool-item .ic { color: var(--muted); }
 .tool-item:hover .ic { color: var(--brand); }
 
-/* 唯讀模式只有一個動作，直接做成可見的小膠囊 */
+/* 唯讀模式的「存一份到我的裝置」是給收到連結的人按的，
+   他們沒看過這個工具，所以這一顆一定要有文字 */
 .tool-solo {
   appearance: none; cursor: pointer; font: inherit;
   display: flex; align-items: center; gap: 7px;
-  padding: 9px 16px; border-radius: 30px;
+  min-height: 44px; padding: 9px 18px; border-radius: 999px;
   border: 1px solid var(--brand); background: var(--brand); color: var(--brand-ink);
   font-size: 13.5px; font-weight: 500;
   box-shadow: 0 2px 12px rgba(var(--shadow-rgb),.18);
 }
 
-/* 小鈕是浮在內容上的，底部留一點空間免得蓋到最後一行 */
-.view { padding-bottom: 56px; }
+/* =====================================================================
+   單色線條圖示
+   ===================================================================== */
+.ic { display: block; flex: none; }
+.btn .ic, .tool-btn .ic, .tool-solo .ic, .tool-item .ic { display: block; }
 
-/* ---------- 打包清單：誰要帶 ---------- */
-.cl-who {
-  display: inline-flex; align-items: center; gap: 4px;
-  margin-left: 8px; font-size: 11px; font-weight: 500;
-  background: var(--ok-soft); color: var(--ok);
-  border-radius: 20px; padding: 1px 9px; vertical-align: middle;
+/* =====================================================================
+   頁尾
+   ===================================================================== */
+.foot {
+  max-width: var(--maxw); margin: 0 auto;
+  padding: 18px 20px 40px; color: var(--muted); font-size: 12.5px; text-align: center;
 }
-.cl-who .ic { opacity: .8; }
-.cl-item.done .cl-who { opacity: .55; }
-/* 只有某幾個人要帶的項目，左邊加一道細線 */
-.cl-own { padding-left: 9px; border-left: 2px solid var(--ok-soft); }
-.cl-item .icon-btn { opacity: .45; }
-.cl-item:hover .icon-btn { opacity: 1; }
-@media (hover: none) { .cl-item .icon-btn { opacity: .7; } }
+.foot p { margin: 4px 0; }
+.foot code { background: var(--surface-2); padding: 1px 5px; border-radius: 4px; }
 
-.cl-group-act { align-items: center; }
+/* =====================================================================
+   手機調整（桌面版維持原本的寬度與留白）
+   ===================================================================== */
+@media (max-width: 560px) {
+  .topbar-cover { height: 96px; }
+  .topbar-inner { padding: 16px 18px 12px; }
+  #headerTitle { font-size: 23px; }
+  .topbar.is-compact .topbar-inner { padding: 11px 18px 9px; }
+  .topbar.is-compact #headerTitle { font-size: 18px; }
+  .head-meta { gap: 3px 12px; font-size: 12.5px; }
 
-/* 標題列右側的控制項收成一組，一起換行 */
-.head-tools {
-  display: flex; align-items: center; gap: 6px;
-  margin-left: auto; flex-wrap: wrap;
+  .tabs { padding: 0 18px; gap: 20px; }
+  .view { padding: 10px 18px 86px; }
+  .block { margin-bottom: 28px; }
+  .block.is-card { padding: 16px 15px; }
+
+  /* 日期自己一行，控制項整組換到下一行，按鈕才不會被擠到字疊字 */
+  .day-head-side { flex: 1 0 100%; justify-content: flex-start; }
+  .member-filter { max-width: 124px; }
+
+  /* 窄螢幕：編輯工具換到下一行，內容才有完整寬度 */
+  .tl-item { grid-template-columns: 42px 11px minmax(0, 1fr); gap: 0 9px; }
+  .tl-actions { grid-column: 3 / -1; justify-content: flex-start; margin-top: 2px; }
+  .tl-image { max-width: 100%; }
+
+  .modal-body { padding: 16px; }
+
+  /* -------------------------------------------------------------
+     手機上的表格改成「一筆一塊」的堆疊式。
+     四欄五欄硬塞進 375px 會擠成一團，這是手機上最難看的地方。
+     電腦版完全不受影響（這一段只在 560px 以下生效）。
+     ------------------------------------------------------------- */
+  .table-stack thead, .table-net thead { display: none; }
+  .table-stack, .table-stack tbody, .table-stack tr, .table-stack td,
+  .table-net, .table-net tbody { display: block; width: 100%; }
+  .table-stack tr {
+    padding: 11px 0; border-bottom: 1px solid var(--line-2);
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start;
+    column-gap: 10px;
+  }
+  .table-stack tr:last-child { border-bottom: 0; }
+  .table-stack td { border: 0; padding: 0; }
+  /* 第一欄是主要內容，佔滿左半邊 */
+  .table-stack td.st-main { grid-column: 1; }
+  /* 金額永遠靠右，跟主要內容同一行 */
+  .table-stack td.st-amount { grid-column: 2; text-align: right; font-weight: 600; white-space: nowrap; }
+  /* 補充資訊（誰付的、分給誰、日期）合成一行灰字，跨整欄 */
+  .table-stack td.st-sub {
+    grid-column: 1 / -1; font-size: 12.5px; color: var(--muted);
+    margin-top: 2px; display: flex; flex-wrap: wrap; gap: 2px 10px;
+  }
+  .table-stack td.st-sub:empty { display: none; }
+  /* 操作鈕自己一列靠右 */
+  .table-stack td.st-act { grid-column: 1 / -1; }
+  .table-stack td.st-act .act-row { justify-content: flex-end; }
+
+  /* 「每個人的明細」欄位更多，改成每人一塊、項目與數字左右對齊 */
+  .table-net tr {
+    display: block; padding: 10px 0 12px;
+    border-bottom: 1px solid var(--line-2);
+  }
+  .table-net tr:last-child { border-bottom: 0; }
+  .table-net td { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
+  .table-net td.st-name {
+    font-weight: 600; font-size: 14.5px; display: block;
+    margin-bottom: 3px; color: var(--text);
+  }
+  .table-net td::before {
+    content: attr(data-label); color: var(--muted); font-size: 12.5px; font-weight: 400;
+  }
+  .table-net td.st-name::before { content: none; }
+  .table-net td.is-empty { display: none; }
 }
-.head-tools .member-filter { max-width: 130px; }

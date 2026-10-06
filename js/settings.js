@@ -12,7 +12,7 @@ App.Settings = (function () {
     panel = U.el(
       '<div class="modal-back">' +
         '<div class="modal modal-wide">' +
-          '<div class="modal-head"><h3>設定</h3><button class="icon-btn" data-act="close" aria-label="關閉">' + U.icon('close') + '</button></div>' +
+          '<div class="modal-head"><h3>設定</h3><button class="icon-btn" data-act="close" title="關閉" aria-label="關閉">' + U.icon('close') + '</button></div>' +
           '<div class="modal-body" id="settingsBody"></div>' +
           '<div class="modal-foot"><span class="spacer"></span><button class="btn btn-ghost" data-act="close">關閉</button></div>' +
         '</div>' +

@@ -8,5 +8,7 @@
 - 改完 `js/` 或 `css/` **一定要把 `index.html` 裡的 `?v=N` 加 1**，否則使用者會拿到舊檔。
 - 事件處理一律 `e.target.closest('[data-act]')`，不可直接讀 `e.target`。
 - 表單驗證寫在 `U.modal` 的 `validate`，不是 `.then()` 裡。
-- 改完跑 `node tests/run.js`（82 項）。
+- 改完跑 `node tests/run.js`（96 項）。
+- 四個分頁上的按鈕**一律是圖示鈕**（沒底色、沒中文字），文字鈕只在彈出視窗與設定面板。
+- 刪除用 `U.confirmDanger()`，不要用瀏覽器原生的 `confirm`。
 - 使用者不寫程式，請用繁體中文、動手前先說明計畫。

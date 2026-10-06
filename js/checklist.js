@@ -5,6 +5,24 @@ App.Checklist = (function () {
   var S = App.Store, U = App.UI;
   var filterMember = '';   // 空字串 = 看全部
 
+  /**
+   * 圖示鈕。全站的圖示鈕都長一樣：沒有底色、18px、點擊範圍 44×44。
+   */
+  function btn(act, iconName, label, extraAttr, extraClass) {
+    return '<button class="icon-btn' + (extraClass ? ' ' + extraClass : '') + '"' +
+      ' data-act="' + act + '"' + (extraAttr || '') +
+      ' title="' + U.esc(label) + '" aria-label="' + U.esc(label) + '">' +
+      U.icon(iconName) + '</button>';
+  }
+
+  /** 有沒有「只有某幾個人要帶」的項目？沒有就不要顯示篩選下拉 */
+  function hasOwners(trip) {
+    if (trip.members.length < 2) return false;
+    return trip.checklist.some(function (g) {
+      return g.items.some(function (i) { return (i.members || []).length > 0; });
+    });
+  }
+
   /** 這一項是大家都要帶，還是只有某幾個人？ */
   function ownersOf(trip, item) {
     var all = trip.members.map(function (m) { return m.id; });
@@ -43,7 +61,7 @@ App.Checklist = (function () {
     });
     var pct = total ? Math.round(done / total * 100) : 0;
 
-    var filterHtml = trip.members.length > 1
+    var filterHtml = hasOwners(trip)
       ? '<select id="packFilter" class="member-filter" title="只看某個人要帶的東西">' +
           '<option value="">全部的人</option>' +
           trip.members.map(function (m) {
@@ -54,14 +72,14 @@ App.Checklist = (function () {
       : '';
 
     view.innerHTML =
-      '<section class="block is-card">' +
+      '<section class="block">' +
         '<div class="block-head">' +
           '<h2>打包清單</h2>' +
           '<div class="head-tools">' +
             filterHtml +
             (readOnly ? '' :
-              '<button class="icon-btn" data-act="uncheck-all" title="全部取消勾選" aria-label="全部取消勾選">' + U.icon('reset', 16) + '</button>' +
-              '<button class="icon-add" data-act="add-group" title="新增分類" aria-label="新增分類">' + U.icon('plus', 16) + '</button>') +
+              btn('uncheck-all', 'reset', '把所有項目的勾勾都取消') +
+              btn('add-group', 'plus', '新增分類')) +
           '</div>' +
         '</div>' +
         '<div class="progress-wrap">' +
@@ -69,8 +87,8 @@ App.Checklist = (function () {
           '<div class="progress-text">已完成 <strong>' + done + '</strong> / ' + total + '（' + pct + '%）</div>' +
         '</div>' +
         (trip.checklist.length === 0
-          ? U.empty('清單是空的。' + (readOnly ? '' : '按右邊的 ＋ 新增分類，或按下面的按鈕載入預設清單。'),
-              readOnly ? '' : '<button class="btn btn-ghost" data-act="load-default">載入預設清單</button>')
+          ? U.empty('清單是空的。' + (readOnly ? '' : '按右上角的 ＋ 自己新增分類，或直接載入內建的預設清單。'),
+              readOnly ? '' : '<button class="btn btn-primary" data-act="load-default">載入預設清單</button>')
           : trip.checklist.map(function (g) { return groupBlock(trip, g, readOnly); }).join('')) +
       '</section>';
 
@@ -92,9 +110,9 @@ App.Checklist = (function () {
         '<h3>' + (g.emoji ? '<span class="cl-emoji">' + U.esc(g.emoji) + '</span>' : '') + U.esc(g.name) +
           '<span class="count">' + done + '/' + items.length + '</span></h3>' +
         (readOnly ? '' : '<div class="cl-group-act">' +
-          '<button class="icon-btn" data-act="add-item" data-g="' + U.esc(g.id) + '" title="新增項目" aria-label="新增項目">' + U.icon('plus', 15) + '</button>' +
-          '<button class="icon-btn" data-act="edit-group" data-g="' + U.esc(g.id) + '" title="改名">' + U.icon('edit', 15) + '</button>' +
-          '<button class="icon-btn" data-act="del-group" data-g="' + U.esc(g.id) + '" title="刪除分類">' + U.icon('trash', 15) + '</button>' +
+          btn('edit-group', 'edit', '分類改名', ' data-g="' + U.esc(g.id) + '"') +
+          btn('del-group', 'trash', '刪除這個分類', ' data-g="' + U.esc(g.id) + '"', 'is-del') +
+          btn('add-item', 'plus', '新增項目到「' + g.name + '」', ' data-g="' + U.esc(g.id) + '"') +
         '</div>') +
       '</div>' +
       (items.length === 0
@@ -110,8 +128,8 @@ App.Checklist = (function () {
                 '</span>' +
               '</label>' +
               (readOnly ? '' :
-                '<button class="icon-btn" data-act="who" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '" title="誰要帶">' + U.icon('people', 15) + '</button>' +
-                '<button class="icon-btn" data-act="del-item" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '" title="刪除">' + U.icon('close', 14) + '</button>') +
+                btn('who', 'people', '設定誰要帶這一項', ' data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '"') +
+                btn('del-item', 'trash', '刪除「' + it.text + '」', ' data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '"', 'is-del')) +
             '</li>';
           }).join('') + '</ul>') +
     '</div>';
@@ -138,10 +156,15 @@ App.Checklist = (function () {
     if (act === 'edit-group') return editGroup(trip, g);
     if (act === 'del-group') {
       if (!g) return;
-      if (!U.ask('確定要刪除分類「' + g.name + '」嗎？裡面的 ' + g.items.length + ' 個項目也會一起消失。')) return;
-      trip.checklist = trip.checklist.filter(function (x) { return x.id !== g.id; });
-      S.touch(trip);
-      return App.render();
+      return U.confirmDanger(
+        '刪除分類',
+        '要刪掉分類「' + g.name + '」嗎？裡面的 ' + g.items.length + ' 個項目會一起消失，而且無法復原。'
+      ).then(function (yes) {
+        if (!yes) return;
+        trip.checklist = trip.checklist.filter(function (x) { return x.id !== g.id; });
+        S.touch(trip);
+        App.render();
+      });
     }
     if (act === 'add-item') return addItem(trip, g);
     if (act === 'who') {
@@ -150,15 +173,30 @@ App.Checklist = (function () {
     }
     if (act === 'del-item') {
       if (!g) return;
-      g.items = g.items.filter(function (x) { return x.id !== id; });
-      S.touch(trip);
-      return App.render();
+      var target = g.items.filter(function (x) { return x.id === id; })[0];
+      if (!target) return;
+      // 以前這裡沒有確認，跟其他地方不一致，而且旁邊就是另一個垃圾桶
+      return U.confirmDanger(
+        '刪除項目',
+        '要把「' + target.text + '」從打包清單裡刪掉嗎？'
+      ).then(function (yes) {
+        if (!yes) return;
+        g.items = g.items.filter(function (x) { return x.id !== id; });
+        S.touch(trip);
+        App.render();
+      });
     }
     if (act === 'uncheck-all') {
-      if (!U.ask('要把所有項目的勾勾都取消嗎？（項目不會被刪除）')) return;
-      trip.checklist.forEach(function (gr) { gr.items.forEach(function (i) { i.done = false; }); });
-      S.touch(trip);
-      return App.render();
+      return U.confirmAsk(
+        '全部取消勾選',
+        '要把所有項目的勾勾都取消嗎？項目本身不會被刪除，只是全部變回「還沒帶」。',
+        '全部取消'
+      ).then(function (yes) {
+        if (!yes) return;
+        trip.checklist.forEach(function (gr) { gr.items.forEach(function (i) { i.done = false; }); });
+        S.touch(trip);
+        App.render();
+      });
     }
     if (act === 'load-default') {
       trip.checklist = S.DEFAULT_CHECKLIST.map(function (d) {

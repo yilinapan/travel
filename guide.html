@@ -6,7 +6,7 @@
 <meta name="description" content="旅遊規劃工具的使用說明：四個分頁怎麼用、分帳的進階功能、分享與備份。">
 <meta name="theme-color" content="#faf6ee">
 <title>使用說明 — 旅遊規劃</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍁</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239e3119' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21v-5'/><path d='m12 16 5.5-3.2-1.6-.6 3.6-2.6-1.7-.5 2.2-2.6-4.3.5.4-2.3-2.6 1.3L12 3 10.5 6l-2.6-1.3.4 2.3-4.3-.5L6.2 9.1l-1.7.5 3.6 2.6-1.6.6z'/></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@500&display=swap" rel="stylesheet">
@@ -147,10 +147,21 @@ code {
 
 .dots {
   display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px; border-radius: 50%;
+  width: 26px; height: 26px; border-radius: 50%;
   border: 1px solid var(--line); background: var(--surface);
-  color: var(--maple); font-size: 13px; vertical-align: -5px; margin: 0 2px;
+  color: var(--maple); vertical-align: -7px; margin: 0 2px;
 }
+.dots svg { width: 15px; height: 15px; }
+
+/* 符號對照表：畫面上的按鈕都是符號，這裡把意思列清楚 */
+.icons { display: grid; gap: 1px; background: var(--line-2); border-radius: 8px; overflow: hidden; }
+.icons div {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); padding: 10px 14px; font-size: 13.5px;
+}
+.icons svg { width: 19px; height: 19px; color: var(--maple); flex: none; }
+.icons b { font-weight: 600; min-width: 5.5em; white-space: nowrap; }
+.icons span { color: var(--text-soft); }
 .qm {
   display: inline-flex; align-items: center; justify-content: center;
   width: 17px; height: 17px; border-radius: 50%;
@@ -191,7 +202,7 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
     </div>
     <div class="tab">
       <h3>行程</h3>
-      <p>一天一條時間軸。每個行程點可以填時間、地點、備註、連結、示意圖和花費。順序用上下箭頭調。</p>
+      <p>一天一條時間軸。每個行程點可以填時間、地點、備註、連結、示意圖和花費。平常只負責看，要調順序或刪東西時按當天的鉛筆圖示。</p>
     </div>
     <div class="tab">
       <h3>分帳</h3>
@@ -203,7 +214,40 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
     </div>
   </div>
 
+
+  <h2>畫面上的符號</h2>
+  <p class="lede" style="font-size:13.5px">按鈕都用符號，畫面才不會擠。忘記哪一顆是什麼的話，電腦把滑鼠停在上面、手機長按，會跳出名稱。</p>
+  <div class="icons">
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><b>新增</b><span>新增行程、支出、成員、分類……永遠在每一區標題的最右邊</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/></svg><b>編輯</b><span>行程頁：打開這一天的編輯工具。其他地方：修改這一筆</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5 10 17 19 7"/></svg><b>完成</b><span>收起編輯工具。在結算那一列則是「這筆已經還了」</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 14l6-6 6 6"/></svg><b>往上移</b><span>把這個行程點往前移一格</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10l6 6 6-6"/></svg><b>往下移</b><span>把這個行程點往後移一格</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4V3z"/><path d="M9.5 8h5M9.5 12h5"/></svg><b>加到分帳</b><span>把這個行程點的金額變成一筆支出</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><path d="M8.5 5.5v3.2l2.2 1.3"/><path d="M17.5 10.5v9m0 0 2.5-2.8m-2.5 2.8L15 16.7"/></svg><b>依時間排序</b><span>把這一天按時間重新排過</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6.5a3 3 0 0 1 0 5.8M17 20a6 6 0 0 0-2-4.4"/></svg><b>誰要帶</b><span>打包清單：指定這一項由誰負責帶</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v5h5"/></svg><b>全部取消勾選</b><span>打包清單：把所有勾勾都取消，項目不會被刪</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 7V5h4v2M6 7l1 13h10l1-13"/></svg><b>刪除</b><span>永遠在一排的最右邊，而且會先跳出確認視窗</span></div>
+    <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10 1.4 1.4m0-12.8-1.4 1.4m-10 10-1.4 1.4"/></svg><b>工具</b><span>右下角那顆。分享、雲端同步、設定、下載備份檔</span></div>
+  </div>
+
   <h2>幾個不太明顯的功能</h2>
+
+  <div class="feat">
+    <h3>想改行程的順序或刪掉某一筆</h3>
+    <p>平常每一天只有一顆鉛筆圖示。按下去之後，每一筆行程才會長出上移、下移、修改、加到分帳、刪除；
+      改完按打勾就收起來。這樣平常看行程的時候畫面乾淨，手機上也比較不會手滑誤按。</p>
+    <div class="eg">
+      看行程 → 按 <b>鉛筆</b> → 調順序或刪除 → 按 <b>打勾</b><br>
+      這天還沒有行程的話，直接按 <b>＋</b> 就好，不會出現沒作用的編輯鈕。
+    </div>
+  </div>
+
+  <div class="feat">
+    <h3>行程點的示意圖</h3>
+    <p>列表上統一用橫式預覽，不會一張圖就把整個手機畫面吃掉。想看完整的，點一下圖片會在新分頁打開原圖。
+      這趡旅程的<b>第一張圖</b>，也會變成「旅程」頁上方那條淺淺的封面。</p>
+  </div>
 
   <div class="feat">
     <h3>一餐裡有人多點了東西</h3>
@@ -217,7 +261,12 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
 
   <div class="feat">
     <h3>旅途中有人先還錢了</h3>
-    <p>在結算結果那一列按「記錄還款」，金額會自動幫你填好。可以改成只還一部分，也可以選當地幣別 —— 用韓幣現金還就選 KRW，系統依匯率換算。</p>
+    <p>在結算結果那一列按<b>打勾</b>，金額會自動幫你填好。可以改成只還一部分，也可以選當地幣別 —— 用韓幣現金還就選 KRW，系統依匯率換算。</p>
+    <div class="eg">
+      記下來的錢會列在<b>已結清紀錄</b>。那裡只是「誰已經先還過多少」的紀錄，
+      結算時會自動扣掉，<b>原本的支出紀錄不會被刪掉</b>。
+      標題旁邊的 <span class="qm">?</span> 點一下也看得到這段說明。
+    </div>
   </div>
 
   <div class="feat">
@@ -231,18 +280,18 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
   </div>
 
   <div class="feat">
-    <h3>行程點想放示意圖</h3>
+    <h3>示意圖要填什麼</h3>
     <p>「示意圖」欄位貼圖片網址就會顯示。想永久保存的話，把圖片放進專案的 images 資料夾，填 <code>images/檔名.jpg</code> 就好。</p>
   </div>
 
   <div class="feat">
-    <h3>看不懂某個設定</h3>
-    <p>畫面上的 <span class="qm">?</span> 點一下（電腦滑過去）會跳出說明。</p>
+    <h3>看不懂某個按鈕或設定</h3>
+    <p>畫面上的 <span class="qm">?</span> 點一下會跳出說明。圖示按鈕則是電腦把滑鼠停在上面、手機長按，會顯示它的名稱。</p>
   </div>
 
   <h2>傳給同行的人</h2>
   <ol class="steps">
-    <li>按右下角的 <span class="dots">⋯</span> → <b>分享</b>，複製那串網址</li>
+    <li>按右下角的 <span class="dots"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10 1.4 1.4m0-12.8-1.4 1.4m-10 10-1.4 1.4"/></svg></span> → <b>分享</b>，複製那串網址</li>
     <li>傳到 LINE 群組<small>朋友點開就看得到行程和自己該付多少</small></li>
     <li>他們想自己編輯的話，按「存一份到我的裝置」<small>會變成他自己的一份，你這邊不受影響</small></li>
   </ol>
@@ -255,7 +304,7 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
     <h3>資料只存在你打開網頁的那台裝置</h3>
     <p>換一台裝置、或清除瀏覽器資料，內容就會不見。不會上傳到任何伺服器，所以也沒有人能幫你救回來。</p>
     <div class="do">
-      → 定期按 <span class="dots" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:inherit">⋯</span>
+      → 定期按 <span class="dots" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:inherit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10 1.4 1.4m0-12.8-1.4 1.4m-10 10-1.4 1.4"/></svg></span>
       <b>設定 → 下載備份檔</b>，存到雲端硬碟
     </div>
   </div>
@@ -272,7 +321,7 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
   </p>
 
   <div class="foot">
-    分帳的計算有 82 項自動測試守著。想自己驗證的話，打開
+    分帳的計算與程式結構有 96 項自動測試守著。想自己驗證的話，打開
     <a href="tests/test.html">tests/test.html</a>，全部綠色就代表算得對。
   </div>
 

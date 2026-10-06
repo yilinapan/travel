@@ -13,7 +13,7 @@ App.Trips = (function () {
       '<section class="block">' +
         secHead('我的旅程', '', 'new-trip', '新增旅程') +
         (trips.length === 0
-          ? U.empty('還沒有任何旅程。按右邊的 ＋ 開始規劃第一趟。')
+          ? U.empty('還沒有任何旅程。按右上角的 ＋ 開始規劃第一趟。')
           : '<div class="trip-list">' + trips.map(function (t) { return tripCard(t, cur); }).join('') + '</div>') +
       '</section>' +
       (cur ? settingsBlock(cur) : '');
@@ -28,20 +28,31 @@ App.Trips = (function () {
       '<strong>資料存在這台裝置。</strong>換裝置或清除瀏覽器資料就會不見。' +
       U.hint('資料存在你這台裝置的瀏覽器裡，不會上傳到任何伺服器。' +
              '換一台裝置、或清除瀏覽器資料，這裡的內容就會不見。' +
-             '按右下角的 ⋯ 打開「設定」就能開啟雲端同步，讓手機和電腦看到同一份資料；' +
+             '按右下角的齒輪圖示打開設定，就能開啟雲端同步，讓手機和電腦看到同一份資料；' +
              '或是定期下載備份檔存到雲端硬碟。') +
       '</div>';
   }
 
-  /** 區塊標題列：標題在左，右邊一個「＋」 */
+  /**
+   * 圖示鈕。全站的圖示鈕都長一樣：沒有底色、18px、點擊範圍 44×44。
+   * label 同時當 title（滑鼠停留、手機長按會顯示）和 aria-label（螢幕報讀），
+   * 畫面上不出現文字，但永遠問得出這顆是做什麼的。
+   */
+  function btn(act, iconName, label, extraAttr, extraClass) {
+    return '<button class="icon-btn' + (extraClass ? ' ' + extraClass : '') + '"' +
+      ' data-act="' + act + '"' + (extraAttr || '') +
+      ' title="' + U.esc(label) + '" aria-label="' + U.esc(label) + '">' +
+      U.icon(iconName) + '</button>';
+  }
+
+  /** 區塊標題列：標題在左，右邊是圖示鈕，＋ 永遠在最右邊 */
   function secHead(title, hint, act, addTitle, extraHtml) {
     return '<div class="sec-head">' +
       '<h3 class="sec-title">' + U.esc(title) + '</h3>' +
       (hint ? '<span class="sec-hint">' + hint + '</span>' : '') +
       '<span class="spacer"></span>' +
       (extraHtml || '') +
-      (act ? '<button class="icon-add" data-act="' + act + '" title="' + U.esc(addTitle) + '"' +
-             ' aria-label="' + U.esc(addTitle) + '">' + U.icon('plus', 16) + '</button>' : '') +
+      (act ? btn(act, 'plus', addTitle) : '') +
     '</div>';
   }
 
@@ -57,12 +68,13 @@ App.Trips = (function () {
     var range = t.startDate && t.endDate
       ? t.startDate.replace(/-/g, '.') + ' — ' + t.endDate.slice(5).replace('-', '.') + '　' + days + ' 天'
       : '尚未設定日期';
+    // 手機上這一行容易折行，分隔符用窄一點的「・」不要用全形空白
     var stats = [
       spots + ' 個行程點',
       t.members.length + ' 人',
       U.money(r.totalCents, t.baseCurrency),
       '已打包 ' + done + '/' + total
-    ].join('　·　');
+    ].join(' ・ ');
 
     return '<article class="trip-row' + (cur && cur.id === t.id ? ' is-current' : '') + '">' +
       '<div class="trip-row-main" data-act="open-trip" data-trip="' + U.esc(t.id) + '">' +
@@ -71,27 +83,27 @@ App.Trips = (function () {
         '<div class="trip-row-range">' + U.esc(range) + '</div>' +
         '<div class="trip-row-stats">' + U.esc(stats) + '</div>' +
       '</div>' +
-      '<div class="trip-row-side">' +
-        '<button class="icon-btn" data-act="edit-trip" data-trip="' + U.esc(t.id) + '" title="編輯名稱與日期">' + U.icon('edit') + '</button>' +
-        '<button class="icon-btn" data-act="del-trip" data-trip="' + U.esc(t.id) + '" title="刪除旅程">' + U.icon('trash') + '</button>' +
+      '<div class="act-row">' +
+        btn('edit-trip', 'edit', '修改名稱與日期', ' data-trip="' + U.esc(t.id) + '"') +
+        btn('del-trip', 'trash', '刪除這趟旅程', ' data-trip="' + U.esc(t.id) + '"', 'is-del') +
       '</div>' +
     '</article>';
   }
 
   function settingsBlock(t) {
     return '<section class="block">' +
-      '<div class="block-head"><h2>' + U.esc(t.name) + '</h2><span class="block-head-tag">設定</span></div>' +
+      '<div class="block-head"><h2>旅程設定</h2></div>' +
 
-      secHead('同行成員', '分帳會用到', 'add-member', '加入成員') +
+      secHead('同行成員', '分帳會用到', 'add-member', '新增成員') +
       (t.members.length === 0
         ? U.empty('還沒有成員。至少加兩個人才能分帳。')
         : '<div class="chip-row">' + t.members.map(function (m) {
             return '<span class="chip">' + U.esc(m.name) +
-              '<button class="chip-x" data-act="del-member" data-id="' + U.esc(m.id) + '" title="移除">' + U.icon('close', 13) + '</button></span>';
+              btn('del-member', 'trash', '移除 ' + m.name, ' data-id="' + U.esc(m.id) + '"', 'icon-sm') + '</span>';
           }).join('') + '</div>') +
 
-      secHead('幣別與匯率', '結算以 ' + U.esc(t.baseCurrency) + ' 顯示', 'add-cur', '加入幣別',
-        '<button class="btn btn-ghost btn-sm" data-act="edit-base">改基準幣別</button>') +
+      secHead('幣別與匯率', '結算以 ' + U.esc(t.baseCurrency) + ' 顯示', 'add-cur', '新增幣別',
+        btn('edit-base', 'edit', '改基準幣別')) +
       '<p class="muted">匯率請自己填' +
       U.hint('例如 1 日幣 ≈ 0.21 台幣，就填 0.21。' +
              '這裡刻意不自動抓網路匯率 —— 自動抓要依賴外部服務，哪天對方改規則或關掉，' +
@@ -101,8 +113,10 @@ App.Trips = (function () {
         : '<table class="table"><thead><tr><th>幣別</th><th>1 單位 = 多少 ' + U.esc(t.baseCurrency) + '</th><th></th></tr></thead><tbody>' +
           t.currencies.map(function (c) {
             return '<tr><td><strong>' + U.esc(c.code) + '</strong></td><td>' + U.esc(c.rate) + '</td>' +
-              '<td class="right"><button class="icon-btn" data-act="edit-cur" data-code="' + U.esc(c.code) + '">' + U.icon('edit') + '</button>' +
-              '<button class="icon-btn" data-act="del-cur" data-code="' + U.esc(c.code) + '">' + U.icon('trash') + '</button></td></tr>';
+              '<td class="right"><div class="act-row right">' +
+                btn('edit-cur', 'edit', '修改 ' + c.code + ' 的匯率', ' data-code="' + U.esc(c.code) + '"') +
+                btn('del-cur', 'trash', '刪除幣別 ' + c.code, ' data-code="' + U.esc(c.code) + '"', 'is-del') +
+              '</div></td></tr>';
           }).join('') + '</tbody></table>') +
     '</section>';
   }
@@ -123,12 +137,16 @@ App.Trips = (function () {
     if (act === 'del-trip') {
       var target = S.getTrip(btn.getAttribute('data-trip'));
       if (!target) return;
-      if (U.ask('確定要刪除「' + target.name + '」嗎？\n行程、分帳、打包清單都會一起消失，而且無法復原。')) {
+      return U.confirmDanger(
+        '刪除旅程',
+        '要刪掉「' + target.name + '」嗎？行程、分帳、打包清單會一起消失，而且無法復原。',
+        '刪除整趟旅程'
+      ).then(function (yes) {
+        if (!yes) return;
         S.deleteTrip(target.id);
         U.toast('已刪除');
         App.render();
-      }
-      return;
+      });
     }
     if (act === 'add-member') return addMember(t);
     if (act === 'del-member') return delMember(t, btn.getAttribute('data-id'));
@@ -197,12 +215,16 @@ App.Trips = (function () {
     var used = t.expenses.filter(function (e) {
       return e.payerId === id || (e.shareIds || []).indexOf(id) !== -1;
     }).length;
-    var msg = '確定要移除「' + m.name + '」嗎？';
-    if (used) msg += '\n\n注意：有 ' + used + ' 筆支出跟這個人有關，移除後那些支出會從結算中被排除。';
-    if (!U.ask(msg)) return;
-    t.members = t.members.filter(function (x) { return x.id !== id; });
-    S.touch(t);
-    App.render();
+    var msg = '要把「' + m.name + '」從同行成員裡移除嗎？';
+    if (used) {
+      msg += '注意：有 ' + used + ' 筆支出跟這個人有關，移除後那些支出會從結算中被排除。';
+    }
+    U.confirmDanger('移除成員', msg, '移除').then(function (yes) {
+      if (!yes) return;
+      t.members = t.members.filter(function (x) { return x.id !== id; });
+      S.touch(t);
+      App.render();
+    });
   }
 
   function editCurrency(t, code) {
@@ -246,12 +268,16 @@ App.Trips = (function () {
   function delCurrency(t, code) {
     if (!t) return;
     var used = t.expenses.filter(function (e) { return e.currency === code; }).length;
-    var msg = '確定要移除幣別 ' + code + ' 嗎？';
-    if (used) msg += '\n\n注意：有 ' + used + ' 筆支出是用這個幣別記的，移除後那些支出會算不出正確金額。';
-    if (!U.ask(msg)) return;
-    t.currencies = t.currencies.filter(function (c) { return c.code !== code; });
-    S.touch(t);
-    App.render();
+    var msg = '要移除幣別 ' + code + ' 嗎？';
+    if (used) {
+      msg += '注意：有 ' + used + ' 筆支出是用這個幣別記的，移除後那些支出會算不出正確金額。';
+    }
+    U.confirmDanger('移除幣別', msg, '移除').then(function (yes) {
+      if (!yes) return;
+      t.currencies = t.currencies.filter(function (c) { return c.code !== code; });
+      S.touch(t);
+      App.render();
+    });
   }
 
   function editBase(t) {

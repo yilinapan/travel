@@ -60,14 +60,15 @@ App.UI = (function () {
           '<div class="modal" role="dialog" aria-modal="true">' +
             '<div class="modal-head">' +
               '<h3>' + esc(opts.title || '') + '</h3>' +
-              '<button class="icon-btn" data-act="cancel" aria-label="關閉">' + icon('close') + '</button>' +
+              '<button class="icon-btn" data-act="cancel" title="關閉" aria-label="關閉">' + icon('close') + '</button>' +
             '</div>' +
             '<form class="modal-body">' + body + '</form>' +
             '<div class="modal-foot">' +
               (opts.danger ? '<button type="button" class="btn btn-danger-ghost" data-act="danger">' + esc(opts.danger) + '</button>' : '') +
               '<span class="spacer"></span>' +
-              '<button type="button" class="btn btn-ghost" data-act="cancel">取消</button>' +
-              '<button type="button" class="btn btn-primary" data-act="ok">' + esc(opts.submitText || '確定') + '</button>' +
+              (opts.noCancel ? '' : '<button type="button" class="btn btn-ghost" data-act="cancel">取消</button>') +
+              '<button type="button" class="btn ' + (opts.submitDanger ? 'btn-danger' : 'btn-primary') +
+                '" data-act="ok">' + esc(opts.submitText || '確定') + '</button>' +
             '</div>' +
           '</div>' +
         '</div>'
@@ -180,7 +181,7 @@ App.UI = (function () {
       '<div class="extra-top">' +
         '<input class="extra-label" placeholder="說明，例如：生魚片" value="' + esc(ex ? ex.label : '') + '">' +
         '<input class="extra-amount" type="number" step="any" inputmode="decimal" placeholder="金額" value="' + esc(ex ? ex.amount : '') + '">' +
-        '<button type="button" class="icon-btn" data-act="del-extra" title="移除這一項">' + icon('close', 15) + '</button>' +
+        '<button type="button" class="icon-btn" data-act="del-extra" title="移除這一項" aria-label="移除這一項">' + icon('close', 15) + '</button>' +
       '</div>' +
       '<div class="extra-members">' + options.map(function (o) {
         var on = picked.indexOf(o.value) !== -1;
@@ -241,16 +242,38 @@ App.UI = (function () {
     return '<div class="field">' + label + input + hint + '</div>';
   }
 
-  /** 確認視窗（危險操作用） */
+  /**
+   * 確認視窗（刪除等破壞性操作用）。
+   * 用網站自己的樣式，不用瀏覽器原生那個灰白對話框 —— 原生的在手機上
+   * 跟整個介面搭不起來，而且沒辦法把「會連帶影響什麼」講清楚。
+   * 回傳 Promise<boolean>。
+   */
   function confirmDanger(title, message, okText) {
     return modal({
       title: title,
-      fields: [{ name: '_msg', type: 'note', label: '' }],
-      submitText: okText || '確定刪除'
+      fields: [{ name: '_msg', type: 'note', label: '', hint: message }],
+      submitText: okText || '刪除',
+      submitDanger: true
     }).then(function (r) { return !!r; });
   }
 
-  /** 簡單的是/否詢問，用瀏覽器原生視窗，最不會出錯 */
+  /**
+   * 一般的確認視窗（不是刪除，但要先問一下）。同樣用網站自己的樣式。
+   * 回傳 Promise<boolean>。
+   */
+  function confirmAsk(title, message, okText) {
+    return modal({
+      title: title,
+      fields: [{ name: '_msg', type: 'note', label: '', hint: message }],
+      submitText: okText || '確定'
+    }).then(function (r) { return !!r; });
+  }
+
+  /**
+   * 簡單的是/否詢問，用瀏覽器原生視窗。
+   * 只留給設定面板那種「一次性、而且必須擋住後續流程」的地方；
+   * 四個分頁上的刪除與確認一律用上面兩個，外觀才會一致。
+   */
   function ask(message) {
     return window.confirm(message);
   }
@@ -325,14 +348,22 @@ App.UI = (function () {
     upload:  '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 19h14"/>',
     cloud:   '<path d="M7 18a4 4 0 0 1 .6-8 5.5 5.5 0 0 1 10.5 1.6A3.5 3.5 0 0 1 17.5 18z"/>',
     check:   '<path d="M5 12.5 10 17 19 7"/>',
-    reset:   '<path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v5h5"/>'
+    reset:   '<path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v5h5"/>',
+    /* 依時間排序：時鐘 + 向下箭頭 */
+    sortTime:'<circle cx="8.5" cy="8.5" r="5.5"/><path d="M8.5 5.5v3.2l2.2 1.3"/><path d="M17.5 10.5v9m0 0 2.5-2.8m-2.5 2.8L15 16.7"/>',
+    /* 加到分帳：收據 */
+    receipt: '<path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4V3z"/><path d="M9.5 8h5M9.5 12h5"/>'
   };
 
-  /** 回傳一個吃 currentColor 的小圖示 */
+  /**
+   * 回傳一個吃 currentColor 的小圖示。
+   * 預設 18px —— 全站列內的圖示鈕都用這個大小，不要再各寫各的，
+   * 大小不一致是「畫面很亂」最常見的原因。標籤裡的小圖示才傳 13。
+   */
   function icon(name, size) {
     var d = ICONS[name];
     if (!d) return '';
-    var n = size || 17;
+    var n = size || 18;
     return '<svg class="ic" width="' + n + '" height="' + n + '" viewBox="0 0 24 24" fill="none" ' +
       'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" ' +
       'aria-hidden="true" focusable="false">' + d + '</svg>';
@@ -409,7 +440,7 @@ App.UI = (function () {
 
   return {
     esc: esc, el: el, num: num, money: money, toast: toast, modal: modal,
-    confirmDanger: confirmDanger, ask: ask, copyText: copyText,
+    confirmDanger: confirmDanger, confirmAsk: confirmAsk, ask: ask, copyText: copyText,
     downloadText: downloadText, pickTextFile: pickTextFile, empty: empty,
     hint: hint, hideHint: hideHint, icon: icon
   };

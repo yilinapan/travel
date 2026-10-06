@@ -11,7 +11,7 @@
 var KNOWN = (
   'if for while switch catch function return typeof instanceof new delete void in of do else try throw case ' +
   'Number String Boolean Array Object Math JSON Date RegExp Error Promise Set Map Symbol ' +
-  'parseInt parseFloat isNaN isFinite encodeURIComponent decodeURIComponent btoa atob ' +
+  'parseInt parseFloat isNaN isFinite encodeURI decodeURI encodeURIComponent decodeURIComponent btoa atob ' +
   'setTimeout clearTimeout setInterval clearInterval requestAnimationFrame ' +
   'alert confirm prompt fetch require module exports ' +
   'Blob File FileReader URL TextEncoder TextDecoder Response Request ' +
@@ -106,6 +106,105 @@ function registerStructureTests(t, eq, files) {
       });
     });
     eq(problems, [], '按鈕與處理不對應');
+  });
+
+  /** 取出某一支檔案的原始碼 */
+  function srcOf(name) {
+    var f = files.filter(function (x) { return x.name === name; })[0];
+    return f ? f.src : '';
+  }
+
+  /* 四個分頁上的按鈕一律是圖示鈕，沒有白底、沒有中文字。
+   * .icon-add（白色圓形＋）和 .btn-add 是舊的做法，不可以再出現。 */
+  t('分頁上沒有殘留的白底「＋」按鈕', function () {
+    var bad = [];
+    ['js/trips.js', 'js/itinerary.js', 'js/expenses.js', 'js/checklist.js'].forEach(function (n) {
+      if (srcOf(n).indexOf('icon-add') !== -1) bad.push(n + ' 還在用 .icon-add');
+    });
+    eq(bad, [], '白底圓形按鈕');
+  });
+
+  /* 每一顆圖示鈕都要有 title 跟 aria-label：畫面上沒有文字，
+   * 滑鼠停留、手機長按、螢幕報讀就是唯一問得出名字的管道。 */
+  t('每一顆圖示鈕都問得出名字', function () {
+    var bad = [];
+    files.forEach(function (f) {
+      var re = /<button class="icon-btn[^"]*"([^>]*)>/g, m;
+      while ((m = re.exec(f.src))) {
+        var attrs = m[1];
+        // 透過 btn() 產生的那些已經包好了，這裡只檢查手寫的
+        if (attrs.indexOf("' + ") !== -1 && attrs.indexOf('title=') === -1) continue;
+        if (attrs.indexOf('title=') === -1 || attrs.indexOf('aria-label=') === -1) {
+          bad.push(f.name + ' 有一顆圖示鈕沒有 title 或 aria-label');
+        }
+      }
+    });
+    eq(bad, [], '圖示鈕的名字');
+  });
+
+  /* 行程頁改成「平常只有一顆編輯，按下去才展開每一筆的工具」。
+   * 如果哪天有人把上移／下移／修改／刪除搬回一般狀態，這裡會擋下來。 */
+  t('行程頁的編輯工具掛在編輯模式底下', function () {
+    var src = srcOf('js/itinerary.js');
+    var problems = [];
+    if (src.indexOf('data-act="toggle-edit"') === -1) problems.push('少了編輯↔完成的切換鈕');
+    if (src.indexOf("=== 'toggle-edit'") === -1) problems.push('編輯↔完成沒有對應的處理');
+
+    var from = src.indexOf('var actions =');
+    var to = src.indexOf('tl-actions');
+    if (from === -1 || to === -1 || to < from) {
+      problems.push('找不到每一筆的編輯工具');
+    } else if (src.slice(from, to).indexOf('editMode') === -1) {
+      problems.push('每一筆的編輯工具沒有依 editMode 決定要不要顯示');
+    }
+    eq(problems, [], '行程頁編輯模式');
+  });
+
+  /* 換一天、切成「只看某人」、或這天根本沒有行程時，編輯模式都要收回來，
+   * 否則會出現「看不到編輯鈕、卻還留著刪除鈕」的狀態。 */
+  t('換天或切篩選時會收起行程頁的編輯模式', function () {
+    var src = srcOf('js/itinerary.js');
+    var times = src.split('editMode = false').length - 1;
+    eq(times >= 3, true, 'editMode = false 的次數（實際 ' + times + ' 次）');
+  });
+
+  /* 四個分頁上的刪除要用網站自己的確認視窗，
+   * 不要用瀏覽器原生的 confirm()（在手機上跟整個介面搭不起來）。 */
+  t('分頁上的刪除都用網站自己的確認視窗', function () {
+    var bad = [];
+    ['js/trips.js', 'js/itinerary.js', 'js/expenses.js', 'js/checklist.js'].forEach(function (n) {
+      if (srcOf(n).indexOf('U.ask(') !== -1) bad.push(n + ' 還在用瀏覽器原生的 confirm');
+    });
+    eq(bad, [], '確認視窗');
+  });
+
+  t('每一個刪除都會先問過', function () {
+    var pairs = [
+      ['js/itinerary.js', "act === 'del'"],
+      ['js/expenses.js', "act === 'del'"],
+      ['js/expenses.js', "act === 'pay-del'"],
+      ['js/checklist.js', "act === 'del-group'"],
+      ['js/checklist.js', "act === 'del-item'"],
+      ['js/trips.js', "act === 'del-trip'"]
+    ];
+    var bad = [];
+    pairs.forEach(function (pair) {
+      var src = srcOf(pair[0]);
+      var i = src.indexOf(pair[1]);
+      if (i === -1) { bad.push(pair[0] + ' 找不到 ' + pair[1]); return; }
+      if (src.slice(i, i + 420).indexOf('confirmDanger') === -1) {
+        bad.push(pair[0] + ' 的 ' + pair[1] + ' 刪除前沒有確認');
+      }
+    });
+    eq(bad, [], '刪除前的確認');
+  });
+
+  t('「已結清紀錄」的說明點得開', function () {
+    var src = srcOf('js/expenses.js');
+    var problems = [];
+    if (src.indexOf('結算時會自動扣除，不會刪除原本的支出紀錄') === -1) problems.push('說明文字不見了');
+    if (src.indexOf('U.hint(') === -1) problems.push('少了可以點的問號圈');
+    eq(problems, [], '已結清紀錄的說明');
   });
 }
 

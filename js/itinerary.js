@@ -49,10 +49,11 @@ App.Itinerary = (function () {
 
     view.innerHTML =
       '<section class="block">' +
-        '<div class="block-head">' +
-          '<h2>行程</h2>' +
-          (readOnly ? '' : '<button class="btn btn-primary" data-act="add-item">+ 新增行程點</button>') +
-        '</div>' +
+        (readOnly ? '' :
+          '<div class="block-head block-head-bare">' +
+            '<span class="spacer"></span>' +
+            '<button class="btn btn-primary" data-act="add-item">+ 新增行程點</button>' +
+          '</div>') +
         dayTabs(trip) +
         dayHeader(trip, activeDay, readOnly, shown.length, day.items.length) +
         (shown.length === 0
@@ -72,13 +73,12 @@ App.Itinerary = (function () {
   }
 
   function dayTabs(trip) {
+    // 只放天數編號；日期已經在上方的頁首那一行了，這裡不用重複
     return '<div class="day-tabs">' + trip.days.map(function (d, i) {
-      var ds = S.dayDate(trip, i);
-      var label = ds ? ds.slice(5).replace('-', '/') : '';
-      return '<button class="day-tab' + (i === activeDay ? ' on' : '') + '" data-act="day" data-i="' + i + '">' +
-        '<span class="day-n">Day ' + (i + 1) + '</span>' +
-        (label ? '<span class="day-d">' + label + '</span>' : '') +
-        '</button>';
+      var n = i + 1;
+      return '<button class="day-tab' + (i === activeDay ? ' on' : '') + '" data-act="day" data-i="' + i + '"' +
+        ' title="' + U.esc(S.dayDate(trip, i) || ('第 ' + n + ' 天')) + '">' +
+        (n < 10 ? '0' + n : n) + '</button>';
     }).join('') + '</div>';
   }
 
@@ -120,7 +120,7 @@ App.Itinerary = (function () {
     var linked = it.expenseId && trip.expenses.some(function (e) { return e.id === it.expenseId; });
     var cost = '';
     if (it.amount) {
-      cost = '<span class="tl-cost">💰 ' + U.money(App.Settle.toCents(it.amount), it.currency || trip.baseCurrency) +
+      cost = '<span class="tl-cost">' + U.money(App.Settle.toCents(it.amount), it.currency || trip.baseCurrency) +
         (linked ? ' <span class="tag tag-ok">已加入分帳</span>' : '') + '</span>';
     }
 
@@ -129,11 +129,13 @@ App.Itinerary = (function () {
       : '<span class="tl-party">👥 ' + U.esc(party.names.join('、')) + '</span>';
 
     return '<li class="tl-item' + (party.isAll ? '' : ' tl-split') + '" data-id="' + U.esc(it.id) + '">' +
-      '<div class="tl-time">' + U.esc(it.time || '—') + '</div>' +
-      '<div class="tl-dot type-' + U.esc(type.key) + '" title="' + U.esc(type.label) + '">' + type.emoji + '</div>' +
+      '<div class="tl-when">' +
+        '<div class="tl-time">' + U.esc(it.time || '—') + '</div>' +
+        '<div class="tl-kind type-' + U.esc(type.key) + '">' + U.esc(type.label) + '</div>' +
+      '</div>' +
       '<div class="tl-body">' +
         '<div class="tl-title">' + U.esc(it.title) + partyTag + '</div>' +
-        (it.place ? '<div class="tl-place">📍 ' + U.esc(it.place) + '</div>' : '') +
+        (it.place ? '<div class="tl-place">' + U.esc(it.place) + '</div>' : '') +
         (it.image ? '<div class="tl-image"><img src="' + U.esc(imageUrl(it.image)) + '" alt="' + U.esc(it.title) + ' 示意圖" loading="lazy" onerror="this.parentNode.innerHTML=\'<span class=&quot;img-bad&quot;>圖片載入失敗，請檢查網址</span>\'"></div>' : '') +
         (it.note ? '<div class="tl-note">' + U.esc(it.note) + '</div>' : '') +
         (it.link ? '<div class="tl-link"><a href="' + U.esc(safeUrl(it.link)) + '" target="_blank" rel="noopener noreferrer">開啟連結 ↗</a></div>' : '') +

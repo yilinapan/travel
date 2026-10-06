@@ -61,7 +61,7 @@ App.Expenses = (function () {
           ? '<div class="all-clear">✅ 全部結清了，不用再轉帳。共已結清 ' + U.money(r.settledCents, cur) + '。</div>'
           : '<div class="all-clear">✅ 目前沒有人欠人，不用轉帳。</div>');
 
-    return '<section class="block block-settle">' +
+    return '<section class="block is-card block-settle">' +
       '<div class="block-head"><h2>結算結果</h2><span class="total">總支出 ' + U.money(r.totalCents, cur) + '</span></div>' +
       warn +
       transfers +

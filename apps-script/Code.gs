@@ -108,6 +108,11 @@ function readSheet_(spec) {
 function cellToText_(cell) {
   if (cell === null || cell === undefined || cell === '') return '';
   if (cell instanceof Date) {
+    // 試算表把「09:00」這種純時間存成 1899-12-30 那天的某個時刻。
+    // 年份在 1901 以前就代表這是「時間」而不是「日期」，要輸出 HH:mm。
+    if (cell.getFullYear() < 1901) {
+      return Utilities.formatDate(cell, Session.getScriptTimeZone(), 'HH:mm');
+    }
     return Utilities.formatDate(cell, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   }
   if (cell === true) return 'TRUE';
@@ -167,6 +172,10 @@ function writeSheet_(spec, rows) {
     sheet.getRange(2, 1, sheet.getLastRow() - 1, cols).clearContent();
   }
   if (!rows.length) return;
+
+  // 整個資料範圍設成「純文字」，不讓試算表自作主張把 09:00 轉成時間、
+  // 把 2026-03-01 轉成日期序號 —— 那會讓讀回來的值跑掉。
+  sheet.getRange(2, 1, rows.length, cols).setNumberFormat('@');
 
   // 補齊欄數，避免某一列比較短導致寫入失敗
   var padded = rows.map(function (row) {

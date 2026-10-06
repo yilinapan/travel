@@ -9,18 +9,16 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
 <!-- 版本號 ?v=N：改過 js/ 或 css/ 之後要把 N 加 1，
      否則瀏覽器會沿用舊檔，造成新舊程式混在一起。-->
-<link rel="stylesheet" href="css/style.css?v=2">
+<link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-inner">
-    <div class="brand">
-      <span class="brand-mark">✈️</span>
-      <span class="brand-text">旅遊規劃</span>
-    </div>
-    <div class="header-mid">
-      <div id="headerSub" class="header-sub"></div>
+    <div class="head-main">
+      <div class="eyebrow" id="headerEyebrow">Trip</div>
+      <h1 id="headerTitle">旅遊規劃</h1>
+      <div class="head-meta" id="headerMeta"></div>
       <div id="syncStatus" class="sync-status" hidden></div>
     </div>
     <div id="headerActions" class="header-actions"></div>
@@ -40,16 +38,16 @@
   <p class="foot-small">分帳計算有自動測試，可打開 <code>tests/test.html</code> 自行驗證。</p>
 </footer>
 
-<script src="js/settle.js?v=2"></script>
-<script src="js/store.js?v=2"></script>
-<script src="js/cloud.js?v=2"></script>
-<script src="js/share.js?v=2"></script>
-<script src="js/ui.js?v=2"></script>
-<script src="js/trips.js?v=2"></script>
-<script src="js/itinerary.js?v=2"></script>
-<script src="js/expenses.js?v=2"></script>
-<script src="js/checklist.js?v=2"></script>
-<script src="js/settings.js?v=2"></script>
-<script src="js/app.js?v=2"></script>
+<script src="js/settle.js?v=3"></script>
+<script src="js/store.js?v=3"></script>
+<script src="js/cloud.js?v=3"></script>
+<script src="js/share.js?v=3"></script>
+<script src="js/ui.js?v=3"></script>
+<script src="js/trips.js?v=3"></script>
+<script src="js/itinerary.js?v=3"></script>
+<script src="js/expenses.js?v=3"></script>
+<script src="js/checklist.js?v=3"></script>
+<script src="js/settings.js?v=3"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>

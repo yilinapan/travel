@@ -5,10 +5,10 @@ window.App = window.App || {};
   var S = App.Store, U = App.UI;
 
   var TABS = [
-    { key: 'trips', label: '我的旅程', emoji: '🧳' },
-    { key: 'itinerary', label: '行程', emoji: '🗺' },
-    { key: 'expenses', label: '分帳', emoji: '💰' },
-    { key: 'checklist', label: '打包清單', emoji: '🎒' }
+    { key: 'trips', label: '旅程' },
+    { key: 'itinerary', label: '行程' },
+    { key: 'expenses', label: '分帳' },
+    { key: 'checklist', label: '打包' }
   ];
 
   var current = 'trips';
@@ -39,12 +39,11 @@ window.App = window.App || {};
 
   function renderHeader() {
     var trip = activeTrip();
-    var sub = document.getElementById('headerSub');
     var acts = document.getElementById('headerActions');
 
-    sub.textContent = trip
-      ? trip.name + (trip.startDate ? '　' + trip.startDate + ' ~ ' + trip.endDate : '')
-      : '還沒有選擇旅程';
+    document.getElementById('headerEyebrow').textContent = trip ? 'Trip' : '旅遊規劃';
+    document.getElementById('headerTitle').textContent = trip ? trip.name : '旅遊規劃';
+    document.getElementById('headerMeta').innerHTML = trip ? metaHtml(trip) : '';
 
     if (readOnly) {
       acts.innerHTML = '<button class="btn btn-primary btn-sm" data-act="adopt">存一份到我的裝置</button>';
@@ -55,6 +54,19 @@ window.App = window.App || {};
         '<button class="btn btn-ghost btn-sm" data-act="settings" title="設定：雲端同步、備份與還原">⚙️</button>';
     }
     renderSyncStatus();
+  }
+
+  /** 頁首那一行摘要：日期、天數、人數、總支出 */
+  function metaHtml(trip) {
+    var r = App.Settle.compute(trip);
+    var parts = [];
+    if (trip.startDate && trip.endDate) {
+      parts.push(U.esc(trip.startDate.replace(/-/g, '.') + ' — ' + trip.endDate.slice(5).replace('-', '.')));
+    }
+    parts.push('<b>' + S.dayCount(trip) + '</b> 天');
+    if (trip.members.length) parts.push('<b>' + trip.members.length + '</b> 人');
+    if (r.totalCents) parts.push('<b>' + U.money(r.totalCents, '') + '</b> ' + U.esc(trip.baseCurrency));
+    return parts.map(function (p) { return '<span>' + p + '</span>'; }).join('');
   }
 
   var SYNC_TEXT = {
@@ -78,7 +90,7 @@ window.App = window.App || {};
     var tabs = readOnly ? TABS.filter(function (t) { return t.key !== 'trips'; }) : TABS;
     nav.innerHTML = tabs.map(function (t) {
       return '<button class="tab' + (t.key === current ? ' on' : '') + '" data-tab="' + t.key + '">' +
-        '<span class="tab-emoji">' + t.emoji + '</span>' + t.label + '</button>';
+        t.label + '</button>';
     }).join('');
   }
 

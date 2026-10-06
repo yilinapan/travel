@@ -4,53 +4,61 @@
  */
 
 :root {
-  --bg:        #f4f6f5;
+  /* ===== 秋天賞楓配色 =====
+     楓紅 #B3452F ・ 銀杏黃 #C2912E ・ 苔綠 #6B7A52
+     和紙白 #FAF7F1 ・ 樹幹棕 #2B2420                      */
+  --bg:        #faf7f1;   /* 和紙白 */
   --surface:   #ffffff;
-  --surface-2: #f0f3f2;
-  --line:      #dfe5e3;
-  --text:      #1d2422;
-  --text-soft: #5d6b67;
-  --muted:     #7d8a86;
+  --surface-2: #f5f0e7;
+  --line:      #e8e0d4;
+  --line-2:    #f2ece2;
+  --text:      #2b2420;   /* 樹幹棕 */
+  --text-soft: #6e6358;
+  --muted:     #a3978a;
 
-  --brand:     #1f6f5c;
-  --brand-ink: #ffffff;
-  --brand-soft:#e3f1ec;
+  --brand:     #b3452f;   /* 楓紅 */
+  --brand-ink: #fffaf6;
+  --brand-soft:#f7e8e3;
 
-  --ok:        #156f45;
-  --ok-soft:   #e3f4ea;
-  --warn:      #8a5a12;
-  --warn-soft: #fdf2dd;
-  --danger:    #b23232;
-  --danger-soft:#fdeaea;
+  --ok:        #5f6e47;   /* 苔綠（加深以確保在白底上看得清楚） */
+  --ok-soft:   #eef1e7;
+  --warn:      #8a6516;   /* 銀杏黃加深 */
+  --warn-soft: #faf0d8;
+  --danger:    #9b2226;   /* 比楓紅更深更冷，才分得出「刪除」和「重點」 */
+  --danger-soft:#f9e8e6;
+  --gold:      #c2912e;   /* 銀杏黃，用在金額 */
 
-  --radius:    12px;
-  --radius-sm: 8px;
-  --shadow:    0 1px 2px rgba(16,32,28,.06), 0 4px 16px rgba(16,32,28,.06);
+  --radius:    8px;
+  --radius-sm: 6px;
+  --shadow:    0 1px 2px rgba(74,53,38,.05), 0 4px 16px rgba(74,53,38,.04);
   --maxw:      920px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg:        #111614;
-    --surface:   #1a211f;
-    --surface-2: #222b28;
-    --line:      #2e3a36;
-    --text:      #e8eeec;
-    --text-soft: #a9b6b2;
-    --muted:     #8b9994;
+    /* 深色＝暮楓：傍晚的楓林 */
+    --bg:        #1b1613;
+    --surface:   #262019;
+    --surface-2: #2f2820;
+    --line:      #3a3027;
+    --line-2:    #2f2820;
+    --text:      #f1e9dd;
+    --text-soft: #b6a999;
+    --muted:     #8a7d6e;
 
-    --brand:     #58b89b;
-    --brand-ink: #0d1413;
-    --brand-soft:#1d322c;
+    --brand:     #e0694a;   /* 深底上要打亮才看得清 */
+    --brand-ink: #231a16;
+    --brand-soft:#3a2219;
 
-    --ok:        #6fd3a3;
-    --ok-soft:   #16301f;
-    --warn:      #e3b765;
-    --warn-soft: #30260f;
-    --danger:    #ef8080;
-    --danger-soft:#331a1a;
+    --ok:        #94a97a;
+    --ok-soft:   #2b3326;
+    --warn:      #e5b54e;
+    --warn-soft: #352a12;
+    --danger:    #e08073;
+    --danger-soft:#3a201c;
+    --gold:      #e5b54e;
 
-    --shadow:    0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.3);
+    --shadow:    0 1px 2px rgba(0,0,0,.45), 0 4px 16px rgba(0,0,0,.3);
   }
 }
 
@@ -300,17 +308,17 @@ h4.sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
   display: flex; align-items: center; justify-content: center;
   font-size: 15px; background: var(--surface-2); border: 1px solid var(--line);
 }
-.tl-dot.type-spot { background: #e5f0fb; border-color: #c4dcf3; }
-.tl-dot.type-food { background: #fdeee0; border-color: #f4d5b6; }
-.tl-dot.type-stay { background: #efe8fb; border-color: #d8cbf2; }
-.tl-dot.type-move { background: #e3f4ea; border-color: #bee3cd; }
-.tl-dot.type-fly  { background: #fde8ee; border-color: #f5c6d4; }
+.tl-dot.type-spot { background: #eef2e8; border-color: #cfd9c0; }  /* 苔綠 */
+.tl-dot.type-food { background: #fbeadb; border-color: #eccfae; }  /* 柿橘 */
+.tl-dot.type-stay { background: #f1e9dd; border-color: #ddcdb6; }  /* 暖棕 */
+.tl-dot.type-move { background: #e8edf1; border-color: #c7d3dc; }  /* 秋空灰藍 */
+.tl-dot.type-fly  { background: #f8e5e0; border-color: #e8c3b8; }  /* 楓紅 */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tl-dot.type-spot { background: #16293c; border-color: #24435f; }
-  :root:not([data-theme="light"]) .tl-dot.type-food { background: #3a2a16; border-color: #5d4524; }
-  :root:not([data-theme="light"]) .tl-dot.type-stay { background: #2a2140; border-color: #43356a; }
-  :root:not([data-theme="light"]) .tl-dot.type-move { background: #16301f; border-color: #255237; }
-  :root:not([data-theme="light"]) .tl-dot.type-fly  { background: #3a1c27; border-color: #60303f; }
+  :root:not([data-theme="light"]) .tl-dot.type-spot { background: #28301f; border-color: #45533a; }
+  :root:not([data-theme="light"]) .tl-dot.type-food { background: #3b2a18; border-color: #5e452a; }
+  :root:not([data-theme="light"]) .tl-dot.type-stay { background: #332a20; border-color: #524434; }
+  :root:not([data-theme="light"]) .tl-dot.type-move { background: #1f2a33; border-color: #38495a; }
+  :root:not([data-theme="light"]) .tl-dot.type-fly  { background: #3b2119; border-color: #60372b; }
 }
 .tl-body { min-width: 0; }
 .tl-title { font-weight: 600; }
@@ -535,3 +543,45 @@ h4.sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
   flex-basis: 100%; font-size: 12px; color: var(--muted);
   background: var(--surface-2); border-radius: 6px; padding: 5px 10px; margin-top: 2px;
 }
+
+/* =====================================================================
+   秋 1「和紙」的排版細節
+   顏色在檔案最上面的 :root，這一區只處理字體與線條的質感。
+   ===================================================================== */
+
+/* 數字一律等寬，上下列才對得齊（金額、時間、日期） */
+.tl-time, .table td, .table th, .net, .transfers .amt, .total,
+.trip-stats, .progress-text, .day-d, .exp-sub {
+  font-variant-numeric: tabular-nums;
+}
+
+/* 時間用楓紅，是時間軸上唯一的彩色，一眼抓得到節奏 */
+.tl-time { color: var(--brand); font-weight: 500; }
+
+/* 標題字重放輕一點，少一些壓迫感 */
+.block-head h2 { font-weight: 500; letter-spacing: .01em; }
+.trip-card-main h3 { font-weight: 500; }
+.day-head h3 { font-weight: 500; }
+
+/* 區塊小標改成間距較開的灰字，像書的章節標 */
+h4.sub {
+  font-size: 11.5px; font-weight: 500; letter-spacing: .14em;
+  color: var(--muted); text-transform: uppercase;
+}
+.sub-hint { letter-spacing: 0; text-transform: none; font-size: 12px; }
+
+/* 金額用銀杏黃，跟楓紅的「重點」區隔開 */
+.tl-cost { color: var(--gold); }
+
+/* 線條細一點、暖一點 */
+.table td, .table th { border-bottom-color: var(--line-2); }
+.tl-item { border-bottom-color: var(--line-2); }
+.cl-item:hover { border-bottom-color: var(--line); }
+
+/* 當天日期底下那條線用楓紅，分段更清楚 */
+.day-head { border-bottom: 2px solid var(--brand); }
+
+/* 小標與上一段之間要留白，不然會黏在一起 */
+h4.sub { margin-top: 26px; }
+h4.sub:first-of-type { margin-top: 18px; }
+.block-settle .muted + h4.sub { margin-top: 22px; }

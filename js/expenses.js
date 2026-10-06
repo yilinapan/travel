@@ -55,10 +55,11 @@ App.Expenses = (function () {
             (readOnlyNow ? '' :
               '<button class="btn btn-ghost btn-sm settle-btn" data-act="settle"' +
               ' data-from="' + U.esc(t.fromId) + '" data-to="' + U.esc(t.toId) + '"' +
-              ' data-cents="' + t.cents + '">已結清</button>') +
+              ' data-cents="' + t.cents + '"' +
+              ' title="已經還過這筆的話，按這裡記下來">記錄還款</button>') +
             '</li>';
         }).join('') + '</ul>' +
-        '<p class="muted">共 ' + r.transfers.length + ' 筆轉帳就能全部結清。'
+        '<p class="muted">以上<strong>尚未結清</strong>，' + r.transfers.length + ' 筆轉帳就能全部結清。'
         + (r.settledCents ? '（已經結清了 ' + U.money(r.settledCents, cur) + '）' : '') + '</p>'
       : (r.settledCents
           ? '<div class="all-clear">' + U.icon('check', 16) + ' 全部結清了，不用再轉帳。共已結清 ' + U.money(r.settledCents, cur) + '。</div>'
@@ -98,7 +99,7 @@ App.Expenses = (function () {
         (readOnlyNow ? '' : '<button class="btn btn-ghost btn-sm" data-act="pay-add">+ 記一筆還款</button>') +
       '</div>' +
       (list.length === 0
-        ? U.empty('還沒有人先還過錢。有人先結清的話，按上面轉帳列旁邊的「已結清」就會記在這裡。')
+        ? U.empty('還沒有人先還過錢。有人還了的話，按上面轉帳列旁邊的「記錄還款」就會記在這裡。')
         : '<table class="table"><tbody>' + list.slice().reverse().map(function (p) {
             return '<tr>' +
               '<td class="small">' + U.esc(p.date || '') + '</td>' +

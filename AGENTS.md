@@ -137,7 +137,9 @@ travel/
   ],
 
   checklist: [
-    { id, name, emoji, items: [{ id, text, done }] }
+    { id, name, emoji, items: [
+        { id, text, done, members: [] }    // members 空陣列 = 每個人都要帶
+    ]}
   ]
 }
 ```
@@ -268,7 +270,6 @@ gh api repos/yilinapan/travel/pages/builds/latest --jq '.status + " " + .commit'
 - **多人共同編輯** — 雲端那層其實已經夠用（把同一串 Apps Script 網址給同行的人就行）。
   要改三件事：① 寫入從「整批覆蓋」改成「只傳動到的那一筆」
   ② 每台裝置要選「我是誰」 ③ 分享連結從唯讀快照改成邀請協作
-- **打包清單標「誰要帶」** — 跟行程的「參加者」同一套做法，已設計好但未實作
 - **圖片上傳到 Google Drive** — 優先度低，使用者說只放少量示意圖
 
 ---

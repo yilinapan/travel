@@ -303,6 +303,46 @@ function registerCloudTests(t, eq, App) {
     eq(Settle.compute(t0).perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和為 0');
   });
 
+  // --- 打包清單的「誰要帶」---
+
+  t('打包項目的「誰要帶」會存成名字，大家都要帶時留空白', function () {
+    var a = sampleTrip();
+    a.checklist[0].items[0].members = ['m2'];      // 護照只有小明那項特別標
+    var rows = Cloud.toRows([a]);
+    eq(rows.checklist[0][5], '小明', '只有某人要帶');
+    eq(rows.checklist[1][5], '', '大家都要帶時留空白');
+  });
+
+  t('「誰要帶」轉成試算表再讀回來一致', function () {
+    var a = sampleTrip();
+    a.checklist[0].items[0].members = ['m1', 'm3'];
+    var b = roundTrip(a);
+    var names = b.checklist[0].items[0].members.map(function (id) {
+      return b.members.filter(function (m) { return m.id === id; })[0].name;
+    });
+    eq(names, ['Allie', '小華'], '誰要帶');
+    eq(b.checklist[0].items[1].members, [], '沒標的維持空陣列');
+  });
+
+  t('「誰要帶」出現名單上沒有的人時，自動加入成員', function () {
+    var r = Cloud.fromRows({
+      trips: [['測試', '', '', 'TWD', 'A,B', '']],
+      checklist: [['測試', '藥品', '', '氣喘藥', 'FALSE', 'C']]
+    });
+    eq(r.trips[0].members.map(function (m) { return m.name; }), ['A', 'B', 'C'], '成員');
+    eq(r.trips[0].checklist[0].items[0].members.length, 1, '誰要帶');
+  });
+
+  t('舊資料沒有「誰要帶」這一欄時不會壞', function () {
+    var r = Cloud.fromRows({
+      trips: [['測試', '', '', 'TWD', 'A,B', '']],
+      checklist: [['測試', '證件', '🪪', '護照', 'TRUE']]
+    });
+    var it = r.trips[0].checklist[0].items[0];
+    eq(it.members, [], '視為大家都要帶');
+    eq(it.done, true, '勾選狀態正常');
+  });
+
   // --- 還款 ---
 
   t('還款會存成名字，來回轉換後內容一致', function () {

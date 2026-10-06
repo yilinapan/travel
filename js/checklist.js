@@ -3,6 +3,28 @@ window.App = window.App || {};
 App.Checklist = (function () {
 
   var S = App.Store, U = App.UI;
+  var filterMember = '';   // 空字串 = 看全部
+
+  /** 這一項是大家都要帶，還是只有某幾個人？ */
+  function ownersOf(trip, item) {
+    var all = trip.members.map(function (m) { return m.id; });
+    var picked = (item.members || []).filter(function (id) { return all.indexOf(id) !== -1; });
+    return {
+      ids: picked,
+      isAll: picked.length === 0 || picked.length === all.length,
+      names: picked.map(function (id) {
+        var m = trip.members.filter(function (x) { return x.id === id; })[0];
+        return m ? m.name : '';
+      }).filter(Boolean)
+    };
+  }
+
+  /** 篩選中時，只算該成員要帶的項目 */
+  function shown(trip, item) {
+    if (!filterMember) return true;
+    var o = ownersOf(trip, item);
+    return o.isAll || o.ids.indexOf(filterMember) !== -1;
+  }
 
   function render(view, trip, readOnly) {
     if (!trip) {
@@ -10,19 +32,35 @@ App.Checklist = (function () {
       return;
     }
 
+    if (filterMember && !trip.members.some(function (m) { return m.id === filterMember; })) filterMember = '';
+
     var done = 0, total = 0;
     trip.checklist.forEach(function (g) {
-      g.items.forEach(function (i) { total++; if (i.done) done++; });
+      g.items.forEach(function (i) {
+        if (!shown(trip, i)) return;
+        total++; if (i.done) done++;
+      });
     });
     var pct = total ? Math.round(done / total * 100) : 0;
+
+    var filterHtml = trip.members.length > 1
+      ? '<select id="packFilter" class="member-filter" title="只看某個人要帶的東西">' +
+          '<option value="">全部的人</option>' +
+          trip.members.map(function (m) {
+            return '<option value="' + U.esc(m.id) + '"' + (m.id === filterMember ? ' selected' : '') + '>' +
+              '只看 ' + U.esc(m.name) + '</option>';
+          }).join('') +
+        '</select>'
+      : '';
 
     view.innerHTML =
       '<section class="block is-card">' +
         '<div class="block-head">' +
           '<h2>打包清單</h2>' +
+          filterHtml +
           (readOnly ? '' : '<div class="btn-row">' +
             '<button class="btn btn-ghost btn-sm" data-act="uncheck-all">全部取消勾選</button>' +
-            '<button class="btn btn-primary" data-act="add-group">+ 新增分類</button>' +
+            '<button class="icon-add" data-act="add-group" title="新增分類" aria-label="新增分類">' + U.icon('plus', 16) + '</button>' +
           '</div>') +
         '</div>' +
         '<div class="progress-wrap">' +
@@ -30,36 +68,49 @@ App.Checklist = (function () {
           '<div class="progress-text">已完成 <strong>' + done + '</strong> / ' + total + '（' + pct + '%）</div>' +
         '</div>' +
         (trip.checklist.length === 0
-          ? U.empty('清單是空的。' + (readOnly ? '' : '按「新增分類」開始，或按下面的按鈕載入預設清單。'),
+          ? U.empty('清單是空的。' + (readOnly ? '' : '按右上角的 ＋ 新增分類，或按下面的按鈕載入預設清單。'),
               readOnly ? '' : '<button class="btn btn-ghost" data-act="load-default">載入預設清單</button>')
-          : trip.checklist.map(function (g) { return groupBlock(g, readOnly); }).join('')) +
+          : trip.checklist.map(function (g) { return groupBlock(trip, g, readOnly); }).join('')) +
       '</section>';
 
     view.onclick = function (e) { onClick(e, trip, readOnly); };
+    view.onchange = function (e) {
+      if (e.target && e.target.id === 'packFilter') {
+        filterMember = e.target.value;
+        App.render();
+      }
+    };
   }
 
-  function groupBlock(g, readOnly) {
-    var done = g.items.filter(function (i) { return i.done; }).length;
+  function groupBlock(trip, g, readOnly) {
+    var items = g.items.filter(function (i) { return shown(trip, i); });
+    if (filterMember && items.length === 0) return '';   // 這個分類沒有他要帶的東西
+    var done = items.filter(function (i) { return i.done; }).length;
     return '<div class="cl-group">' +
       '<div class="cl-group-head">' +
         '<h3>' + (g.emoji ? '<span class="cl-emoji">' + U.esc(g.emoji) + '</span>' : '') + U.esc(g.name) +
-          '<span class="count">' + done + '/' + g.items.length + '</span></h3>' +
+          '<span class="count">' + done + '/' + items.length + '</span></h3>' +
         (readOnly ? '' : '<div class="cl-group-act">' +
           '<button class="icon-btn" data-act="add-item" data-g="' + U.esc(g.id) + '" title="新增項目">' + U.icon('plus', 15) + '</button>' +
           '<button class="icon-btn" data-act="edit-group" data-g="' + U.esc(g.id) + '" title="改名">' + U.icon('edit', 15) + '</button>' +
           '<button class="icon-btn" data-act="del-group" data-g="' + U.esc(g.id) + '" title="刪除分類">' + U.icon('trash', 15) + '</button>' +
         '</div>') +
       '</div>' +
-      (g.items.length === 0
+      (items.length === 0
         ? '<p class="muted pad">這個分類還沒有項目。</p>'
-        : '<ul class="cl-items">' + g.items.map(function (it) {
-            return '<li class="cl-item' + (it.done ? ' done' : '') + '">' +
+        : '<ul class="cl-items">' + items.map(function (it) {
+            var o = ownersOf(trip, it);
+            return '<li class="cl-item' + (it.done ? ' done' : '') + (o.isAll ? '' : ' cl-own') + '">' +
               '<label class="cl-check">' +
                 '<input type="checkbox"' + (it.done ? ' checked' : '') + (readOnly ? ' disabled' : '') +
                   ' data-act="toggle" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '">' +
-                '<span>' + U.esc(it.text) + '</span>' +
+                '<span>' + U.esc(it.text) +
+                  (o.isAll ? '' : '<span class="cl-who">' + U.icon('people', 12) + U.esc(o.names.join('、')) + '</span>') +
+                '</span>' +
               '</label>' +
-              (readOnly ? '' : '<button class="icon-btn" data-act="del-item" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '" title="刪除">' + U.icon('close', 14) + '</button>') +
+              (readOnly ? '' :
+                '<button class="icon-btn" data-act="who" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '" title="誰要帶">' + U.icon('people', 15) + '</button>' +
+                '<button class="icon-btn" data-act="del-item" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '" title="刪除">' + U.icon('close', 14) + '</button>') +
             '</li>';
           }).join('') + '</ul>') +
     '</div>';
@@ -92,6 +143,10 @@ App.Checklist = (function () {
       return App.render();
     }
     if (act === 'add-item') return addItem(trip, g);
+    if (act === 'who') {
+      var target = g && g.items.filter(function (x) { return x.id === id; })[0];
+      return editOwners(trip, target);
+    }
     if (act === 'del-item') {
       if (!g) return;
       g.items = g.items.filter(function (x) { return x.id !== id; });
@@ -138,6 +193,31 @@ App.Checklist = (function () {
         g.name = v.name;
         g.emoji = v.emoji;
       }
+      S.touch(trip);
+      App.render();
+    });
+  }
+
+  /** 設定這一項由誰負責帶 */
+  function editOwners(trip, item) {
+    if (!item) return;
+    if (trip.members.length === 0) {
+      return U.toast('請先到「旅程」加入成員', 'bad');
+    }
+    U.modal({
+      title: '「' + item.text + '」誰要帶？',
+      submitText: '儲存',
+      fields: [{
+        name: 'members', label: '誰要帶', type: 'checks',
+        value: item.members || [],
+        options: trip.members.map(function (m) { return { value: m.id, label: m.name }; }),
+        hint: '不勾就是每個人都要帶自己的（例如衣服、充電線）。只有某幾個人要帶的才勾，例如共用的轉接頭、某人的藥。'
+      }]
+    }).then(function (v) {
+      if (!v) return;
+      var picked = v.members || [];
+      if (picked.length === trip.members.length) picked = [];   // 全勾等於沒分
+      item.members = picked;
       S.touch(trip);
       App.render();
     });

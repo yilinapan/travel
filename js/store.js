@@ -86,6 +86,20 @@ App.Store = (function () {
     });
   }
 
+  /**
+   * 時間欄應該是 HH:MM。
+   * 試算表曾經把「09:00」存成 1899-12-30 當天的時刻，讀回來就變成日期字串。
+   * 這裡把那種壞值清掉 —— 原本的時間已經救不回來，但至少不要在時間欄顯示一個日期。
+   */
+  function cleanTime(v) {
+    var s = String(v || '').trim();
+    if (!s) return '';
+    if (/^\d{1,2}:\d{2}$/.test(s)) return s;          // 正常的 09:00
+    var m = s.match(/[T ](\d{1,2}:\d{2})/);            // 1899-12-30T09:00 這種還救得回來
+    if (m) return m[1];
+    return '';                                         // 其餘一律清掉
+  }
+
   /** 舊資料補上後來新增的欄位，避免更新後打不開 */
   function migrateTrip(trip) {
     if (!trip.currencies) trip.currencies = [];
@@ -96,6 +110,9 @@ App.Store = (function () {
     if (!trip.days) trip.days = [];
     if (!trip.baseCurrency) trip.baseCurrency = 'TWD';
     syncDays(trip);
+    trip.days.forEach(function (d) {
+      (d.items || []).forEach(function (it) { it.time = cleanTime(it.time); });
+    });
     return trip;
   }
 
@@ -174,7 +191,7 @@ App.Store = (function () {
           id: uid('g'),
           name: g.name,
           emoji: g.emoji,
-          items: g.items.map(function (txt) { return { id: uid('c'), text: txt, done: false }; })
+          items: g.items.map(function (txt) { return { id: uid('c'), text: txt, done: false, members: [] }; })
         };
       }),
       createdAt: new Date().toISOString(),
@@ -248,6 +265,7 @@ App.Store = (function () {
     adoptTrip: adoptTrip,
     touch: touch,
     migrateTrip: migrateTrip,
+    cleanTime: cleanTime,
     syncDays: syncDays,
     dayCount: dayCount,
     dayDate: dayDate,

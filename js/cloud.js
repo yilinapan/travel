@@ -230,7 +230,8 @@ App.Cloud = (function () {
       (t.checklist || []).forEach(function (g) {
         (g.items || []).forEach(function (it) {
           rows.checklist.push([
-            t.name, g.name, g.emoji || '', it.text, it.done ? 'TRUE' : 'FALSE'
+            t.name, g.name, g.emoji || '', it.text, it.done ? 'TRUE' : 'FALSE',
+            joinNames(t, it.members)        // 空白代表每個人都要帶
           ]);
         });
       });
@@ -405,7 +406,15 @@ App.Cloud = (function () {
         g = { id: S.uid('g'), name: gname, emoji: String(r[2] || '').trim(), items: [] };
         t.checklist.push(g);
       }
-      g.items.push({ id: S.uid('c'), text: String(r[3] || '').trim(), done: truthy(r[4]) });
+      g.items.push({
+        id: S.uid('c'),
+        text: String(r[3] || '').trim(),
+        done: truthy(r[4]),
+        members: splitList(r[5]).map(function (n) {
+          var m = ensureMember(t, n);
+          return m && m.id;
+        }).filter(Boolean)
+      });
     });
 
     var trips = order.map(function (k) { return byName[k]; });

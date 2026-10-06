@@ -353,7 +353,12 @@ a { color: var(--brand); }
 .tl-title { font-weight: 600; }
 .tl-place, .tl-note, .tl-link, .tl-costline { font-size: 13px; margin-top: 2px; }
 .tl-place { color: var(--text-soft); }
-.tl-note { color: var(--muted); white-space: pre-wrap; }
+/* 備註左邊一條細槓，跟地點區隔開（秋 1 的做法） */
+.tl-note {
+  color: var(--muted); white-space: pre-wrap;
+  margin-top: 7px; padding-left: 12px;
+  border-left: 2px solid var(--line);
+}
 .tl-cost { color: var(--brand); font-weight: 600; }
 .tl-actions {
   display: flex; align-items: center; gap: 1px; flex-wrap: wrap;
@@ -770,3 +775,18 @@ a { color: var(--brand); }
 
 /* 小鈕是浮在內容上的，底部留一點空間免得蓋到最後一行 */
 .view { padding-bottom: 56px; }
+
+/* ---------- 打包清單：誰要帶 ---------- */
+.cl-who {
+  display: inline-flex; align-items: center; gap: 4px;
+  margin-left: 8px; font-size: 11px; font-weight: 500;
+  background: var(--ok-soft); color: var(--ok);
+  border-radius: 20px; padding: 1px 9px; vertical-align: middle;
+}
+.cl-who .ic { opacity: .8; }
+.cl-item.done .cl-who { opacity: .55; }
+/* 只有某幾個人要帶的項目，左邊加一道細線 */
+.cl-own { padding-left: 9px; border-left: 2px solid var(--ok-soft); }
+.cl-item .icon-btn { opacity: .45; }
+.cl-item:hover .icon-btn { opacity: 1; }
+@media (hover: none) { .cl-item .icon-btn { opacity: .7; } }

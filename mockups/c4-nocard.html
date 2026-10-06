@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="v2.css">
+<link rel="stylesheet" href="v2.css?v=3">
 <style>
 /* ===== 秋 4 · 無卡片（配色同秋 2） ===== */
 :root{
@@ -31,6 +31,11 @@
 }
 /* 沒有卡片時，分段全靠這幾條線，所以線要留著 */
 .dayhead{border-bottom-width:2px;border-bottom-color:var(--maple)}
+
+/* 把卡片徹底拿掉 —— 寫在這裡而不是共用檔，避免瀏覽器用到舊的樣式快取 */
+.card{background:none !important;border:0 !important;border-radius:0 !important;
+  padding:0 !important;box-shadow:none !important;margin-top:4px}
+.sum{border-top:1px solid var(--line)}
 </style>
 </head>
 <body class="no-cards">

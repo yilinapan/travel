@@ -46,16 +46,48 @@ window.App = window.App || {};
     document.getElementById('headerMeta').innerHTML = trip ? metaHtml(trip) : '';
 
     if (readOnly) {
-      acts.innerHTML = '<button class="act" data-act="adopt">' + U.icon('download', 19) + '存一份到我的裝置</button>';
+      // 唯讀模式只有一個動作，而且是主要動作，直接顯示不用收起來
+      acts.innerHTML = '<button class="tool-solo" data-act="adopt">' +
+        U.icon('download', 17) + '存一份到我的裝置</button>';
     } else {
+      // 這三個是偶爾才用的，平常收成右下角一顆小鈕，不佔畫面
+      var items =
+        (trip ? '<button class="tool-item" data-act="share">' + U.icon('share', 16) + '分享</button>' : '') +
+        (App.Cloud.isOn() ? '<button class="tool-item" data-act="sync">' + U.icon('sync', 16) + '同步</button>' : '') +
+        '<button class="tool-item" data-act="settings">' + U.icon('gear', 16) + '設定</button>';
       acts.innerHTML =
-        (trip ? '<button class="act" data-act="share">' + U.icon('share', 19) + '分享</button>' : '') +
-        (App.Cloud.isOn() ? '<button class="act" data-act="sync">' + U.icon('sync', 19) + '同步</button>' : '') +
-        '<button class="act" data-act="settings">' + U.icon('gear', 19) + '設定</button>';
+        '<div class="tool-menu" id="toolMenu" hidden>' + items + '</div>' +
+        '<button class="tool-btn" data-act="more" aria-label="更多工具" aria-expanded="false">' +
+          '<span class="tool-dots">⋯</span></button>';
     }
     renderSyncStatus();
     renderFootNote();
   }
+
+  /* ---- 右下角的工具小鈕 ---- */
+  function toolMenu() { return document.getElementById('toolMenu'); }
+
+  function toggleTools() {
+    var m = toolMenu();
+    if (!m) return;
+    var open = m.hidden;
+    m.hidden = !open;
+    var btn = document.querySelector('.tool-btn');
+    if (btn) btn.setAttribute('aria-expanded', String(open));
+  }
+
+  function closeTools() {
+    var m = toolMenu();
+    if (m) m.hidden = true;
+    var btn = document.querySelector('.tool-btn');
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  // 點畫面其他地方、或按 Esc，就把它收起來
+  document.addEventListener('click', function (e) {
+    if (!e.target.closest || !e.target.closest('#headerActions')) closeTools();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTools(); });
 
   /** 頁首那一行摘要：日期、天數、人數、總支出 */
   function metaHtml(trip) {
@@ -236,6 +268,8 @@ window.App = window.App || {};
       var act = b.getAttribute('data-act');
       if (act === 'share') share();
       if (act === 'adopt') adopt();
+      if (act === 'more') return toggleTools();
+      closeTools();
       if (act === 'sync') syncNow();
       if (act === 'settings') App.Settings.open();
     });

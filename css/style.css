@@ -592,18 +592,21 @@ a { color: var(--brand); }
 }
 .cl-check input:disabled { opacity: .5; cursor: default; }
 
-/* 視窗裡的勾選框用同一個形狀，只是勾起來是楓紅（那是「選取」不是「完成」） */
-.check input, .extra-members input {
+/* 視窗裡的勾選框用同一個形狀，只是勾起來是楓紅（那是「選取」不是「完成」）。
+   選擇器必須寫成 label.check input：這些勾選框都在 .field 裡面，
+   而下面的 .field input 是同樣的 specificity，只寫 .check input 會被它的
+   width:100% 跟 padding 蓋掉，勾選框會變成一個大白框。 */
+label.check input {
   appearance: none; -webkit-appearance: none;
-  width: 17px; height: 17px; flex: none; margin: 0;
+  width: 17px; height: 17px; min-width: 17px; flex: none; margin: 0; padding: 0;
   position: relative; cursor: pointer;
   background: var(--surface);
   border: 1.5px solid var(--muted); border-radius: 3px;
 }
-.check input:checked, .extra-members input:checked {
+label.check input:checked {
   background: var(--brand); border-color: var(--brand);
 }
-.check input:checked::after, .extra-members input:checked::after {
+label.check input:checked::after {
   content: ""; position: absolute; left: 4.5px; top: 1px;
   width: 4px; height: 9px;
   border: solid var(--brand-ink); border-width: 0 2px 2px 0;
@@ -647,15 +650,19 @@ a { color: var(--brand); }
 .extra-top { display: flex; gap: 6px; align-items: center; }
 .extra-top .extra-label { flex: 1 1 auto; min-width: 0; }
 .extra-top .extra-amount { flex: 0 0 90px; }
-.extra-row input {
-  font: inherit; font-size: 14px; padding: 7px 9px;
+/* 同上：這些欄位也在 .field 裡，選擇器要比 .field input 更具體。
+   而且要指明是哪兩格 —— 寫成 .extra-row input 的話，
+   下面「這筆分給誰」的勾選框也會被當成文字欄。*/
+.extras .extra-row .extra-label,
+.extras .extra-row .extra-amount {
+  width: auto; font: inherit; font-size: 14px; padding: 7px 9px;
   background: var(--surface); color: var(--text);
   border: 1px solid var(--line); border-radius: 7px;
 }
 .extra-members { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
-.check-sm { padding: 3px 11px; font-size: 13px; min-height: 32px; }
-.check-sm input { width: 15px; height: 15px; }
-.check-sm input:checked::after { left: 3.5px; top: .5px; height: 8px; }
+.extra-members .check-sm { padding: 3px 11px; font-size: 13px; min-height: 32px; }
+label.check-sm input { width: 15px; height: 15px; min-width: 15px; }
+label.check-sm input:checked::after { left: 3.5px; top: .5px; height: 8px; }
 
 /* =====================================================================
    跳出視窗（視窗、表單欄位、圖片保留圓角）
@@ -711,14 +718,23 @@ a { color: var(--brand); }
 .note-text { font-size: 14.5px; color: var(--text-soft); white-space: pre-wrap; line-height: 1.75; }
 
 .checks { display: flex; flex-wrap: wrap; gap: 6px; }
-.check {
-  display: inline-flex; align-items: center; gap: 7px;
-  min-height: 38px;
-  background: var(--surface-2); border: 1px solid var(--line);
-  border-radius: 999px; padding: 6px 14px; cursor: pointer; font-size: 14px;
-}
 
-.check:has(input:checked) { background: var(--brand-soft); border-color: var(--brand); }
+/* 選人的膠囊。選擇器必須寫兩層（.checks .check）：
+   這些 label 都在 .field 裡面，而 .field label 是 display:block、
+   font-weight:600、有 margin-bottom。只寫 .check 會輸給它，
+   膠囊就會垂成「勾選框一行、名字一行」。*/
+.checks .check, .extra-members .check {
+  display: inline-flex; align-items: center; gap: 8px;
+  min-height: 38px; margin-bottom: 0;
+  background: var(--surface-2); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 14px; cursor: pointer;
+  font-size: 14px; font-weight: 400; color: var(--text);
+}
+.checks .check span, .extra-members .check span { line-height: 1.3; }
+
+.checks .check:has(input:checked), .extra-members .check:has(input:checked) {
+  background: var(--brand-soft); border-color: var(--brand); color: var(--brand);
+}
 
 .share-url { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; word-break: break-all; }
 

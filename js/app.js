@@ -115,7 +115,7 @@ window.App = window.App || {};
       box.innerHTML = '資料只存在這台裝置' +
         U.hint('資料存在你這台裝置的瀏覽器裡，不會上傳到任何伺服器。' +
                '換一台裝置、或清除瀏覽器資料，內容就會不見。' +
-               '請到下方的「設定」開啟雲端同步，或定期下載備份檔。');
+               '按右下角的 ⋯ 打開「設定」可以開啟雲端同步，或定期下載備份檔。');
     }
   }
 
@@ -174,7 +174,9 @@ window.App = window.App || {};
       );
       box.querySelector('.share-url').value = url;
       box.addEventListener('click', function (e) {
-        var a = e.target.getAttribute && e.target.getAttribute('data-act');
+        // 往上找到按鈕本身：按鈕裡可能放了 SVG 圖示，直接讀 e.target 會抓不到
+        var b = e.target.closest ? e.target.closest('[data-act]') : null;
+        var a = b && b.getAttribute('data-act');
         if (e.target === box || a === 'x') box.remove();
         if (a === 'copy') {
           U.copyText(url).then(function () {

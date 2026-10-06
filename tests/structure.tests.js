@@ -73,6 +73,19 @@ function registerStructureTests(t, eq, files) {
     });
   });
 
+  /* 按鈕裡放了 SVG 圖示之後，點到的會是圖示而不是按鈕本身，
+   * 直接讀 e.target.getAttribute('data-act') 就會抓不到，按鈕等於失效。
+   * 這個錯誤發生過兩次（旅程頁的 ✕ 關不掉），所以用檢查擋住。 */
+  t('沒有直接讀 e.target 的 data-act（要往上找到按鈕）', function () {
+    var bad = [];
+    files.forEach(function (f) {
+      if (/e\.target\.getAttribute\s*\(\s*['"]data-act/.test(f.src)) {
+        bad.push(f.name + ' 直接讀 e.target 的 data-act，應改用 e.target.closest(\'[data-act]\')');
+      }
+    });
+    eq(bad, [], '寫法有問題的檔案');
+  });
+
   t('每個 data-act 都有對應的處理', function () {
     var problems = [];
     files.forEach(function (f) {

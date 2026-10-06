@@ -127,10 +127,11 @@ App.UI = (function () {
           return;
         }
 
-        var act = e.target.getAttribute && e.target.getAttribute('data-act');
-        if (act === 'cancel') close(null);
-        if (act === 'danger') close({ __danger: true });
-        if (act === 'ok') submit();
+        // 一律用 btnAct（往上找到按鈕本身）。
+        // 不可以直接讀 e.target —— 按鈕裡若放了 SVG 圖示，點到的會是圖示，抓不到 data-act。
+        if (btnAct === 'cancel') close(null);
+        if (btnAct === 'danger') close({ __danger: true });
+        if (btnAct === 'ok') submit();
       });
       wrap.querySelector('form').addEventListener('submit', function (e) {
         e.preventDefault();

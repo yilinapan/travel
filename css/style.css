@@ -32,9 +32,15 @@
   --danger:    #76210f;   /* 赤銅：比落栗更深，刪除才分得出來 */
   --danger-soft:#f7e7e2;
 
+  /* 整個配色裡最深的顏色：深咖啡，由赤銅延伸而來。
+     提示泡泡、浮動訊息、遮罩都用它，不使用黑色。 */
+  --deep:      #3b2317;
+  --deep-ink:  #faf6ee;
+  --shadow-rgb: 74,45,26;   /* 所有陰影都用這個咖啡色調，不用純黑 */
+
   --radius:    8px;
   --radius-sm: 6px;
-  --shadow:    0 1px 2px rgba(74,45,26,.05), 0 4px 16px rgba(74,45,26,.04);
+  --shadow:    0 1px 2px rgba(74,45,26,.05), 0 4px 16px rgba(74,45,26,.045);
   --maxw:      920px;
 }
 
@@ -63,7 +69,12 @@
     --danger:    #e08168;
     --danger-soft:#3a1f17;
 
-    --shadow:    0 1px 2px rgba(0,0,0,.45), 0 4px 16px rgba(0,0,0,.3);
+    /* 深色模式下底色已經很暗，泡泡要比底色「亮一階」才看得出來 */
+    --deep:      #4d3a2b;
+    --deep-ink:  #f6efe4;
+    --shadow-rgb: 18,10,5;   /* 連陰影都用深咖啡，整份配色沒有純黑 */
+
+    --shadow:    0 1px 2px rgba(18,10,5,.5), 0 4px 16px rgba(18,10,5,.35);
   }
 }
 
@@ -467,7 +478,7 @@ a { color: var(--brand); }
 /* ---------- 跳出視窗 ---------- */
 .modal-back {
   position: fixed; inset: 0; z-index: 100;
-  background: rgba(14,22,20,.5);
+  background: rgba(59,35,23,.46);   /* 深咖啡半透明，不用黑 */
   display: flex; align-items: flex-end; justify-content: center;
   padding: 0;
 }
@@ -478,7 +489,7 @@ a { color: var(--brand); }
   border-radius: var(--radius) var(--radius) 0 0;
   width: 100%; max-width: 520px;
   max-height: 92vh; display: flex; flex-direction: column;
-  box-shadow: 0 -8px 40px rgba(0,0,0,.25);
+  box-shadow: 0 -8px 40px rgba(var(--shadow-rgb),.26);
 }
 @media (min-width: 640px) { .modal { border-radius: var(--radius); } }
 
@@ -531,9 +542,10 @@ a { color: var(--brand); }
   pointer-events: none;
 }
 .toast {
-  background: #1d2422; color: #fff;
-  padding: 10px 18px; border-radius: 20px; font-size: 14px;
-  box-shadow: 0 4px 20px rgba(0,0,0,.25);
+  background: var(--deep); color: var(--deep-ink);
+  padding: 11px 16px; border-radius: var(--radius-sm);
+  font-size: 13.5px; line-height: 1.6; max-width: min(320px, calc(100vw - 32px));
+  box-shadow: 0 6px 24px rgba(var(--shadow-rgb),.26);
   transition: opacity .4s, transform .4s;
 }
 .toast-bad { background: var(--danger); }
@@ -627,12 +639,13 @@ a { color: var(--brand); }
 .hint-dot:hover, .hint-dot:focus-visible {
   background: var(--brand); border-color: var(--brand); color: var(--brand-ink); outline: none;
 }
+/* 提示泡泡與浮動訊息共用同一套外觀：深咖啡底、同樣的圓角與陰影 */
 .hint-bubble {
   position: absolute; z-index: 300;
-  background: var(--text); color: var(--bg);
-  border-radius: var(--radius-sm); padding: 11px 14px;
-  font-size: 13px; line-height: 1.65;
-  box-shadow: 0 6px 24px rgba(43,36,32,.28);
+  background: var(--deep); color: var(--deep-ink);
+  border-radius: var(--radius-sm); padding: 11px 16px;
+  font-size: 13.5px; line-height: 1.6;
+  box-shadow: 0 6px 24px rgba(var(--shadow-rgb),.26);
 }
 
 /* 同步狀態移到頁首標題下方 */
@@ -722,7 +735,7 @@ a { color: var(--brand); }
   display: flex; align-items: center; justify-content: center;
   border: 1px solid var(--line); border-radius: 50%;
   background: var(--surface); color: var(--muted);
-  box-shadow: 0 2px 10px rgba(74,45,26,.10);
+  box-shadow: 0 2px 10px rgba(var(--shadow-rgb),.10);
   opacity: .72; transition: opacity .15s, color .15s;
 }
 .tool-btn:hover, .tool-btn[aria-expanded="true"] { opacity: 1; color: var(--brand); border-color: var(--brand); }
@@ -732,7 +745,7 @@ a { color: var(--brand); }
   display: flex; flex-direction: column; align-items: stretch; gap: 4px;
   background: var(--surface); border: 1px solid var(--line);
   border-radius: var(--radius); padding: 6px;
-  box-shadow: 0 6px 26px rgba(74,45,26,.16);
+  box-shadow: 0 6px 26px rgba(var(--shadow-rgb),.16);
 }
 .tool-menu[hidden] { display: none; }
 .tool-item {
@@ -752,7 +765,7 @@ a { color: var(--brand); }
   padding: 9px 16px; border-radius: 30px;
   border: 1px solid var(--brand); background: var(--brand); color: var(--brand-ink);
   font-size: 13.5px; font-weight: 500;
-  box-shadow: 0 2px 12px rgba(74,45,26,.18);
+  box-shadow: 0 2px 12px rgba(var(--shadow-rgb),.18);
 }
 
 /* 小鈕是浮在內容上的，底部留一點空間免得蓋到最後一行 */

@@ -13,7 +13,7 @@ App.Trips = (function () {
       '<section class="block">' +
         secHead('我的旅程', '', 'new-trip', '新增旅程') +
         (trips.length === 0
-          ? U.empty('還沒有任何旅程。按右上角的 ＋ 開始規劃第一趟。')
+          ? U.empty('還沒有任何旅程。按右邊的 ＋ 開始規劃第一趟。')
           : '<div class="trip-list">' + trips.map(function (t) { return tripCard(t, cur); }).join('') + '</div>') +
       '</section>' +
       (cur ? settingsBlock(cur) : '');
@@ -28,7 +28,7 @@ App.Trips = (function () {
       '<strong>資料存在這台裝置。</strong>換裝置或清除瀏覽器資料就會不見。' +
       U.hint('資料存在你這台裝置的瀏覽器裡，不會上傳到任何伺服器。' +
              '換一台裝置、或清除瀏覽器資料，這裡的內容就會不見。' +
-             '到畫面下方的「設定」可以開啟雲端同步，讓手機和電腦看到同一份資料；' +
+             '按右下角的 ⋯ 打開「設定」就能開啟雲端同步，讓手機和電腦看到同一份資料；' +
              '或是定期下載備份檔存到雲端硬碟。') +
       '</div>';
   }

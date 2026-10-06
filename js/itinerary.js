@@ -44,7 +44,7 @@ App.Itinerary = (function () {
       : rows;
 
     var emptyText = day.items.length === 0
-      ? (readOnly ? '這天還沒有安排行程。' : '這天還沒有行程。按上面的「新增行程點」開始排。')
+      ? (readOnly ? '這天還沒有安排行程。' : '這天還沒有行程。按右上方的「＋ 新增行程點」開始排。')
       : '這一天沒有這個人的行程。';
 
     view.innerHTML =

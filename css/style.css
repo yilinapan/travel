@@ -790,3 +790,7 @@ a { color: var(--brand); }
 .cl-item .icon-btn { opacity: .45; }
 .cl-item:hover .icon-btn { opacity: 1; }
 @media (hover: none) { .cl-item .icon-btn { opacity: .7; } }
+
+/* 分類標題列裡的「＋」小一號，才不會比旁邊的編輯／刪除搶眼 */
+.icon-add-sm { width: 24px; height: 24px; }
+.cl-group-act { align-items: center; }

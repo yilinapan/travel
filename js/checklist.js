@@ -68,7 +68,7 @@ App.Checklist = (function () {
           '<div class="progress-text">已完成 <strong>' + done + '</strong> / ' + total + '（' + pct + '%）</div>' +
         '</div>' +
         (trip.checklist.length === 0
-          ? U.empty('清單是空的。' + (readOnly ? '' : '按右上角的 ＋ 新增分類，或按下面的按鈕載入預設清單。'),
+          ? U.empty('清單是空的。' + (readOnly ? '' : '按右邊的 ＋ 新增分類，或按下面的按鈕載入預設清單。'),
               readOnly ? '' : '<button class="btn btn-ghost" data-act="load-default">載入預設清單</button>')
           : trip.checklist.map(function (g) { return groupBlock(trip, g, readOnly); }).join('')) +
       '</section>';
@@ -91,7 +91,7 @@ App.Checklist = (function () {
         '<h3>' + (g.emoji ? '<span class="cl-emoji">' + U.esc(g.emoji) + '</span>' : '') + U.esc(g.name) +
           '<span class="count">' + done + '/' + items.length + '</span></h3>' +
         (readOnly ? '' : '<div class="cl-group-act">' +
-          '<button class="icon-btn" data-act="add-item" data-g="' + U.esc(g.id) + '" title="新增項目">' + U.icon('plus', 15) + '</button>' +
+          '<button class="icon-add icon-add-sm" data-act="add-item" data-g="' + U.esc(g.id) + '" title="新增項目" aria-label="新增項目">' + U.icon('plus', 14) + '</button>' +
           '<button class="icon-btn" data-act="edit-group" data-g="' + U.esc(g.id) + '" title="改名">' + U.icon('edit', 15) + '</button>' +
           '<button class="icon-btn" data-act="del-group" data-g="' + U.esc(g.id) + '" title="刪除分類">' + U.icon('trash', 15) + '</button>' +
         '</div>') +

@@ -26,10 +26,10 @@ App.Expenses = (function () {
       '<section class="block">' +
         '<div class="block-head">' +
           '<h2>所有支出<span class="count">' + trip.expenses.length + '</span></h2>' +
-          (readOnly ? '' : '<button class="btn btn-primary" data-act="add">+ 記一筆</button>') +
+          (readOnly ? '' : '<button class="icon-add" data-act="add" title="記一筆支出" aria-label="記一筆支出">' + U.icon('plus', 16) + '</button>') +
         '</div>' +
         (trip.expenses.length === 0
-          ? U.empty(readOnly ? '還沒有任何支出。' : '還沒有支出。按「記一筆」開始，或在「行程」頁填了金額後一鍵加進來。')
+          ? U.empty(readOnly ? '還沒有任何支出。' : '還沒有支出。按右邊的 ＋ 記一筆，或在「行程」頁填了金額後一鍵加進來。')
           : expenseTable(trip, readOnly)) +
       '</section>' +
       // 還款是偶爾才用的，放最後
@@ -96,10 +96,10 @@ App.Expenses = (function () {
     return '<section class="block">' +
       '<div class="block-head">' +
         '<h2>已結清記錄<span class="count">' + list.length + '</span></h2>' +
-        (readOnlyNow ? '' : '<button class="btn btn-ghost btn-sm" data-act="pay-add">+ 記一筆還款</button>') +
+        (readOnlyNow ? '' : '<button class="icon-add" data-act="pay-add" title="記一筆還款" aria-label="記一筆還款">' + U.icon('plus', 16) + '</button>') +
       '</div>' +
       (list.length === 0
-        ? U.empty('還沒有人先還過錢。有人還了的話，按上面轉帳列旁邊的「記錄還款」就會記在這裡。')
+        ? U.empty('還沒有人先還過錢。有人還了的話，按上面轉帳列旁邊的「記錄還款」，或右邊的 ＋，就會記在這裡。')
         : '<table class="table"><tbody>' + list.slice().reverse().map(function (p) {
             return '<tr>' +
               '<td class="small">' + U.esc(p.date || '') + '</td>' +

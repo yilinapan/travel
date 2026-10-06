@@ -44,16 +44,11 @@ App.Itinerary = (function () {
       : rows;
 
     var emptyText = day.items.length === 0
-      ? (readOnly ? '這天還沒有安排行程。' : '這天還沒有行程。按右上方的「＋ 新增行程點」開始排。')
+      ? (readOnly ? '這天還沒有安排行程。' : '這天還沒有行程。按右邊的 ＋ 新增第一個行程點。')
       : '這一天沒有這個人的行程。';
 
     view.innerHTML =
       '<section class="block">' +
-        (readOnly ? '' :
-          '<div class="block-head block-head-bare">' +
-            '<span class="spacer"></span>' +
-            '<button class="btn btn-primary" data-act="add-item">+ 新增行程點</button>' +
-          '</div>') +
         dayTabs(trip) +
         dayHeader(trip, activeDay, readOnly, shown.length, day.items.length) +
         (shown.length === 0
@@ -110,6 +105,7 @@ App.Itinerary = (function () {
         filterHtml +
         '<span class="muted">' + countText + '</span>' +
         (!readOnly && !filterMember && totalCount > 1 ? '<button class="btn btn-ghost btn-sm" data-act="sort-time">依時間排序</button>' : '') +
+        (readOnly ? '' : '<button class="icon-add" data-act="add-item" title="新增行程點" aria-label="新增行程點">' + U.icon('plus', 16) + '</button>') +
       '</div>' +
       (filterMember ? '<div class="filter-note">篩選中只能瀏覽。要調整順序請先切回「全部的人」。</div>' : '') +
     '</div>';

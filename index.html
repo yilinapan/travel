@@ -9,7 +9,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
 <!-- 版本號 ?v=N：改過 js/ 或 css/ 之後要把 N 加 1，
      否則瀏覽器會沿用舊檔，造成新舊程式混在一起。-->
-<link rel="stylesheet" href="css/style.css?v=3">
+<link rel="stylesheet" href="css/style.css?v=4">
 </head>
 <body>
 
@@ -21,7 +21,7 @@
       <div class="head-meta" id="headerMeta"></div>
       <div id="syncStatus" class="sync-status" hidden></div>
     </div>
-    <div id="headerActions" class="header-actions"></div>
+
   </div>
 </header>
 
@@ -34,20 +34,22 @@
 <main id="view" class="view"></main>
 
 <footer class="foot">
-  <p>資料只存在你這台裝置的瀏覽器，不會上傳到任何伺服器。請定期到「我的旅程」下載備份檔。</p>
-  <p class="foot-small">分帳計算有自動測試，可打開 <code>tests/test.html</code> 自行驗證。</p>
+  <p id="footNote"></p>
 </footer>
 
-<script src="js/settle.js?v=3"></script>
-<script src="js/store.js?v=3"></script>
-<script src="js/cloud.js?v=3"></script>
-<script src="js/share.js?v=3"></script>
-<script src="js/ui.js?v=3"></script>
-<script src="js/trips.js?v=3"></script>
-<script src="js/itinerary.js?v=3"></script>
-<script src="js/expenses.js?v=3"></script>
-<script src="js/checklist.js?v=3"></script>
-<script src="js/settings.js?v=3"></script>
-<script src="js/app.js?v=3"></script>
+<!-- 偶爾才用的操作放畫面下方，手機單手好按 -->
+<nav id="headerActions" class="actionbar" aria-label="工具"></nav>
+
+<script src="js/settle.js?v=4"></script>
+<script src="js/store.js?v=4"></script>
+<script src="js/cloud.js?v=4"></script>
+<script src="js/share.js?v=4"></script>
+<script src="js/ui.js?v=4"></script>
+<script src="js/trips.js?v=4"></script>
+<script src="js/itinerary.js?v=4"></script>
+<script src="js/expenses.js?v=4"></script>
+<script src="js/checklist.js?v=4"></script>
+<script src="js/settings.js?v=4"></script>
+<script src="js/app.js?v=4"></script>
 </body>
 </html>

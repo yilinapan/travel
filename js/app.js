@@ -46,14 +46,15 @@ window.App = window.App || {};
     document.getElementById('headerMeta').innerHTML = trip ? metaHtml(trip) : '';
 
     if (readOnly) {
-      acts.innerHTML = '<button class="btn btn-primary btn-sm" data-act="adopt">存一份到我的裝置</button>';
+      acts.innerHTML = '<button class="act" data-act="adopt"><i>⬇</i>存一份到我的裝置</button>';
     } else {
       acts.innerHTML =
-        (App.Cloud.isOn() ? '<button class="btn btn-ghost btn-sm" data-act="sync" title="立即同步">⟳</button>' : '') +
-        (trip ? '<button class="btn btn-ghost btn-sm" data-act="share">🔗 分享</button>' : '') +
-        '<button class="btn btn-ghost btn-sm" data-act="settings" title="設定：雲端同步、備份與還原">⚙️</button>';
+        (trip ? '<button class="act" data-act="share"><i>🔗</i>分享</button>' : '') +
+        (App.Cloud.isOn() ? '<button class="act" data-act="sync"><i>⟳</i>同步</button>' : '') +
+        '<button class="act" data-act="settings"><i>⚙</i>設定</button>';
     }
     renderSyncStatus();
+    renderFootNote();
   }
 
   /** 頁首那一行摘要：日期、天數、人數、總支出 */
@@ -67,6 +68,23 @@ window.App = window.App || {};
     if (trip.members.length) parts.push('<b>' + trip.members.length + '</b> 人');
     if (r.totalCents) parts.push('<b>' + U.money(r.totalCents, '') + '</b> ' + U.esc(trip.baseCurrency));
     return parts.map(function (p) { return '<span>' + p + '</span>'; }).join('');
+  }
+
+  /** 頁尾：一句話帶過，細節收在說明圓圈裡 */
+  function renderFootNote() {
+    var box = document.getElementById('footNote');
+    if (!box) return;
+    if (App.Cloud.isOn()) {
+      box.innerHTML = '資料同步在你的 Google 試算表' +
+        U.hint('這台裝置會自動跟你的 Google 試算表同步，手機和電腦看到同一份資料。' +
+               '沒有網路時仍可離線使用，連上後會再同步回去。' +
+               '想多一層保險的話，可以到設定裡下載備份檔。');
+    } else {
+      box.innerHTML = '資料只存在這台裝置' +
+        U.hint('資料存在你這台裝置的瀏覽器裡，不會上傳到任何伺服器。' +
+               '換一台裝置、或清除瀏覽器資料，內容就會不見。' +
+               '請到下方的「設定」開啟雲端同步，或定期下載備份檔。');
+    }
   }
 
   var SYNC_TEXT = {

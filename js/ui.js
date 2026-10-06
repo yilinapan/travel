@@ -304,6 +304,71 @@ App.UI = (function () {
     });
   }
 
+  /**
+   * 說明圓圈：把長句收起來，點一下（電腦滑過去）才顯示。
+   * 手機沒有 hover，所以一定要支援點擊，不能只靠 CSS。
+   */
+  function hint(text, label) {
+    return '<button type="button" class="hint-dot" data-hint="' + esc(text) + '"' +
+      ' aria-label="' + esc(label || '說明') + '">?</button>';
+  }
+
+  var bubble = null;
+
+  function hideHint() {
+    if (bubble) { bubble.remove(); bubble = null; }
+  }
+
+  function showHint(dot) {
+    hideHint();
+    var text = dot.getAttribute('data-hint');
+    if (!text) return;
+    bubble = el('<div class="hint-bubble" role="tooltip">' + esc(text) + '</div>');
+    document.body.appendChild(bubble);
+
+    // 先放到按鈕下方，超出畫面就往回收，手機上才不會被切掉
+    var r = dot.getBoundingClientRect();
+    var w = Math.min(290, window.innerWidth - 24);
+    bubble.style.width = w + 'px';
+    var left = Math.min(Math.max(12, r.left + r.width / 2 - w / 2), window.innerWidth - w - 12);
+    bubble.style.left = left + 'px';
+
+    var top = r.bottom + window.scrollY + 8;
+    bubble.style.top = top + 'px';
+    // 下方放不下就改放上面
+    if (r.bottom + bubble.offsetHeight + 16 > window.innerHeight) {
+      bubble.style.top = (r.top + window.scrollY - bubble.offsetHeight - 8) + 'px';
+    }
+  }
+
+  // 整頁共用一組事件，各模組重畫畫面也不用重新綁定
+  document.addEventListener('click', function (e) {
+    var dot = e.target.closest && e.target.closest('.hint-dot');
+    if (dot) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (bubble && bubble.dataset.for === dot.getAttribute('data-hint')) return hideHint();
+      showHint(dot);
+      if (bubble) bubble.dataset.for = dot.getAttribute('data-hint');
+      return;
+    }
+    hideHint();
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideHint(); });
+  window.addEventListener('scroll', hideHint, { passive: true });
+
+  // 電腦上滑過去就顯示，不用點
+  if (window.matchMedia && window.matchMedia('(hover: hover)').matches) {
+    document.addEventListener('mouseover', function (e) {
+      var dot = e.target.closest && e.target.closest('.hint-dot');
+      if (dot) showHint(dot);
+    });
+    document.addEventListener('mouseout', function (e) {
+      var dot = e.target.closest && e.target.closest('.hint-dot');
+      if (dot && !e.relatedTarget?.closest?.('.hint-bubble')) hideHint();
+    });
+  }
+
   function empty(message, actionHtml) {
     return '<div class="empty">' + esc(message) + (actionHtml ? '<div class="empty-act">' + actionHtml + '</div>' : '') + '</div>';
   }
@@ -311,6 +376,7 @@ App.UI = (function () {
   return {
     esc: esc, el: el, num: num, money: money, toast: toast, modal: modal,
     confirmDanger: confirmDanger, ask: ask, copyText: copyText,
-    downloadText: downloadText, pickTextFile: pickTextFile, empty: empty
+    downloadText: downloadText, pickTextFile: pickTextFile, empty: empty,
+    hint: hint, hideHint: hideHint
   };
 })();

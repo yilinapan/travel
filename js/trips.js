@@ -25,10 +25,14 @@ App.Trips = (function () {
   }
 
   function storageNotice() {
+    // 已經開了雲端同步就不用再提醒了
+    if (App.Cloud.isOn()) return '';
     return '<div class="notice">' +
-      '<strong>資料存在這台裝置的瀏覽器裡。</strong>' +
-      '換一台裝置、或清除瀏覽器資料，這裡的內容就會不見。' +
-      '請到右上角的 ⚙️ 設定裡開啟雲端同步，或定期下載備份檔。' +
+      '<strong>資料存在這台裝置。</strong>換裝置或清除瀏覽器資料就會不見。' +
+      U.hint('資料存在你這台裝置的瀏覽器裡，不會上傳到任何伺服器。' +
+             '換一台裝置、或清除瀏覽器資料，這裡的內容就會不見。' +
+             '到畫面下方的「設定」可以開啟雲端同步，讓手機和電腦看到同一份資料；' +
+             '或是定期下載備份檔存到雲端硬碟。') +
       '</div>';
   }
 
@@ -74,7 +78,10 @@ App.Trips = (function () {
       '<button class="btn btn-ghost" data-act="add-member">+ 加入成員</button>' +
 
       '<h4 class="sub">幣別與匯率<span class="sub-hint">基準幣別：' + U.esc(t.baseCurrency) + '</span></h4>' +
-      '<p class="muted">匯率請自己填（例如 1 日幣 = 0.21 台幣就填 0.21）。刻意不自動抓網路匯率，這樣不會因為外部服務改變而壞掉。</p>' +
+      '<p class="muted">匯率請自己填' +
+      U.hint('例如 1 日幣 ≈ 0.21 台幣，就填 0.21。' +
+             '這裡刻意不自動抓網路匯率 —— 自動抓要依賴外部服務，哪天對方改規則或關掉，' +
+             '這個工具就會跟著壞。自己填雖然多一個動作，但穩定可靠。') + '</p>' +
       (t.currencies.length === 0
         ? U.empty('目前只用 ' + t.baseCurrency + '。要記外幣支出的話，先在這裡加一個幣別。')
         : '<table class="table"><thead><tr><th>幣別</th><th>1 單位 = 多少 ' + U.esc(t.baseCurrency) + '</th><th></th></tr></thead><tbody>' +

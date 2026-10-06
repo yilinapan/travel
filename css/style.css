@@ -513,6 +513,22 @@ a { color: var(--brand); }
 /* =====================================================================
    結算
    ===================================================================== */
+/* 結餘：一人一列，名字靠左、金額靠右，細節收成下面一行灰字。
+   這比六欄表格好讀很多，而且手機跟電腦是同一個版面。*/
+.balance { list-style: none; margin: 6px 0 4px; padding: 0; }
+.balance li {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0 12px; align-items: baseline;
+  padding: 11px 2px; border-bottom: 1px solid var(--line-2);
+}
+.balance li:last-child { border-bottom: 0; }
+.bal-name { font-size: 15px; font-weight: 500; color: var(--text); }
+.bal-amt { font-size: 15px; font-weight: 700; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.bal-sub {
+  grid-column: 1 / -1; font-size: 12.5px; color: var(--muted);
+  margin-top: 2px; font-variant-numeric: tabular-nums;
+}
+
 .transfers { list-style: none; margin: 0 0 4px; padding: 0; }
 .transfers li {
   display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
@@ -594,16 +610,6 @@ a { color: var(--brand); }
   transform: rotate(45deg);
 }
 .cl-item.done .cl-check span { text-decoration: line-through; color: var(--muted); }
-.cl-who {
-  display: inline-flex; align-items: center; gap: 4px;
-  margin-left: 8px; font-size: 11px; font-weight: 500;
-  background: var(--ok-soft); color: var(--ok);
-  border-radius: 999px; padding: 1px 9px; vertical-align: middle;
-}
-.cl-who .ic { opacity: .8; }
-.cl-item.done .cl-who { opacity: .55; }
-/* 只有某幾個人要帶的項目，左邊加一道細線 */
-.cl-own { padding-left: 9px; border-left: 2px solid var(--ok-soft); }
 /* 使用者自己填的分類圖示仍是 emoji；調成灰階，不跟主色搶注意力 */
 .cl-emoji { filter: grayscale(1); opacity: .6; font-size: 15px; }
 
@@ -847,8 +853,10 @@ a { color: var(--brand); }
   .block { margin-bottom: 28px; }
   .block.is-card { padding: 16px 15px; }
 
-  /* 日期自己一行，控制項整組換到下一行，按鈕才不會被擠到字疊字 */
-  .day-head-side { flex: 1 0 100%; justify-content: flex-start; }
+  /* 日期自己一行，按鈕整組換到下一行。
+     要靠右 —— 靠左的話三顆圖示會浮在標題底下的空白裡，像掉落的東西；
+     靠右對齊內容邊緣才看得出來是「這一區的工具列」。*/
+  .day-head-side { flex: 1 0 100%; justify-content: flex-end; margin-top: -2px; }
 
   /* 窄螢幕：編輯工具換到下一行，內容才有完整寬度 */
   .tl-item { grid-template-columns: 42px 11px minmax(0, 1fr); gap: 0 9px; }
@@ -862,9 +870,8 @@ a { color: var(--brand); }
      四欄五欄硬塞進 375px 會擠成一團，這是手機上最難看的地方。
      電腦版完全不受影響（這一段只在 560px 以下生效）。
      ------------------------------------------------------------- */
-  .table-stack thead, .table-net thead { display: none; }
-  .table-stack, .table-stack tbody, .table-stack tr, .table-stack td,
-  .table-net, .table-net tbody { display: block; width: 100%; }
+  .table-stack thead { display: none; }
+  .table-stack, .table-stack tbody, .table-stack tr, .table-stack td { display: block; width: 100%; }
   .table-stack tr {
     padding: 11px 0; border-bottom: 1px solid var(--line-2);
     display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start;
@@ -886,20 +893,4 @@ a { color: var(--brand); }
   .table-stack td.st-act { grid-column: 1 / -1; }
   .table-stack td.st-act .act-row { justify-content: flex-end; }
 
-  /* 「每個人的明細」欄位更多，改成每人一塊、項目與數字左右對齊 */
-  .table-net tr {
-    display: block; padding: 10px 0 12px;
-    border-bottom: 1px solid var(--line-2);
-  }
-  .table-net tr:last-child { border-bottom: 0; }
-  .table-net td { display: flex; justify-content: space-between; gap: 12px; padding: 2px 0; }
-  .table-net td.st-name {
-    font-weight: 600; font-size: 14.5px; display: block;
-    margin-bottom: 3px; color: var(--text);
-  }
-  .table-net td::before {
-    content: attr(data-label); color: var(--muted); font-size: 12.5px; font-weight: 400;
-  }
-  .table-net td.st-name::before { content: none; }
-  .table-net td.is-empty { display: none; }
 }

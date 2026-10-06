@@ -3,7 +3,6 @@ window.App = window.App || {};
 App.Checklist = (function () {
 
   var S = App.Store, U = App.UI;
-  var filterMember = '';   // 空字串 = 看全部
 
   /**
    * 圖示鈕。全站的圖示鈕都長一樣：沒有底色、18px、點擊範圍 44×44。
@@ -15,64 +14,23 @@ App.Checklist = (function () {
       U.icon(iconName) + '</button>';
   }
 
-  /** 有沒有「只有某幾個人要帶」的項目？沒有就不要顯示篩選下拉 */
-  function hasOwners(trip) {
-    if (trip.members.length < 2) return false;
-    return trip.checklist.some(function (g) {
-      return g.items.some(function (i) { return (i.members || []).length > 0; });
-    });
-  }
-
-  /** 這一項是大家都要帶，還是只有某幾個人？ */
-  function ownersOf(trip, item) {
-    var all = trip.members.map(function (m) { return m.id; });
-    var picked = (item.members || []).filter(function (id) { return all.indexOf(id) !== -1; });
-    return {
-      ids: picked,
-      isAll: picked.length === 0 || picked.length === all.length,
-      names: picked.map(function (id) {
-        var m = trip.members.filter(function (x) { return x.id === id; })[0];
-        return m ? m.name : '';
-      }).filter(Boolean)
-    };
-  }
-
-  /** 篩選中時，只算該成員要帶的項目 */
-  function shown(trip, item) {
-    if (!filterMember) return true;
-    var o = ownersOf(trip, item);
-    return o.isAll || o.ids.indexOf(filterMember) !== -1;
-  }
-
   function render(view, trip, readOnly) {
     if (!trip) {
       view.innerHTML = U.empty('還沒有選擇旅程。請先到「我的旅程」建立或開啟一趟旅程。');
       return;
     }
 
-    if (filterMember && !trip.members.some(function (m) { return m.id === filterMember; })) filterMember = '';
-
     var done = 0, total = 0;
     trip.checklist.forEach(function (g) {
-      g.items.forEach(function (i) {
-        if (!shown(trip, i)) return;
-        total++; if (i.done) done++;
-      });
+      g.items.forEach(function (i) { total++; if (i.done) done++; });
     });
     var pct = total ? Math.round(done / total * 100) : 0;
-
-    var filterHtml = hasOwners(trip)
-      ? btn('filter', 'people',
-            filterMember ? '目前只看 ' + nameOf(trip, filterMember) + ' 要帶的東西，按一下改回全部' : '只看某個人要帶的東西',
-            '', filterMember ? 'on' : '')
-      : '';
 
     view.innerHTML =
       '<section class="block">' +
         '<div class="block-head">' +
           '<h2>打包清單</h2>' +
           '<div class="head-tools">' +
-            filterHtml +
             (readOnly ? '' :
               btn('uncheck-all', 'reset', '把所有項目的勾勾都取消') +
               btn('add-group', 'plus', '新增分類')) +
@@ -80,8 +38,7 @@ App.Checklist = (function () {
         '</div>' +
         '<div class="progress-wrap">' +
           '<div class="progress"><div class="progress-bar" style="width:' + pct + '%"></div></div>' +
-          '<div class="progress-text">已完成 <strong>' + done + '</strong> / ' + total + '（' + pct + '%）' +
-            (filterMember ? '，目前只看「' + U.esc(nameOf(trip, filterMember)) + '」要帶的' : '') + '</div>' +
+          '<div class="progress-text">已完成 <strong>' + done + '</strong> / ' + total + '（' + pct + '%）</div>' +
         '</div>' +
         (trip.checklist.length === 0
           ? U.empty('清單是空的。' + (readOnly ? '' : '按右上角的 ＋ 自己新增分類，或直接載入內建的預設清單。'),
@@ -94,8 +51,7 @@ App.Checklist = (function () {
   }
 
   function groupBlock(trip, g, readOnly) {
-    var items = g.items.filter(function (i) { return shown(trip, i); });
-    if (filterMember && items.length === 0) return '';   // 這個分類沒有他要帶的東西
+    var items = g.items;
     var done = items.filter(function (i) { return i.done; }).length;
     return '<div class="cl-group">' +
       '<div class="cl-group-head">' +
@@ -110,17 +66,13 @@ App.Checklist = (function () {
       (items.length === 0
         ? '<p class="muted pad">這個分類還沒有項目。</p>'
         : '<ul class="cl-items">' + items.map(function (it) {
-            var o = ownersOf(trip, it);
-            return '<li class="cl-item' + (it.done ? ' done' : '') + (o.isAll ? '' : ' cl-own') + '">' +
+            return '<li class="cl-item' + (it.done ? ' done' : '') + '">' +
               '<label class="cl-check">' +
                 '<input type="checkbox"' + (it.done ? ' checked' : '') + (readOnly ? ' disabled' : '') +
                   ' data-act="toggle" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '">' +
-                '<span>' + U.esc(it.text) +
-                  (o.isAll ? '' : '<span class="cl-who">' + U.icon('people', 12) + U.esc(o.names.join('、')) + '</span>') +
-                '</span>' +
+                '<span>' + U.esc(it.text) + '</span>' +
               '</label>' +
               (readOnly ? '' :
-                btn('who', 'people', '設定誰要帶這一項', ' data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '"') +
                 btn('del-item', 'trash', '刪除「' + it.text + '」', ' data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '"', 'is-del')) +
             '</li>';
           }).join('') + '</ul>') +
@@ -144,7 +96,6 @@ App.Checklist = (function () {
       S.touch(trip);
       return App.render();
     }
-    if (act === 'filter') return pickFilter(trip);
     if (act === 'add-group') return editGroup(trip, null);
     if (act === 'edit-group') return editGroup(trip, g);
     if (act === 'del-group') {
@@ -160,10 +111,6 @@ App.Checklist = (function () {
       });
     }
     if (act === 'add-item') return addItem(trip, g);
-    if (act === 'who') {
-      var target = g && g.items.filter(function (x) { return x.id === id; })[0];
-      return editOwners(trip, target);
-    }
     if (act === 'del-item') {
       if (!g) return;
       var target = g.items.filter(function (x) { return x.id === id; })[0];
@@ -204,30 +151,6 @@ App.Checklist = (function () {
     }
   }
 
-  /** 只看某個人要帶的東西。用視窗選，標題列就不用放一個下拉選單 */
-  function pickFilter(trip) {
-    U.modal({
-      title: '只看誰要帶的',
-      submitText: '套用',
-      fields: [{
-        name: 'who', label: '看誰的清單', type: 'select', value: filterMember,
-        options: [{ value: '', label: '全部的人' }].concat(
-          trip.members.map(function (m) { return { value: m.id, label: '只看 ' + m.name }; })),
-        hint: '不勾「誰要帶」的項目是每個人都要帶，所以篩選時都會出現。'
-      }]
-    }).then(function (v) {
-      if (!v) return;
-      filterMember = v.who;
-      App.render();
-    });
-  }
-
-  /** 用 id 找成員名字 */
-  function nameOf(trip, id) {
-    var m = trip.members.filter(function (x) { return x.id === id; })[0];
-    return m ? m.name : '';
-  }
-
   function groupOf(trip, id) {
     return trip.checklist.filter(function (g) { return g.id === id; })[0] || null;
   }
@@ -249,31 +172,6 @@ App.Checklist = (function () {
         g.name = v.name;
         g.emoji = v.emoji;
       }
-      S.touch(trip);
-      App.render();
-    });
-  }
-
-  /** 設定這一項由誰負責帶 */
-  function editOwners(trip, item) {
-    if (!item) return;
-    if (trip.members.length === 0) {
-      return U.toast('請先到「旅程」加入成員', 'bad');
-    }
-    U.modal({
-      title: '「' + item.text + '」誰要帶？',
-      submitText: '儲存',
-      fields: [{
-        name: 'members', label: '誰要帶', type: 'checks',
-        value: item.members || [],
-        options: trip.members.map(function (m) { return { value: m.id, label: m.name }; }),
-        hint: '不勾就是每個人都要帶自己的（例如衣服、充電線）。只有某幾個人要帶的才勾，例如共用的轉接頭、某人的藥。'
-      }]
-    }).then(function (v) {
-      if (!v) return;
-      var picked = v.members || [];
-      if (picked.length === trip.members.length) picked = [];   // 全勾等於沒分
-      item.members = picked;
       S.touch(trip);
       App.render();
     });

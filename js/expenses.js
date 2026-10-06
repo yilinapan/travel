@@ -49,16 +49,40 @@ App.Expenses = (function () {
     view.onclick = function (e) { onClick(e, trip, readOnly); };
   }
 
+  /**
+   * 結算區。版面跟一般分帳 App 一樣分成兩段：
+   *   ① 每個人現在是正是負（結餘）
+   *   ② 怎麼轉帳才能結清（動作）
+   * 原本是一張六欄的表格，欄位多、數字擠，手機上特別難讀。
+   */
   function settleBlock(trip, r, readOnlyNow) {
     var cur = trip.baseCurrency;
-    var hasPayments = (trip.payments || []).length > 0;
     var warn = r.warnings.length
       ? '<div class="notice notice-warn"><strong>請注意：</strong><ul>' +
         r.warnings.map(function (w) { return '<li>' + U.esc(w) + '</li>'; }).join('') + '</ul></div>'
       : '';
 
+    /* 結餘：一人一列，名字靠左、金額靠右。
+       應收是綠的、應付是紅的，一眼分得出來。
+       付了多少、該分摊多少收成下面一行灰字，要看才看。*/
+    var balance = '<ul class="balance">' + r.perMember.map(function (m) {
+      var cls = m.netCents > 0 ? 'net-plus' : m.netCents < 0 ? 'net-minus' : 'net-zero';
+      var text = m.netCents > 0 ? '應收 ' + U.money(m.netCents, '')
+        : m.netCents < 0 ? '應付 ' + U.money(-m.netCents, '')
+        : '已結清';
+      var sub = ['付了 ' + U.money(m.paidCents, ''), '分摊 ' + U.money(m.shareCents, '')];
+      if (m.repaidOutCents) sub.push('已還 ' + U.money(m.repaidOutCents, ''));
+      if (m.repaidInCents) sub.push('已收 ' + U.money(m.repaidInCents, ''));
+      return '<li>' +
+        '<span class="bal-name">' + U.esc(m.name) + '</span>' +
+        '<span class="bal-amt ' + cls + '">' + text + '</span>' +
+        '<span class="bal-sub">' + U.esc(sub.join(' · ')) + '</span>' +
+      '</li>';
+    }).join('') + '</ul>';
+
     var transfers = r.transfers.length
-      ? '<ul class="transfers">' + r.transfers.map(function (t) {
+      ? '<h4 class="sub">怎麼結清</h4>' +
+        '<ul class="transfers">' + r.transfers.map(function (t) {
           return '<li><strong>' + U.esc(nameOf(trip, t.fromId)) + '</strong>' +
             ' <span class="arrow">→</span> ' +
             '<strong>' + U.esc(nameOf(trip, t.toId)) + '</strong>' +
@@ -69,36 +93,20 @@ App.Expenses = (function () {
               ' data-cents="' + t.cents + '"', 'settle-btn')) +
             '</li>';
         }).join('') + '</ul>' +
-        '<p class="muted">以上<strong>尚未結清</strong>，' + r.transfers.length + ' 筆轉帳就能全部結清。'
-        + (r.settledCents ? '（已經結清了 ' + U.money(r.settledCents, cur) + '）' : '') + '</p>'
-      : (r.settledCents
-          ? '<div class="all-clear">' + U.icon('check', 16) + ' 全部結清了，不用再轉帳。共已結清 ' + U.money(r.settledCents, cur) + '。</div>'
-          : '<div class="all-clear">' + U.icon('check', 16) + ' 目前沒有人欠人，不用轉帳。</div>');
+        '<p class="muted">' + r.transfers.length + ' 筆轉帳就能全部結清。'
+        + (r.settledCents ? '目前已經結清了 ' + U.money(r.settledCents, cur) + '。' : '') + '</p>'
+      : '<div class="all-clear">' + U.icon('check', 16) +
+        (r.settledCents
+          ? ' 全部結清了，不用再轉帳。共已結清 ' + U.money(r.settledCents, cur) + '。'
+          : ' 目前沒有人欠人，不用轉帳。') + '</div>';
 
     return '<section class="block block-settle">' +
-      '<div class="block-head"><h2>結算結果</h2><span class="total">總支出 ' + U.money(r.totalCents, cur) + '</span></div>' +
+      '<div class="block-head"><h2>結算</h2>' +
+        '<span class="total">總支出 ' + U.money(r.totalCents, cur) + '</span></div>' +
       warn +
+      balance +
       transfers +
-      '<h4 class="sub">每個人的明細</h4>' +
-      '<table class="table table-net"><thead><tr><th>成員</th><th class="right">付了</th><th class="right">該分攤</th>' +
-      (hasPayments ? '<th class="right">已還</th><th class="right">已收</th>' : '') +
-      '<th class="right">結果</th></tr></thead><tbody>' +
-      r.perMember.map(function (m) {
-        var tag = m.netCents > 0 ? '<span class="net net-plus">應收 ' + U.money(m.netCents, '') + '</span>'
-          : m.netCents < 0 ? '<span class="net net-minus">應付 ' + U.money(-m.netCents, '') + '</span>'
-          : '<span class="net net-zero">已結清</span>';
-        /* data-label 是給手機版用的：堆疊後沒有表頭，
-           CSS 會把它當成每一行的小標題顯示在左邊。*/
-        return '<tr><td class="st-name">' + U.esc(m.name) + '</td>' +
-          '<td class="right" data-label="付了">' + U.money(m.paidCents, '') + '</td>' +
-          '<td class="right" data-label="該分摊">' + U.money(m.shareCents, '') + '</td>' +
-          (hasPayments
-            ? '<td class="right muted-cell' + (m.repaidOutCents ? '' : ' is-empty') + '" data-label="已還">' + (m.repaidOutCents ? U.money(m.repaidOutCents, '') : '—') + '</td>' +
-              '<td class="right muted-cell' + (m.repaidInCents ? '' : ' is-empty') + '" data-label="已收">' + (m.repaidInCents ? U.money(m.repaidInCents, '') : '—') + '</td>'
-            : '') +
-          '<td class="right" data-label="結果">' + tag + '</td></tr>';
-      }).join('') + '</tbody></table>' +
-      '<p class="muted">金額以 ' + U.esc(cur) + ' 計。</p>' +
+      '<p class="muted">金額一律換算成 ' + U.esc(cur) + ' 計算。</p>' +
     '</section>';
   }
 

@@ -22,6 +22,7 @@ App.Expenses = (function () {
 
     view.innerHTML =
       settleBlock(trip, r, readOnly) +
+      // 記帳是這一頁最常做的事，排在結算正下方
       '<section class="block">' +
         '<div class="block-head">' +
           '<h2>所有支出<span class="count">' + trip.expenses.length + '</span></h2>' +
@@ -30,7 +31,9 @@ App.Expenses = (function () {
         (trip.expenses.length === 0
           ? U.empty(readOnly ? '還沒有任何支出。' : '還沒有支出。按「記一筆」開始，或在「行程」頁填了金額後一鍵加進來。')
           : expenseTable(trip, readOnly)) +
-      '</section>';
+      '</section>' +
+      // 還款是偶爾才用的，放最後
+      paymentsBlock(trip, readOnly);
 
     view.onclick = function (e) { onClick(e, trip, readOnly); };
   }
@@ -83,16 +86,19 @@ App.Expenses = (function () {
           '<td class="right">' + tag + '</td></tr>';
       }).join('') + '</tbody></table>' +
       '<p class="muted">金額以 ' + U.esc(cur) + ' 計。</p>' +
-      paymentsBlock(trip, readOnlyNow) +
     '</section>';
   }
 
   /** 已結清記錄：旅途中先還掉的錢 */
   function paymentsBlock(trip, readOnlyNow) {
     var list = trip.payments || [];
-    return '<h4 class="sub">已結清記錄<span class="sub-hint">' + list.length + ' 筆</span></h4>' +
+    return '<section class="block">' +
+      '<div class="block-head">' +
+        '<h2>已結清記錄<span class="count">' + list.length + '</span></h2>' +
+        (readOnlyNow ? '' : '<button class="btn btn-ghost btn-sm" data-act="pay-add">+ 記一筆還款</button>') +
+      '</div>' +
       (list.length === 0
-        ? '<p class="muted">還沒有人先還過錢。有人先結清的話，按上面轉帳列旁邊的「已結清」就會記在這裡。</p>'
+        ? U.empty('還沒有人先還過錢。有人先結清的話，按上面轉帳列旁邊的「已結清」就會記在這裡。')
         : '<table class="table"><tbody>' + list.slice().reverse().map(function (p) {
             return '<tr>' +
               '<td class="small">' + U.esc(p.date || '') + '</td>' +
@@ -105,7 +111,7 @@ App.Expenses = (function () {
                 '<button class="icon-btn" data-act="pay-del" data-id="' + U.esc(p.id) + '">' + U.icon('trash') + '</button></td>') +
             '</tr>';
           }).join('') + '</tbody></table>') +
-      (readOnlyNow ? '' : '<button class="btn btn-ghost btn-sm" data-act="pay-add">+ 記一筆還款</button>');
+    '</section>';
   }
 
   function expenseTable(trip, readOnly) {

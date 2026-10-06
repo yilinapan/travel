@@ -26,10 +26,11 @@ App.Expenses = (function () {
       '<section class="block">' +
         '<div class="block-head">' +
           '<h2>所有支出<span class="count">' + trip.expenses.length + '</span></h2>' +
-          (readOnly ? '' : '<button class="icon-add" data-act="add" title="記一筆支出" aria-label="記一筆支出">' + U.icon('plus', 16) + '</button>') +
+          (readOnly ? '' : '<button class="btn-add" data-act="add">' + U.icon('plus', 15) + '記一筆支出</button>') +
         '</div>' +
         (trip.expenses.length === 0
-          ? U.empty(readOnly ? '還沒有任何支出。' : '還沒有支出。按右邊的 ＋ 記一筆，或在「行程」頁填了金額後一鍵加進來。')
+          ? U.empty(readOnly ? '還沒有任何支出。' : '還沒有支出。也可以在「行程」頁填了金額之後一鍵加進來。',
+              readOnly ? '' : '<button class="btn btn-primary" data-act="add">' + U.icon('plus', 16) + '記一筆支出</button>')
           : expenseTable(trip, readOnly)) +
       '</section>' +
       // 還款是偶爾才用的，放最後
@@ -65,7 +66,7 @@ App.Expenses = (function () {
           ? '<div class="all-clear">' + U.icon('check', 16) + ' 全部結清了，不用再轉帳。共已結清 ' + U.money(r.settledCents, cur) + '。</div>'
           : '<div class="all-clear">' + U.icon('check', 16) + ' 目前沒有人欠人，不用轉帳。</div>');
 
-    return '<section class="block is-card block-settle">' +
+    return '<section class="block block-settle">' +
       '<div class="block-head"><h2>結算結果</h2><span class="total">總支出 ' + U.money(r.totalCents, cur) + '</span></div>' +
       warn +
       transfers +
@@ -90,16 +91,21 @@ App.Expenses = (function () {
     '</section>';
   }
 
-  /** 已結清記錄：旅途中先還掉的錢 */
+  /** 這一段在說明視窗裡用，手機點一下就能看（不用只能滑鼠滑過去的 tooltip） */
+  var PAY_INFO = '這裡記錄旅途中已經先還給對方的款項。結算時會自動扣除，不會刪除原本的支出紀錄。';
+
+  /** 已結清紀錄：旅途中先還掉的錢 */
   function paymentsBlock(trip, readOnlyNow) {
     var list = trip.payments || [];
     return '<section class="block">' +
       '<div class="block-head">' +
-        '<h2>已結清記錄<span class="count">' + list.length + '</span></h2>' +
-        (readOnlyNow ? '' : '<button class="icon-add" data-act="pay-add" title="記一筆還款" aria-label="記一筆還款">' + U.icon('plus', 16) + '</button>') +
+        '<h2>已結清紀錄<span class="count">' + list.length + '</span>' +
+          '<button class="icon-btn" data-act="pay-info" title="這是什麼？" aria-label="已結清紀錄是什麼">' +
+          U.icon('info', 16) + '</button></h2>' +
+        (readOnlyNow ? '' : '<button class="btn-add" data-act="pay-add">' + U.icon('plus', 15) + '新增還款</button>') +
       '</div>' +
       (list.length === 0
-        ? U.empty('還沒有人先還過錢。有人還了的話，按上面轉帳列旁邊的「記錄還款」，或右邊的 ＋，就會記在這裡。')
+        ? U.empty('還沒有人先還過錢。有人還了的話，按上面轉帳列旁邊的「記錄還款」，或這裡的「＋ 新增還款」，就會記在這裡。')
         : '<table class="table"><tbody>' + list.slice().reverse().map(function (p) {
             return '<tr>' +
               '<td class="small">' + U.esc(p.date || '') + '</td>' +
@@ -108,8 +114,8 @@ App.Expenses = (function () {
                 (p.note ? '<div class="exp-note">' + U.esc(p.note) + '</div>' : '') + '</td>' +
               '<td class="right nowrap">' + U.money(App.Settle.toCents(p.amount), p.currency) + '</td>' +
               (readOnlyNow ? '' : '<td class="right nowrap">' +
-                '<button class="icon-btn" data-act="pay-edit" data-id="' + U.esc(p.id) + '">' + U.icon('edit') + '</button>' +
-                '<button class="icon-btn" data-act="pay-del" data-id="' + U.esc(p.id) + '">' + U.icon('trash') + '</button></td>') +
+                '<button class="icon-btn" data-act="pay-edit" data-id="' + U.esc(p.id) + '" title="修改" aria-label="修改這筆還款">' + U.icon('edit') + '</button>' +
+                '<button class="icon-btn" data-act="pay-del" data-id="' + U.esc(p.id) + '" title="刪除" aria-label="刪除這筆還款">' + U.icon('trash') + '</button></td>') +
             '</tr>';
           }).join('') + '</tbody></table>') +
     '</section>';
@@ -137,8 +143,8 @@ App.Expenses = (function () {
         '<td>' + U.esc(nameOf(trip, e.payerId) || '（已刪除）') + '</td>' +
         '<td class="small">' + U.esc(sharerText) + '</td>' +
         (readOnly ? '' : '<td class="right nowrap">' +
-          '<button class="icon-btn" data-act="edit" data-id="' + U.esc(e.id) + '">' + U.icon('edit') + '</button>' +
-          '<button class="icon-btn" data-act="del" data-id="' + U.esc(e.id) + '">' + U.icon('trash') + '</button></td>') +
+          '<button class="icon-btn" data-act="edit" data-id="' + U.esc(e.id) + '" title="修改" aria-label="修改這筆支出">' + U.icon('edit') + '</button>' +
+          '<button class="icon-btn" data-act="del" data-id="' + U.esc(e.id) + '" title="刪除" aria-label="刪除這筆支出">' + U.icon('trash') + '</button></td>') +
       '</tr>';
     }).join('');
 
@@ -155,11 +161,14 @@ App.Expenses = (function () {
 
   // ---------------------------------------------------------------
   function onClick(e, trip, readOnly) {
-    if (readOnly) return;
     var btn = e.target.closest('[data-act]');
     if (!btn) return;
     var act = btn.getAttribute('data-act');
     var id = btn.getAttribute('data-id');
+
+    // 說明視窗唯讀模式也要能打開，所以放在 readOnly 檢查前面
+    if (act === 'pay-info') return U.info('已結清紀錄', PAY_INFO);
+    if (readOnly) return;
 
     if (act === 'settle') {
       // 從結算那一列按下來的，金額先幫使用者填好

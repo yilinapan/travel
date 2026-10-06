@@ -40,10 +40,16 @@ window.App = window.App || {};
   function renderHeader() {
     var trip = activeTrip();
     var acts = document.getElementById('headerActions');
+    var bar = document.getElementById('topbar');
 
-    document.getElementById('headerEyebrow').textContent = trip ? 'Trip' : '旅遊規劃';
+    // 只有「旅程」頁放完整摘要；行程、分帳、打包頁留精簡標題，
+    // 不要每一頁都把同一串旅程資訊再重複一次。
+    var full = current === 'trips' && !!trip;
+
     document.getElementById('headerTitle').textContent = trip ? trip.name : '旅遊規劃';
-    document.getElementById('headerMeta').innerHTML = trip ? metaHtml(trip) : '';
+    document.getElementById('headerMeta').innerHTML = full ? metaHtml(trip) : '';
+    bar.className = 'topbar' + (full ? '' : ' is-compact');
+    renderCover(full ? trip : null);
 
     if (readOnly) {
       // 唯讀模式只有一個動作，而且是主要動作，直接顯示不用收起來
@@ -57,8 +63,8 @@ window.App = window.App || {};
         '<button class="tool-item" data-act="settings">' + U.icon('gear', 16) + '設定</button>';
       acts.innerHTML =
         '<div class="tool-menu" id="toolMenu" hidden>' + items + '</div>' +
-        '<button class="tool-btn" data-act="more" aria-label="更多工具" aria-expanded="false">' +
-          '<span class="tool-dots">⋯</span></button>';
+        '<button class="tool-btn" data-act="more" aria-label="工具選單" aria-expanded="false">' +
+          U.icon('gear', 16) + '工具</button>';
     }
     renderSyncStatus();
     renderFootNote();
@@ -89,17 +95,55 @@ window.App = window.App || {};
   });
   document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeTools(); });
 
-  /** 頁首那一行摘要：日期、天數、人數、總支出 */
+  /**
+   * 旅程頁的摘要：日期、天數、人數、金額各自成一段，
+   * 不要全部擠成一條難讀的文字。金額用銀杏金，其餘是灰棕。
+   */
   function metaHtml(trip) {
     var r = App.Settle.compute(trip);
     var parts = [];
     if (trip.startDate && trip.endDate) {
-      parts.push(U.esc(trip.startDate.replace(/-/g, '.') + ' — ' + trip.endDate.slice(5).replace('-', '.')));
+      parts.push('<span class="hm-range">' +
+        U.esc(trip.startDate.replace(/-/g, '.') + ' — ' + trip.endDate.slice(5).replace('-', '.')) +
+        '</span>');
     }
-    parts.push('<b>' + S.dayCount(trip) + '</b> 天');
-    if (trip.members.length) parts.push('<b>' + trip.members.length + '</b> 人');
-    if (r.totalCents) parts.push('<b>' + U.money(r.totalCents, '') + '</b> ' + U.esc(trip.baseCurrency));
-    return parts.map(function (p) { return '<span>' + p + '</span>'; }).join('');
+    parts.push('<span class="hm-item"><b>' + S.dayCount(trip) + '</b> 天</span>');
+    if (trip.members.length) parts.push('<span class="hm-item"><b>' + trip.members.length + '</b> 人</span>');
+    if (r.totalCents) {
+      parts.push('<span class="hm-amount">' + U.money(r.totalCents, '') + ' ' + U.esc(trip.baseCurrency) + '</span>');
+    }
+    return parts.join('');
+  }
+
+  /**
+   * 旅程頁的低高度封面：直接拿這趟旅程「已經填好的第一張行程圖片」來用。
+   * 不新增任何資料欄位，也不動雲端同步的格式。
+   * 沒有圖片就維持乾淨的文字版 —— 不放假圖。
+   */
+  function renderCover(trip) {
+    var box = document.getElementById('headerCover');
+    if (!box) return;
+    var url = trip ? firstImage(trip) : '';
+    if (!url) {
+      box.hidden = true;
+      box.style.backgroundImage = '';
+      return;
+    }
+    box.hidden = false;
+    // 圖片載不出來時這一塊就是空的底色，不會出現破圖圖示
+    box.style.backgroundImage = 'url("' + encodeURI(url).replace(/"/g, '%22') + '")';
+  }
+
+  /** 找出這趟旅程第一個填了圖片的行程點 */
+  function firstImage(trip) {
+    for (var d = 0; d < trip.days.length; d++) {
+      var items = trip.days[d].items || [];
+      for (var i = 0; i < items.length; i++) {
+        var src = String(items[i].image || '').trim();
+        if (src) return src;
+      }
+    }
+    return '';
   }
 
   /** 頁尾：一句話帶過，細節收在說明圓圈裡 */
@@ -115,7 +159,7 @@ window.App = window.App || {};
       box.innerHTML = '資料只存在這台裝置' +
         U.hint('資料存在你這台裝置的瀏覽器裡，不會上傳到任何伺服器。' +
                '換一台裝置、或清除瀏覽器資料，內容就會不見。' +
-               '按右下角的 ⋯ 打開「設定」可以開啟雲端同步，或定期下載備份檔。');
+               '按右下角的「工具」打開設定，可以開啟雲端同步，或定期下載備份檔。');
     }
   }
 
@@ -155,7 +199,8 @@ window.App = window.App || {};
       var box = U.el(
         '<div class="modal-back">' +
           '<div class="modal">' +
-            '<div class="modal-head"><h3>分享這趟行程</h3><button class="icon-btn" data-act="x">✕</button></div>' +
+            '<div class="modal-head"><h3>分享這趟行程</h3>' +
+              '<button class="icon-btn" data-act="x" aria-label="關閉">' + U.icon('close') + '</button></div>' +
             '<div class="modal-body">' +
               '<p class="muted">把下面這串網址傳給同行的人，他們點開就能看到<strong>行程</strong>和<strong>自己的分帳金額</strong>（不能修改）。</p>' +
               warn +

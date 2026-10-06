@@ -13,7 +13,8 @@ App.Trips = (function () {
       '<section class="block">' +
         secHead('我的旅程', '', 'new-trip', '新增旅程') +
         (trips.length === 0
-          ? U.empty('還沒有任何旅程。按右邊的 ＋ 開始規劃第一趟。')
+          ? U.empty('還沒有任何旅程。',
+              '<button class="btn btn-primary" data-act="new-trip">' + U.icon('plus', 16) + '新增旅程</button>')
           : '<div class="trip-list">' + trips.map(function (t) { return tripCard(t, cur); }).join('') + '</div>') +
       '</section>' +
       (cur ? settingsBlock(cur) : '');
@@ -28,20 +29,20 @@ App.Trips = (function () {
       '<strong>資料存在這台裝置。</strong>換裝置或清除瀏覽器資料就會不見。' +
       U.hint('資料存在你這台裝置的瀏覽器裡，不會上傳到任何伺服器。' +
              '換一台裝置、或清除瀏覽器資料，這裡的內容就會不見。' +
-             '按右下角的 ⋯ 打開「設定」就能開啟雲端同步，讓手機和電腦看到同一份資料；' +
+             '按右下角的「工具」打開設定，就能開啟雲端同步，讓手機和電腦看到同一份資料；' +
              '或是定期下載備份檔存到雲端硬碟。') +
       '</div>';
   }
 
-  /** 區塊標題列：標題在左，右邊一個「＋」 */
+  /** 區塊標題列：標題在左，右邊是「圖示＋文字」的新增鈕（不要只放一個加號） */
   function secHead(title, hint, act, addTitle, extraHtml) {
     return '<div class="sec-head">' +
       '<h3 class="sec-title">' + U.esc(title) + '</h3>' +
       (hint ? '<span class="sec-hint">' + hint + '</span>' : '') +
       '<span class="spacer"></span>' +
       (extraHtml || '') +
-      (act ? '<button class="icon-add" data-act="' + act + '" title="' + U.esc(addTitle) + '"' +
-             ' aria-label="' + U.esc(addTitle) + '">' + U.icon('plus', 16) + '</button>' : '') +
+      (act ? '<button class="btn-add" data-act="' + act + '">' +
+             U.icon('plus', 15) + U.esc(addTitle) + '</button>' : '') +
     '</div>';
   }
 
@@ -80,17 +81,18 @@ App.Trips = (function () {
 
   function settingsBlock(t) {
     return '<section class="block">' +
-      '<div class="block-head"><h2>' + U.esc(t.name) + '</h2><span class="block-head-tag">設定</span></div>' +
+      // 旅程名稱上面的頁首已經有了，這裡不用再重複一次
+      '<div class="block-head"><h2>旅程設定</h2></div>' +
 
-      secHead('同行成員', '分帳會用到', 'add-member', '加入成員') +
+      secHead('同行成員', '分帳會用到', 'add-member', '新增成員') +
       (t.members.length === 0
         ? U.empty('還沒有成員。至少加兩個人才能分帳。')
         : '<div class="chip-row">' + t.members.map(function (m) {
             return '<span class="chip">' + U.esc(m.name) +
-              '<button class="chip-x" data-act="del-member" data-id="' + U.esc(m.id) + '" title="移除">' + U.icon('close', 13) + '</button></span>';
+              '<button class="chip-x" data-act="del-member" data-id="' + U.esc(m.id) + '" title="移除" aria-label="移除 ' + U.esc(m.name) + '">' + U.icon('close', 13) + '</button></span>';
           }).join('') + '</div>') +
 
-      secHead('幣別與匯率', '結算以 ' + U.esc(t.baseCurrency) + ' 顯示', 'add-cur', '加入幣別',
+      secHead('幣別與匯率', '結算以 ' + U.esc(t.baseCurrency) + ' 顯示', 'add-cur', '新增幣別',
         '<button class="btn btn-ghost btn-sm" data-act="edit-base">改基準幣別</button>') +
       '<p class="muted">匯率請自己填' +
       U.hint('例如 1 日幣 ≈ 0.21 台幣，就填 0.21。' +
@@ -101,8 +103,8 @@ App.Trips = (function () {
         : '<table class="table"><thead><tr><th>幣別</th><th>1 單位 = 多少 ' + U.esc(t.baseCurrency) + '</th><th></th></tr></thead><tbody>' +
           t.currencies.map(function (c) {
             return '<tr><td><strong>' + U.esc(c.code) + '</strong></td><td>' + U.esc(c.rate) + '</td>' +
-              '<td class="right"><button class="icon-btn" data-act="edit-cur" data-code="' + U.esc(c.code) + '">' + U.icon('edit') + '</button>' +
-              '<button class="icon-btn" data-act="del-cur" data-code="' + U.esc(c.code) + '">' + U.icon('trash') + '</button></td></tr>';
+              '<td class="right nowrap"><button class="icon-btn" data-act="edit-cur" data-code="' + U.esc(c.code) + '" title="修改匯率" aria-label="修改匯率">' + U.icon('edit') + '</button>' +
+              '<button class="icon-btn" data-act="del-cur" data-code="' + U.esc(c.code) + '" title="刪除幣別" aria-label="刪除幣別">' + U.icon('trash') + '</button></td></tr>';
           }).join('') + '</tbody></table>') +
     '</section>';
   }

@@ -66,7 +66,7 @@ App.UI = (function () {
             '<div class="modal-foot">' +
               (opts.danger ? '<button type="button" class="btn btn-danger-ghost" data-act="danger">' + esc(opts.danger) + '</button>' : '') +
               '<span class="spacer"></span>' +
-              '<button type="button" class="btn btn-ghost" data-act="cancel">取消</button>' +
+              (opts.noCancel ? '' : '<button type="button" class="btn btn-ghost" data-act="cancel">取消</button>') +
               '<button type="button" class="btn btn-primary" data-act="ok">' + esc(opts.submitText || '確定') + '</button>' +
             '</div>' +
           '</div>' +
@@ -241,6 +241,19 @@ App.UI = (function () {
     return '<div class="field">' + label + input + hint + '</div>';
   }
 
+  /**
+   * 純說明視窗：只有一顆「知道了」。
+   * 手機沒有 hover，比較長的說明一定要「點得開」，不能只靠滑鼠滑過去。
+   */
+  function info(title, text) {
+    return modal({
+      title: title,
+      noCancel: true,
+      submitText: '知道了',
+      fields: [{ name: '_info', type: 'note', label: '', hint: text }]
+    });
+  }
+
   /** 確認視窗（危險操作用） */
   function confirmDanger(title, message, okText) {
     return modal({
@@ -325,7 +338,8 @@ App.UI = (function () {
     upload:  '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 19h14"/>',
     cloud:   '<path d="M7 18a4 4 0 0 1 .6-8 5.5 5.5 0 0 1 10.5 1.6A3.5 3.5 0 0 1 17.5 18z"/>',
     check:   '<path d="M5 12.5 10 17 19 7"/>',
-    reset:   '<path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v5h5"/>'
+    reset:   '<path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v5h5"/>',
+    info:    '<circle cx="12" cy="12" r="9"/><path d="M12 11v5.5"/><path d="M12 7.6v.6"/>'
   };
 
   /** 回傳一個吃 currentColor 的小圖示 */
@@ -411,6 +425,6 @@ App.UI = (function () {
     esc: esc, el: el, num: num, money: money, toast: toast, modal: modal,
     confirmDanger: confirmDanger, ask: ask, copyText: copyText,
     downloadText: downloadText, pickTextFile: pickTextFile, empty: empty,
-    hint: hint, hideHint: hideHint, icon: icon
+    hint: hint, hideHint: hideHint, icon: icon, info: info
   };
 })();

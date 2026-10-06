@@ -585,3 +585,8 @@ h4.sub {
 h4.sub { margin-top: 26px; }
 h4.sub:first-of-type { margin-top: 18px; }
 .block-settle .muted + h4.sub { margin-top: 22px; }
+
+/* ---------- 已結清 ---------- */
+.settle-btn { margin-left: 10px; flex: none; }
+.net-zero { color: var(--ok); }
+.muted-cell { color: var(--muted); font-size: 13px; }

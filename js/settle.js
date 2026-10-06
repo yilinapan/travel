@@ -16,6 +16,13 @@ App.Settle = (function () {
     return (cents / 100).toFixed(2).replace(/\.00$/, '');
   }
 
+  /** 查成員名字；找不到回傳空字串 */
+  function nameOf(trip, id) {
+    var list = trip.members || [];
+    for (var i = 0; i < list.length; i++) if (list[i].id === id) return list[i].name;
+    return '';
+  }
+
   /** 查某幣別對基準幣別的匯率；找不到回傳 null */
   function rateOf(trip, code) {
     if (!code || code === trip.baseCurrency) return 1;
@@ -142,18 +149,52 @@ App.Settle = (function () {
       }
     });
 
+    // ---- 還款：旅途中已經先還掉的錢 ----
+    // 支出是「誰幫大家墊錢」，還款是「誰還錢給誰」，兩者分開記。
+    var repaidOut = {}, repaidIn = {};
+    members.forEach(function (m) { repaidOut[m.id] = 0; repaidIn[m.id] = 0; });
+    var settled = 0;
+
+    (trip.payments || []).forEach(function (p) {
+      var who = (nameOf(trip, p.fromId) || '某人') + ' → ' + (nameOf(trip, p.toId) || '某人');
+      var r = rateOf(trip, p.currency);
+      if (r === null) {
+        warnings.push('還款「' + who + '」用的幣別 ' + p.currency + ' 還沒設定匯率，暫時以 1:1 計算。');
+        r = 1;
+      }
+      var cents = Math.round(toCents(p.amount) * r);
+      if (cents <= 0) return;
+
+      if (!paid.hasOwnProperty(p.fromId) || !paid.hasOwnProperty(p.toId)) {
+        warnings.push('有一筆還款的對象已經不在成員名單裡，這筆不列入計算。');
+        return;
+      }
+      if (p.fromId === p.toId) {
+        warnings.push('有一筆還款的付款人和收款人是同一個人，這筆不列入計算。');
+        return;
+      }
+
+      repaidOut[p.fromId] += cents;
+      repaidIn[p.toId] += cents;
+      settled += cents;
+    });
+
     var perMember = members.map(function (m) {
       return {
         id: m.id,
         name: m.name,
         paidCents: paid[m.id],
         shareCents: share[m.id],
-        netCents: paid[m.id] - share[m.id]
+        repaidOutCents: repaidOut[m.id],   // 已經還給別人的
+        repaidInCents: repaidIn[m.id],     // 已經收到別人還的
+        // 還了錢就少欠一點，收了錢就少收一點
+        netCents: paid[m.id] - share[m.id] + repaidOut[m.id] - repaidIn[m.id]
       };
     });
 
     return {
       totalCents: total,
+      settledCents: settled,
       perMember: perMember,
       transfers: minimalTransfers(perMember),
       warnings: warnings

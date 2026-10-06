@@ -312,6 +312,125 @@ function registerSettleTests(t, eq, Settle) {
     eq(r.perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和仍為 0');
   });
 
+  // =================================================================
+  // 還款（旅途中先結清的部分）
+  // =================================================================
+
+  /** 基本情境：Allie 墊了 900，三人均分，每人該出 300 */
+  function tripWithDebt(payments) {
+    return trip({
+      expenses: [{ title: '住宿', amount: 900, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'] }],
+      payments: payments || []
+    });
+  }
+
+  t('還款後，還錢的人欠得比較少，收錢的人應收也變少', function () {
+    var r = Settle.compute(tripWithDebt([
+      { fromId: 'b', toId: 'a', amount: 300, currency: 'TWD', date: '2026-03-01' }
+    ]));
+    eq(net(r, 'b'), 0, '小明已全額還清');
+    eq(net(r, 'a'), 30000, 'Allie 只剩小華那 300 要收');
+    eq(net(r, 'c'), -30000, '小華沒還，仍要付 300');
+  });
+
+  t('全部的人都還清之後，不會再有任何轉帳', function () {
+    var r = Settle.compute(tripWithDebt([
+      { fromId: 'b', toId: 'a', amount: 300, currency: 'TWD' },
+      { fromId: 'c', toId: 'a', amount: 300, currency: 'TWD' }
+    ]));
+    eq(r.transfers.length, 0, '轉帳筆數');
+    eq(r.perMember.map(function (m) { return m.netCents; }), [0, 0, 0], '每個人都歸零');
+  });
+
+  t('只還一部分時，剩下的繼續算在待結清裡', function () {
+    var r = Settle.compute(tripWithDebt([
+      { fromId: 'b', toId: 'a', amount: 120, currency: 'TWD' }
+    ]));
+    eq(net(r, 'b'), -18000, '小明還差 180');
+    eq(r.transfers.filter(function (x) { return x.fromId === 'b'; })[0].cents, 18000, '待轉金額');
+  });
+
+  t('還款用外幣時會依匯率換算（50,000 韓元 × 0.024 = 1,200 台幣）', function () {
+    var t0 = trip({
+      currencies: [{ code: 'KRW', rate: 0.024 }],
+      expenses: [{ title: '住宿', amount: 3600, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'] }],
+      payments: [{ fromId: 'b', toId: 'a', amount: 50000, currency: 'KRW' }]
+    });
+    var r = Settle.compute(t0);
+    eq(net(r, 'b'), 0, '小明該出 1,200，用韓幣還清剛好歸零');
+    eq(r.settledCents, 120000, '已結清總額（台幣分）');
+  });
+
+  t('有還款時，淨額總和仍然是 0', function () {
+    var r = Settle.compute(trip({
+      expenses: [
+        { title: '住宿', amount: 1234.56, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'] },
+        { title: '晚餐', amount: 777, currency: 'TWD', payerId: 'b', shareIds: ['b', 'c'] }
+      ],
+      payments: [
+        { fromId: 'b', toId: 'a', amount: 111.11, currency: 'TWD' },
+        { fromId: 'c', toId: 'a', amount: 250, currency: 'TWD' }
+      ]
+    }));
+    eq(r.perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和');
+  });
+
+  t('有還款時，結算後每個人仍然剛好歸零', function () {
+    var r = Settle.compute(trip({
+      expenses: [{ title: '住宿', amount: 1000, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'] }],
+      payments: [{ fromId: 'b', toId: 'a', amount: 200, currency: 'TWD' }]
+    }));
+    var bal = {};
+    r.perMember.forEach(function (m) { bal[m.id] = m.netCents; });
+    r.transfers.forEach(function (x) { bal[x.fromId] += x.cents; bal[x.toId] -= x.cents; });
+    eq([bal.a, bal.b, bal.c], [0, 0, 0], '結算後餘額');
+  });
+
+  t('還太多錢時，變成對方欠他（不會算錯方向）', function () {
+    var r = Settle.compute(tripWithDebt([
+      { fromId: 'b', toId: 'a', amount: 500, currency: 'TWD' }   // 只欠 300 卻還了 500
+    ]));
+    eq(net(r, 'b'), 20000, '小明反而應收 200');
+    eq(r.transfers.filter(function (x) { return x.toId === 'b'; }).length, 1, '應該有人要還錢給小明');
+  });
+
+  t('每個人的明細會分開記「已還」與「已收」', function () {
+    var r = Settle.compute(tripWithDebt([
+      { fromId: 'b', toId: 'a', amount: 300, currency: 'TWD' }
+    ]));
+    var b = r.perMember.filter(function (m) { return m.id === 'b'; })[0];
+    var a = r.perMember.filter(function (m) { return m.id === 'a'; })[0];
+    eq(b.repaidOutCents, 30000, '小明已還');
+    eq(b.repaidInCents, 0, '小明沒收到還款');
+    eq(a.repaidInCents, 30000, 'Allie 已收');
+  });
+
+  t('自己還給自己會被擋下來並發出警告', function () {
+    var r = Settle.compute(tripWithDebt([
+      { fromId: 'b', toId: 'b', amount: 300, currency: 'TWD' }
+    ]));
+    if (r.warnings.length === 0) throw new Error('應該要有警告訊息');
+    eq(net(r, 'b'), -30000, '不該改變任何人的欠款');
+  });
+
+  t('還款對象已被刪除時發出警告，不列入計算', function () {
+    var r = Settle.compute(tripWithDebt([
+      { fromId: 'b', toId: '已刪除', amount: 300, currency: 'TWD' }
+    ]));
+    if (r.warnings.length === 0) throw new Error('應該要有警告訊息');
+    eq(net(r, 'b'), -30000, '小明仍然欠 300');
+  });
+
+  t('沒有任何還款記錄時，行為跟以前完全一樣', function () {
+    var withField = Settle.compute(tripWithDebt([]));
+    var without = Settle.compute(trip({
+      expenses: [{ title: '住宿', amount: 900, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'] }]
+    }));
+    eq(withField.perMember.map(function (m) { return m.netCents; }),
+       without.perMember.map(function (m) { return m.netCents; }), '淨額');
+    eq(withField.settledCents, 0, '已結清總額為 0');
+  });
+
   t('備註欄位不影響計算', function () {
     var withNote = Settle.compute(trip({
       expenses: [{ title: '午餐', note: '小明請客的那餐', amount: 300, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'] }]

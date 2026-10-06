@@ -166,7 +166,7 @@ App.Cloud = (function () {
 
   /** 把全部旅程攤平成四張分頁的列 */
   function toRows(trips) {
-    var rows = { trips: [], items: [], expenses: [], checklist: [] };
+    var rows = { trips: [], items: [], expenses: [], payments: [], checklist: [] };
 
     trips.forEach(function (t) {
       rows.trips.push([
@@ -215,6 +215,18 @@ App.Cloud = (function () {
         ]);
       });
 
+      (t.payments || []).forEach(function (p) {
+        rows.payments.push([
+          t.name,
+          p.date || '',
+          nameOf(t, p.fromId),
+          nameOf(t, p.toId),
+          String(p.amount == null ? '' : p.amount),
+          p.currency || '',
+          p.note || ''
+        ]);
+      });
+
       (t.checklist || []).forEach(function (g) {
         (g.items || []).forEach(function (it) {
           rows.checklist.push([
@@ -249,7 +261,7 @@ App.Cloud = (function () {
         byName[key] = {
           id: S.uid('trip'), name: key, startDate: '', endDate: '',
           baseCurrency: 'TWD', currencies: [], members: [],
-          days: [], expenses: [], checklist: [],
+          days: [], expenses: [], payments: [], checklist: [],
           createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
         };
         order.push(key);
@@ -359,6 +371,27 @@ App.Cloud = (function () {
         payerId: payer ? payer.id : '',
         shareIds: shareIds,
         extras: extras
+      });
+    });
+
+    // --- 還款 ---
+    (rows.payments || []).forEach(function (r) {
+      var t = ensureTrip(r[0]);
+      if (!t) return;
+      var from = ensureMember(t, r[2]);
+      var to = ensureMember(t, r[3]);
+      if (!from || !to) {
+        warnings.push('「' + t.name + '」有一筆還款沒寫清楚是誰還給誰，已略過。');
+        return;
+      }
+      t.payments.push({
+        id: S.uid('pay'),
+        date: String(r[1] || '').trim(),
+        fromId: from.id,
+        toId: to.id,
+        amount: Number(r[4]) || 0,
+        currency: String(r[5] || '').trim() || t.baseCurrency,
+        note: String(r[6] || '').trim()
       });
     });
 

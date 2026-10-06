@@ -303,10 +303,56 @@ function registerCloudTests(t, eq, App) {
     eq(Settle.compute(t0).perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和為 0');
   });
 
+  // --- 還款 ---
+
+  t('還款會存成名字，來回轉換後內容一致', function () {
+    var a = sampleTrip();
+    a.payments = [{ id: 'p1', date: '2026-03-02', fromId: 'm2', toId: 'm1',
+                    amount: 50000, currency: 'JPY', note: 'Day1 三筆的份' }];
+    var rows = Cloud.toRows([a]);
+    eq(rows.payments[0], ['關西5天', '2026-03-02', '小明', 'Allie', '50000', 'JPY', 'Day1 三筆的份'], '還款列');
+
+    var b = Cloud.fromRows(rows).trips[0];
+    var p = b.payments[0];
+    eq(p.amount, 50000, '金額');
+    eq(p.currency, 'JPY', '幣別');
+    eq(p.note, 'Day1 三筆的份', '備註');
+    eq(b.members.filter(function (m) { return m.id === p.fromId; })[0].name, '小明', '誰還的');
+    eq(b.members.filter(function (m) { return m.id === p.toId; })[0].name, 'Allie', '還給誰');
+  });
+
+  t('有還款時，來回轉換後結算結果完全一致', function () {
+    var a = sampleTrip();
+    a.payments = [{ id: 'p1', date: '', fromId: 'm2', toId: 'm1', amount: 100, currency: 'TWD', note: '' }];
+    var b = roundTrip(a);
+    var ra = Settle.compute(a), rb = Settle.compute(b);
+    eq(rb.settledCents, ra.settledCents, '已結清總額');
+    eq(rb.perMember.map(function (m) { return [m.name, m.netCents]; }),
+       ra.perMember.map(function (m) { return [m.name, m.netCents]; }), '每人淨額');
+  });
+
+  t('還款欄沒寫清楚誰還給誰時提出警告，不會算錯錢', function () {
+    var r = Cloud.fromRows({
+      trips: [['測試', '', '', 'TWD', 'A,B', '']],
+      payments: [['測試', '', 'A', '', '300', 'TWD', '']]
+    });
+    if (r.warnings.length === 0) throw new Error('應該要有警告訊息');
+    eq(r.trips[0].payments.length, 0, '這筆不列入');
+  });
+
+  t('舊資料沒有還款分頁時不會壞', function () {
+    var r = Cloud.fromRows({
+      trips: [['測試', '', '', 'TWD', 'A,B', '']],
+      expenses: [['測試', '', '晚餐', '', '300', 'TWD', 'A', '', '']]
+    });
+    eq(r.trips[0].payments, [], '還款為空陣列');
+    eq(Settle.compute(r.trips[0]).settledCents, 0, '已結清總額為 0');
+  });
+
   t('空資料不會當掉', function () {
     eq(Cloud.fromRows({}).trips, [], '空物件');
     eq(Cloud.fromRows(null).trips, [], 'null');
-    eq(Cloud.toRows([]), { trips: [], items: [], expenses: [], checklist: [] }, '空陣列');
+    eq(Cloud.toRows([]), { trips: [], items: [], expenses: [], payments: [], checklist: [] }, '空陣列');
   });
 }
 

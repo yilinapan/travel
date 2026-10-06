@@ -91,6 +91,7 @@ App.Store = (function () {
     if (!trip.currencies) trip.currencies = [];
     if (!trip.members) trip.members = [];
     if (!trip.expenses) trip.expenses = [];
+    if (!trip.payments) trip.payments = [];
     if (!trip.checklist) trip.checklist = [];
     if (!trip.days) trip.days = [];
     if (!trip.baseCurrency) trip.baseCurrency = 'TWD';

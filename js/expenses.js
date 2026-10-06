@@ -21,7 +21,7 @@ App.Expenses = (function () {
     var r = App.Settle.compute(trip);
 
     view.innerHTML =
-      settleBlock(trip, r) +
+      settleBlock(trip, r, readOnly) +
       '<section class="block">' +
         '<div class="block-head">' +
           '<h2>所有支出<span class="count">' + trip.expenses.length + '</span></h2>' +
@@ -35,8 +35,9 @@ App.Expenses = (function () {
     view.onclick = function (e) { onClick(e, trip, readOnly); };
   }
 
-  function settleBlock(trip, r) {
+  function settleBlock(trip, r, readOnlyNow) {
     var cur = trip.baseCurrency;
+    var hasPayments = (trip.payments || []).length > 0;
     var warn = r.warnings.length
       ? '<div class="notice notice-warn"><strong>請注意：</strong><ul>' +
         r.warnings.map(function (w) { return '<li>' + U.esc(w) + '</li>'; }).join('') + '</ul></div>'
@@ -47,28 +48,64 @@ App.Expenses = (function () {
           return '<li><strong>' + U.esc(nameOf(trip, t.fromId)) + '</strong>' +
             ' <span class="arrow">→</span> ' +
             '<strong>' + U.esc(nameOf(trip, t.toId)) + '</strong>' +
-            '<span class="amt">' + U.money(t.cents, cur) + '</span></li>';
+            '<span class="amt">' + U.money(t.cents, cur) + '</span>' +
+            (readOnlyNow ? '' :
+              '<button class="btn btn-ghost btn-sm settle-btn" data-act="settle"' +
+              ' data-from="' + U.esc(t.fromId) + '" data-to="' + U.esc(t.toId) + '"' +
+              ' data-cents="' + t.cents + '">已結清</button>') +
+            '</li>';
         }).join('') + '</ul>' +
-        '<p class="muted">共 ' + r.transfers.length + ' 筆轉帳就能全部結清。</p>'
-      : '<div class="all-clear">✅ 目前沒有人欠人，不用轉帳。</div>';
+        '<p class="muted">共 ' + r.transfers.length + ' 筆轉帳就能全部結清。'
+        + (r.settledCents ? '（已經結清了 ' + U.money(r.settledCents, cur) + '）' : '') + '</p>'
+      : (r.settledCents
+          ? '<div class="all-clear">✅ 全部結清了，不用再轉帳。共已結清 ' + U.money(r.settledCents, cur) + '。</div>'
+          : '<div class="all-clear">✅ 目前沒有人欠人，不用轉帳。</div>');
 
     return '<section class="block block-settle">' +
       '<div class="block-head"><h2>結算結果</h2><span class="total">總支出 ' + U.money(r.totalCents, cur) + '</span></div>' +
       warn +
       transfers +
       '<h4 class="sub">每個人的明細</h4>' +
-      '<table class="table"><thead><tr><th>成員</th><th class="right">付了</th><th class="right">該分攤</th><th class="right">結果</th></tr></thead><tbody>' +
+      '<table class="table"><thead><tr><th>成員</th><th class="right">付了</th><th class="right">該分攤</th>' +
+      (hasPayments ? '<th class="right">已還</th><th class="right">已收</th>' : '') +
+      '<th class="right">結果</th></tr></thead><tbody>' +
       r.perMember.map(function (m) {
         var tag = m.netCents > 0 ? '<span class="net net-plus">應收 ' + U.money(m.netCents, '') + '</span>'
           : m.netCents < 0 ? '<span class="net net-minus">應付 ' + U.money(-m.netCents, '') + '</span>'
-          : '<span class="net">持平</span>';
+          : '<span class="net net-zero">已結清</span>';
         return '<tr><td>' + U.esc(m.name) + '</td>' +
           '<td class="right">' + U.money(m.paidCents, '') + '</td>' +
           '<td class="right">' + U.money(m.shareCents, '') + '</td>' +
+          (hasPayments
+            ? '<td class="right muted-cell">' + (m.repaidOutCents ? U.money(m.repaidOutCents, '') : '—') + '</td>' +
+              '<td class="right muted-cell">' + (m.repaidInCents ? U.money(m.repaidInCents, '') : '—') + '</td>'
+            : '') +
           '<td class="right">' + tag + '</td></tr>';
       }).join('') + '</tbody></table>' +
       '<p class="muted">金額以 ' + U.esc(cur) + ' 計。</p>' +
+      paymentsBlock(trip, readOnlyNow) +
     '</section>';
+  }
+
+  /** 已結清記錄：旅途中先還掉的錢 */
+  function paymentsBlock(trip, readOnlyNow) {
+    var list = trip.payments || [];
+    return '<h4 class="sub">已結清記錄<span class="sub-hint">' + list.length + ' 筆</span></h4>' +
+      (list.length === 0
+        ? '<p class="muted">還沒有人先還過錢。有人先結清的話，按上面轉帳列旁邊的「已結清」就會記在這裡。</p>'
+        : '<table class="table"><tbody>' + list.slice().reverse().map(function (p) {
+            return '<tr>' +
+              '<td class="small">' + U.esc(p.date || '') + '</td>' +
+              '<td>' + U.esc(nameOf(trip, p.fromId) || '（已刪除）') +
+                ' <span class="arrow">→</span> ' + U.esc(nameOf(trip, p.toId) || '（已刪除）') +
+                (p.note ? '<div class="exp-note">' + U.esc(p.note) + '</div>' : '') + '</td>' +
+              '<td class="right nowrap">' + U.money(App.Settle.toCents(p.amount), p.currency) + '</td>' +
+              (readOnlyNow ? '' : '<td class="right nowrap">' +
+                '<button class="icon-btn" data-act="pay-edit" data-id="' + U.esc(p.id) + '">✏️</button>' +
+                '<button class="icon-btn" data-act="pay-del" data-id="' + U.esc(p.id) + '">🗑</button></td>') +
+            '</tr>';
+          }).join('') + '</tbody></table>') +
+      (readOnlyNow ? '' : '<button class="btn btn-ghost btn-sm" data-act="pay-add">+ 記一筆還款</button>');
   }
 
   function expenseTable(trip, readOnly) {
@@ -117,6 +154,24 @@ App.Expenses = (function () {
     var act = btn.getAttribute('data-act');
     var id = btn.getAttribute('data-id');
 
+    if (act === 'settle') {
+      // 從結算那一列按下來的，金額先幫使用者填好
+      return editPayment(trip, null, {
+        fromId: btn.getAttribute('data-from'),
+        toId: btn.getAttribute('data-to'),
+        amount: Number(btn.getAttribute('data-cents')) / 100
+      });
+    }
+    if (act === 'pay-add') return editPayment(trip, null, null);
+    if (act === 'pay-edit') return editPayment(trip, (trip.payments || []).filter(function (x) { return x.id === id; })[0], null);
+    if (act === 'pay-del') {
+      var pay = (trip.payments || []).filter(function (x) { return x.id === id; })[0];
+      if (!pay) return;
+      if (!U.ask('確定要刪除這筆還款記錄嗎？\n刪除後這筆錢會重新算回未結清。')) return;
+      trip.payments = trip.payments.filter(function (x) { return x.id !== id; });
+      S.touch(trip);
+      return App.render();
+    }
     if (act === 'add') return editExpense(trip, null);
     if (act === 'edit') return editExpense(trip, trip.expenses.filter(function (x) { return x.id === id; })[0]);
     if (act === 'del') {
@@ -131,6 +186,77 @@ App.Expenses = (function () {
       S.touch(trip);
       App.render();
     }
+  }
+
+  /**
+   * 記一筆還款。
+   * preset 是從結算那一列帶過來的（誰欠誰、欠多少），讓使用者按一下就好。
+   */
+  function editPayment(trip, pay, preset) {
+    var isNew = !pay;
+    var base = pay || preset || {};
+    var who = trip.members.map(function (m) { return { value: m.id, label: m.name }; });
+    var currencies = [{ value: trip.baseCurrency, label: trip.baseCurrency + '（基準）' }]
+      .concat(trip.currencies.map(function (c) { return { value: c.code, label: c.code }; }));
+
+    U.modal({
+      title: isNew ? '記一筆還款' : '編輯還款記錄',
+      submitText: isNew ? '記下來' : '儲存',
+      fields: [
+        {
+          name: 'fromId', label: '誰還的', type: 'select', required: true,
+          value: base.fromId || (who[0] && who[0].value), options: who
+        },
+        {
+          name: 'toId', label: '還給誰', type: 'select', required: true,
+          value: base.toId || (who[1] && who[1].value), options: who
+        },
+        {
+          name: 'amount', label: '金額', type: 'number', required: true, value: base.amount == null ? '' : base.amount,
+          hint: preset ? '已經幫你填上目前還欠的金額。只還一部分的話改小一點就好。' : '只還一部分也可以，剩下的會繼續算在未結清裡。'
+        },
+        {
+          name: 'currency', label: '幣別', type: 'select',
+          value: base.currency || trip.baseCurrency, options: currencies,
+          hint: '現場用現金還的話，選當地幣別就好，系統會依匯率換算。'
+        },
+        { name: 'date', label: '日期', type: 'date', value: base.date || todayOrStart(trip) },
+        { name: 'note', label: '備註', value: base.note || '', placeholder: '例如：Day1 三筆的份，現金給的' }
+      ],
+      validate: function (v) {
+        if (!(Number(v.amount) > 0)) return '金額要大於 0';
+        if (v.fromId === v.toId) return '還錢的人和收錢的人不能是同一個';
+        return null;
+      }
+    }).then(function (v) {
+      if (!v) return;
+      if (!trip.payments) trip.payments = [];
+      if (isNew) {
+        trip.payments.push({
+          id: S.uid('pay'), fromId: v.fromId, toId: v.toId,
+          amount: Number(v.amount), currency: v.currency, date: v.date, note: v.note
+        });
+        U.toast('已記下這筆還款');
+      } else {
+        pay.fromId = v.fromId; pay.toId = v.toId;
+        pay.amount = Number(v.amount); pay.currency = v.currency;
+        pay.date = v.date; pay.note = v.note;
+      }
+      S.touch(trip);
+      App.render();
+    });
+  }
+
+  /** 還款日期預設填今天；今天不在旅程期間內就填出發日 */
+  function todayOrStart(trip) {
+    var d = new Date();
+    var today = d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+    if (trip.startDate && trip.endDate && (today < trip.startDate || today > trip.endDate)) {
+      return trip.startDate;
+    }
+    return today;
   }
 
   function editExpense(trip, exp) {

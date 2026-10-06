@@ -17,7 +17,7 @@ App.Checklist = (function () {
     var pct = total ? Math.round(done / total * 100) : 0;
 
     view.innerHTML =
-      '<section class="block">' +
+      '<section class="block is-card">' +
         '<div class="block-head">' +
           '<h2>打包清單</h2>' +
           (readOnly ? '' : '<div class="btn-row">' +

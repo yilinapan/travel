@@ -231,10 +231,16 @@ h4.sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
 .trip-card {
   display: flex; align-items: stretch; gap: 8px;
   border: 1px solid var(--line); border-radius: var(--radius);
-  background: var(--surface-2);
+  background: var(--surface);
   overflow: hidden;
 }
-.trip-card.is-current { border-color: var(--brand); background: var(--brand-soft); }
+.trip-card {
+  background: var(--surface); border-color: var(--line);
+}
+.trip-card.is-current {
+  border-color: var(--line);
+  box-shadow: inset 3px 0 0 var(--brand);
+}
 .trip-card-main { flex: 1; min-width: 0; padding: 13px 15px; cursor: pointer; }
 .trip-card-main:hover h3 { color: var(--brand); }
 .trip-card-main h3 { font-size: 16px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -245,8 +251,9 @@ h4.sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
   margin-top: 7px; font-size: 12.5px; color: var(--muted);
 }
 .pill {
-  background: var(--brand); color: var(--brand-ink);
-  font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 20px;
+  background: none; color: var(--brand);
+  border: 1px solid var(--brand);
+  font-size: 10.5px; font-weight: 500; padding: 0 8px; border-radius: 20px;
 }
 
 /* ---------- 成員標籤 ---------- */
@@ -297,7 +304,7 @@ h4.sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
 
 .day-head {
   display: flex; align-items: baseline; gap: 10px 12px; flex-wrap: wrap;
-  padding: 24px 0 12px; border-bottom: 2px solid var(--brand); margin-bottom: 4px;
+  padding: 24px 0 12px; border-bottom: 1px solid var(--line); margin-bottom: 4px;
 }
 /* 日期要完整顯示，不可以被右邊的控制項擠到換行 */
 .day-head h3 { font-size: 17px; font-weight: 500; flex: 1 0 100%; }
@@ -605,7 +612,7 @@ h4.sub {
 .cl-item:hover { border-bottom-color: var(--line); }
 
 /* 當天日期底下那條線用楓紅，分段更清楚 */
-.day-head { border-bottom: 2px solid var(--brand); }
+
 
 /* 小標與上一段之間要留白，不然會黏在一起 */
 h4.sub { margin-top: 26px; }

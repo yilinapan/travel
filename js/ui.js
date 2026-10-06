@@ -324,7 +324,8 @@ App.UI = (function () {
     download:'<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>',
     upload:  '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 19h14"/>',
     cloud:   '<path d="M7 18a4 4 0 0 1 .6-8 5.5 5.5 0 0 1 10.5 1.6A3.5 3.5 0 0 1 17.5 18z"/>',
-    check:   '<path d="M5 12.5 10 17 19 7"/>'
+    check:   '<path d="M5 12.5 10 17 19 7"/>',
+    reset:   '<path d="M4 12a8 8 0 1 0 2.3-5.6"/><path d="M4 4v5h5"/>'
   };
 
   /** 回傳一個吃 currentColor 的小圖示 */

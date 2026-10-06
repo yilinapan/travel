@@ -177,7 +177,10 @@ a { color: var(--brand); }
 /* 主標：大、深色，一眼看得出是這一頁的主題 */
 .block-head h2 {
   font-size: 19px; font-weight: 500; letter-spacing: -.005em;
-  color: var(--text); flex: 1; min-width: 0;
+  color: var(--text);
+  /* min-width: max-content 讓標題不會被右邊的控制項擠扁；
+     放不下時是控制項換行，不是標題被切掉 */
+  flex: 1 1 auto; min-width: max-content;
 }
 .block-head-tag {
   font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
@@ -791,6 +794,11 @@ a { color: var(--brand); }
 .cl-item:hover .icon-btn { opacity: 1; }
 @media (hover: none) { .cl-item .icon-btn { opacity: .7; } }
 
-/* 分類標題列裡的「＋」小一號，才不會比旁邊的編輯／刪除搶眼 */
-.icon-add-sm { width: 24px; height: 24px; }
 .cl-group-act { align-items: center; }
+
+/* 標題列右側的控制項收成一組，一起換行 */
+.head-tools {
+  display: flex; align-items: center; gap: 6px;
+  margin-left: auto; flex-wrap: wrap;
+}
+.head-tools .member-filter { max-width: 130px; }

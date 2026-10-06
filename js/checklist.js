@@ -57,11 +57,12 @@ App.Checklist = (function () {
       '<section class="block is-card">' +
         '<div class="block-head">' +
           '<h2>打包清單</h2>' +
-          filterHtml +
-          (readOnly ? '' : '<div class="btn-row">' +
-            '<button class="btn btn-ghost btn-sm" data-act="uncheck-all">全部取消勾選</button>' +
-            '<button class="icon-add" data-act="add-group" title="新增分類" aria-label="新增分類">' + U.icon('plus', 16) + '</button>' +
-          '</div>') +
+          '<div class="head-tools">' +
+            filterHtml +
+            (readOnly ? '' :
+              '<button class="icon-btn" data-act="uncheck-all" title="全部取消勾選" aria-label="全部取消勾選">' + U.icon('reset', 16) + '</button>' +
+              '<button class="icon-add" data-act="add-group" title="新增分類" aria-label="新增分類">' + U.icon('plus', 16) + '</button>') +
+          '</div>' +
         '</div>' +
         '<div class="progress-wrap">' +
           '<div class="progress"><div class="progress-bar" style="width:' + pct + '%"></div></div>' +
@@ -91,7 +92,7 @@ App.Checklist = (function () {
         '<h3>' + (g.emoji ? '<span class="cl-emoji">' + U.esc(g.emoji) + '</span>' : '') + U.esc(g.name) +
           '<span class="count">' + done + '/' + items.length + '</span></h3>' +
         (readOnly ? '' : '<div class="cl-group-act">' +
-          '<button class="icon-add icon-add-sm" data-act="add-item" data-g="' + U.esc(g.id) + '" title="新增項目" aria-label="新增項目">' + U.icon('plus', 14) + '</button>' +
+          '<button class="icon-btn" data-act="add-item" data-g="' + U.esc(g.id) + '" title="新增項目" aria-label="新增項目">' + U.icon('plus', 15) + '</button>' +
           '<button class="icon-btn" data-act="edit-group" data-g="' + U.esc(g.id) + '" title="改名">' + U.icon('edit', 15) + '</button>' +
           '<button class="icon-btn" data-act="del-group" data-g="' + U.esc(g.id) + '" title="刪除分類">' + U.icon('trash', 15) + '</button>' +
         '</div>') +

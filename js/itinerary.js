@@ -4,8 +4,23 @@ App.Itinerary = (function () {
 
   var S = App.Store, U = App.UI;
   var activeDay = 0;
+  var filterMember = '';   // 空字串 = 看全部的人
 
   var WEEK = ['日', '一', '二', '三', '四', '五', '六'];
+
+  /** 這個行程點是全員一起，還是只有某幾個人？ */
+  function partyOf(trip, it) {
+    var all = trip.members.map(function (m) { return m.id; });
+    var picked = (it.members || []).filter(function (id) { return all.indexOf(id) !== -1; });
+    return {
+      ids: picked,
+      isAll: picked.length === 0 || picked.length === all.length,
+      names: picked.map(function (id) {
+        var m = trip.members.filter(function (x) { return x.id === id; })[0];
+        return m ? m.name : '';
+      }).filter(Boolean)
+    };
+  }
 
   function render(view, trip, readOnly) {
     if (!trip) {
@@ -13,10 +28,24 @@ App.Itinerary = (function () {
       return;
     }
     S.syncDays(trip);
-    var total = trip.days.length;
-    if (activeDay >= total) activeDay = 0;
+    if (activeDay >= trip.days.length) activeDay = 0;
+    // 被篩選的成員已經不在名單上了就自動取消篩選
+    if (filterMember && !trip.members.some(function (m) { return m.id === filterMember; })) filterMember = '';
 
     var day = trip.days[activeDay];
+
+    // 永遠用「原本的位置」當索引，這樣篩選中按上下箭頭也不會移錯
+    var rows = day.items.map(function (it, i) { return { item: it, index: i }; });
+    var shown = filterMember
+      ? rows.filter(function (r) {
+          var p = partyOf(trip, r.item);
+          return p.isAll || p.ids.indexOf(filterMember) !== -1;
+        })
+      : rows;
+
+    var emptyText = day.items.length === 0
+      ? (readOnly ? '這天還沒有安排行程。' : '這天還沒有行程。按上面的「新增行程點」開始排。')
+      : '這一天沒有這個人的行程。';
 
     view.innerHTML =
       '<section class="block">' +
@@ -25,15 +54,21 @@ App.Itinerary = (function () {
           (readOnly ? '' : '<button class="btn btn-primary" data-act="add-item">+ 新增行程點</button>') +
         '</div>' +
         dayTabs(trip) +
-        dayHeader(trip, activeDay, readOnly) +
-        (day.items.length === 0
-          ? U.empty(readOnly ? '這天還沒有安排行程。' : '這天還沒有行程。按上面的「新增行程點」開始排。')
-          : '<ol class="timeline">' + day.items.map(function (it, i) {
-              return itemRow(trip, it, i, day.items.length, readOnly);
+        dayHeader(trip, activeDay, readOnly, shown.length, day.items.length) +
+        (shown.length === 0
+          ? U.empty(emptyText)
+          : '<ol class="timeline">' + shown.map(function (r) {
+              return itemRow(trip, r.item, r.index, day.items.length, readOnly);
             }).join('') + '</ol>') +
       '</section>';
 
     view.onclick = function (e) { onClick(e, trip, readOnly); };
+    view.onchange = function (e) {
+      if (e.target && e.target.id === 'memberFilter') {
+        filterMember = e.target.value;
+        App.render();
+      }
+    };
   }
 
   function dayTabs(trip) {
@@ -47,20 +82,36 @@ App.Itinerary = (function () {
     }).join('') + '</div>';
   }
 
-  function dayHeader(trip, i, readOnly) {
+  function dayHeader(trip, i, readOnly, shownCount, totalCount) {
     var ds = S.dayDate(trip, i);
     var text = 'Day ' + (i + 1);
     if (ds) {
       var d = S.parseDate(ds);
       text += ' · ' + ds + '（週' + WEEK[d.getDay()] + '）';
     }
-    var count = trip.days[i].items.length;
+    var countText = filterMember
+      ? shownCount + ' / ' + totalCount + ' 個行程點'
+      : totalCount + ' 個行程點';
+
+    // 有兩個以上成員才需要篩選
+    var filterHtml = trip.members.length > 1
+      ? '<select id="memberFilter" class="member-filter" title="只看某個人的行程">' +
+          '<option value="">👥 全部的人</option>' +
+          trip.members.map(function (m) {
+            return '<option value="' + U.esc(m.id) + '"' + (m.id === filterMember ? ' selected' : '') + '>' +
+              '只看 ' + U.esc(m.name) + '</option>';
+          }).join('') +
+        '</select>'
+      : '';
+
     return '<div class="day-head">' +
       '<h3>' + U.esc(text) + '</h3>' +
       '<div class="day-head-side">' +
-        '<span class="muted">' + count + ' 個行程點</span>' +
-        (!readOnly && count > 1 ? '<button class="btn btn-ghost btn-sm" data-act="sort-time">依時間排序</button>' : '') +
+        filterHtml +
+        '<span class="muted">' + countText + '</span>' +
+        (!readOnly && !filterMember && totalCount > 1 ? '<button class="btn btn-ghost btn-sm" data-act="sort-time">依時間排序</button>' : '') +
       '</div>' +
+      (filterMember ? '<div class="filter-note">篩選中只能瀏覽。要調整順序請先切回「全部的人」。</div>' : '') +
     '</div>';
   }
 
@@ -73,11 +124,15 @@ App.Itinerary = (function () {
         (linked ? ' <span class="tag tag-ok">已加入分帳</span>' : '') + '</span>';
     }
 
-    return '<li class="tl-item" data-id="' + U.esc(it.id) + '">' +
+    var party = partyOf(trip, it);
+    var partyTag = party.isAll ? ''
+      : '<span class="tl-party">👥 ' + U.esc(party.names.join('、')) + '</span>';
+
+    return '<li class="tl-item' + (party.isAll ? '' : ' tl-split') + '" data-id="' + U.esc(it.id) + '">' +
       '<div class="tl-time">' + U.esc(it.time || '—') + '</div>' +
       '<div class="tl-dot type-' + U.esc(type.key) + '" title="' + U.esc(type.label) + '">' + type.emoji + '</div>' +
       '<div class="tl-body">' +
-        '<div class="tl-title">' + U.esc(it.title) + '</div>' +
+        '<div class="tl-title">' + U.esc(it.title) + partyTag + '</div>' +
         (it.place ? '<div class="tl-place">📍 ' + U.esc(it.place) + '</div>' : '') +
         (it.image ? '<div class="tl-image"><img src="' + U.esc(imageUrl(it.image)) + '" alt="' + U.esc(it.title) + ' 示意圖" loading="lazy" onerror="this.parentNode.innerHTML=\'<span class=&quot;img-bad&quot;>圖片載入失敗，請檢查網址</span>\'"></div>' : '') +
         (it.note ? '<div class="tl-note">' + U.esc(it.note) + '</div>' : '') +
@@ -86,8 +141,9 @@ App.Itinerary = (function () {
       '</div>' +
       (readOnly ? '' :
       '<div class="tl-actions">' +
-        '<button class="icon-btn" data-act="up" data-id="' + U.esc(it.id) + '"' + (i === 0 ? ' disabled' : '') + ' title="往上移">▲</button>' +
-        '<button class="icon-btn" data-act="down" data-id="' + U.esc(it.id) + '"' + (i === total - 1 ? ' disabled' : '') + ' title="往下移">▼</button>' +
+        (filterMember ? '' :
+          '<button class="icon-btn" data-act="up" data-id="' + U.esc(it.id) + '"' + (i === 0 ? ' disabled' : '') + ' title="往上移">▲</button>' +
+          '<button class="icon-btn" data-act="down" data-id="' + U.esc(it.id) + '"' + (i === total - 1 ? ' disabled' : '') + ' title="往下移">▼</button>') +
         '<button class="icon-btn" data-act="edit" data-id="' + U.esc(it.id) + '" title="編輯">✏️</button>' +
         '<button class="icon-btn" data-act="del" data-id="' + U.esc(it.id) + '" title="刪除">🗑</button>' +
         (it.amount && !linked ? '<button class="btn btn-ghost btn-sm" data-act="to-expense" data-id="' + U.esc(it.id) + '">加到分帳</button>' : '') +
@@ -185,6 +241,12 @@ App.Itinerary = (function () {
           options: S.ITEM_TYPES.map(function (t) { return { value: t.key, label: t.emoji + ' ' + t.label }; })
         },
         { name: 'place', label: '地點', value: item ? item.place : '', placeholder: '例如：京都市東山區' },
+        {
+          name: 'members', label: '誰參加', type: 'checks',
+          value: item ? (item.members || []) : [],
+          options: trip.members.map(function (m) { return { value: m.id, label: m.name }; }),
+          hint: '全部的人一起就不用勾（留空等於全員）。下午分頭行動時，才勾那幾個人。'
+        },
         { name: 'link', label: '連結', value: item ? item.link : '', placeholder: '貼 Google Maps 網址、訂房頁面都可以' },
         {
           name: 'image', label: '示意圖', value: item ? item.image : '',
@@ -197,8 +259,13 @@ App.Itinerary = (function () {
       ]
     }).then(function (v) {
       if (!v) return;
+      // 全部都勾等於沒有分組，存成空陣列讓資料單純一點
+      var picked = v.members || [];
+      if (picked.length === trip.members.length) picked = [];
+
       var data = {
         title: v.title, time: v.time, type: v.type, place: v.place,
+        members: picked,
         link: v.link, image: v.image, note: v.note,
         amount: v.amount ? Number(v.amount) : '',
         currency: v.currency
@@ -229,6 +296,10 @@ App.Itinerary = (function () {
       return U.toast('請先到「我的旅程」加入成員，才能分帳', 'bad');
     }
     var all = trip.members.map(function (m) { return m.id; });
+    // 這個行程點如果是分頭行動，分帳就預設只分給有去的那幾個人
+    var party = partyOf(trip, item);
+    var defaultShare = party.isAll ? all : party.ids;
+
     U.modal({
       title: '把「' + item.title + '」加到分帳',
       submitText: '加入',
@@ -244,9 +315,10 @@ App.Itinerary = (function () {
           options: trip.members.map(function (m) { return { value: m.id, label: m.name }; })
         },
         {
-          name: 'shareIds', label: '這筆分給誰', type: 'checks', required: true, value: all,
+          name: 'shareIds', label: '這筆分給誰', type: 'checks', required: true, value: defaultShare,
           options: trip.members.map(function (m) { return { value: m.id, label: m.name }; }),
-          hint: '勾選的人之間平均分攤'
+          hint: party.isAll ? '勾選的人之間平均分攤'
+            : '已自動帶入這個行程點的參加者（' + party.names.join('、') + '），需要的話可以再調整。'
         }
       ]
     }).then(function (v) {

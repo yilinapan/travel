@@ -51,7 +51,8 @@ window.App = window.App || {};
     } else {
       acts.innerHTML =
         (App.Cloud.isOn() ? '<button class="btn btn-ghost btn-sm" data-act="sync" title="立即同步">⟳</button>' : '') +
-        (trip ? '<button class="btn btn-ghost btn-sm" data-act="share">🔗 分享</button>' : '');
+        (trip ? '<button class="btn btn-ghost btn-sm" data-act="share">🔗 分享</button>' : '') +
+        '<button class="btn btn-ghost btn-sm" data-act="settings" title="設定：雲端同步、備份與還原">⚙️</button>';
     }
     renderSyncStatus();
   }
@@ -138,7 +139,10 @@ window.App = window.App || {};
 
   // ---------------------------------------------------------------
   /** 雲端狀態變了就更新畫面上的小字 */
-  App.onCloudStatus = function () { renderSyncStatus(); };
+  App.onCloudStatus = function () {
+    renderSyncStatus();
+    if (App.Settings) App.Settings.refresh();
+  };
 
   /**
    * 自動同步時發現雲端有更新的版本。
@@ -203,6 +207,7 @@ window.App = window.App || {};
       if (act === 'share') share();
       if (act === 'adopt') adopt();
       if (act === 'sync') syncNow();
+      if (act === 'settings') App.Settings.open();
     });
 
     App.Share.readFromUrl().then(function (trip) {

@@ -192,7 +192,8 @@ App.Cloud = (function () {
             it.link || '',
             it.image || '',
             it.amount === '' || it.amount == null ? '' : String(it.amount),
-            it.currency || ''
+            it.currency || '',
+            joinNames(t, it.members)        // 空白代表全員一起
           ]);
         });
       });
@@ -310,7 +311,8 @@ App.Cloud = (function () {
           link: String(r[8] || '').trim(),
           image: String(r[9] || '').trim(),
           amount: r[10] === '' || r[10] == null ? '' : Number(r[10]),
-          currency: String(r[11] || '').trim()
+          currency: String(r[11] || '').trim(),
+          memberNames: splitList(r[12])    // 稍後統一轉成成員編號
         }
       });
     });
@@ -318,6 +320,13 @@ App.Cloud = (function () {
       return a.day - b.day || a.order - b.order;
     });
     pending.forEach(function (p) {
+      // 參加者在試算表裡是名字，這裡轉成成員編號；空白代表全員一起
+      var names = p.item.memberNames || [];
+      delete p.item.memberNames;
+      p.item.members = names.map(function (n) {
+        var m = ensureMember(p.trip, n);
+        return m && m.id;
+      }).filter(Boolean);
       ensureDay(p.trip, p.day).items.push(p.item);
     });
 

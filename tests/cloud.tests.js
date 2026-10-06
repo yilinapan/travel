@@ -197,6 +197,46 @@ function registerCloudTests(t, eq, App) {
     eq(r.trips[1].expenses.length, 3, '第二趟的支出筆數');
   });
 
+  // --- 分頭行動（行程點的參加者）---
+
+  t('行程點的參加者會存成名字，全員一起時留空白', function () {
+    var a = sampleTrip();
+    a.days[0].items[0].members = ['m1', 'm2'];      // 只有 Allie 和小明
+    var rows = Cloud.toRows([a]);
+    eq(rows.items[0][12], 'Allie,小明', '分頭行動的參加者');
+    eq(rows.items[1][12], '', '全員一起時留空白');
+  });
+
+  t('參加者轉成試算表再讀回來，人數與名字一致', function () {
+    var a = sampleTrip();
+    a.days[0].items[0].members = ['m1', 'm3'];
+    var b = roundTrip(a);
+    var names = b.days[0].items[0].members.map(function (id) {
+      return b.members.filter(function (m) { return m.id === id; })[0].name;
+    });
+    eq(names, ['Allie', '小華'], '參加者');
+    eq(b.days[0].items[1].members, [], '全員一起的行程點');
+  });
+
+  t('參加者欄出現名單上沒有的人時，自動加入成員', function () {
+    var r = Cloud.fromRows({
+      trips: [['測試', '', '', 'TWD', 'A,B', '']],
+      items: [['測試', '1', '1', '', '景點', '分頭行動', '', '', '', '', '', '', 'A,C']]
+    });
+    var t0 = r.trips[0];
+    eq(t0.members.map(function (m) { return m.name; }), ['A', 'B', 'C'], '成員');
+    eq(t0.days[0].items[0].members.length, 2, '參加者人數');
+  });
+
+  t('舊資料沒有參加者欄時，視為全員一起（不會壞）', function () {
+    var r = Cloud.fromRows({
+      trips: [['測試', '', '', 'TWD', 'A,B', '']],
+      items: [['測試', '1', '1', '09:00', '景點', '清水寺', '京都', '', '', '', '', '']]
+    });
+    eq(r.trips[0].days[0].items[0].members, [], '參加者應為空（代表全員）');
+    eq(r.trips[0].days[0].items[0].title, '清水寺', '其他欄位正常');
+  });
+
   // --- 備註與指定項目 ---
 
   t('支出的備註會保留', function () {

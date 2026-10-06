@@ -5,9 +5,6 @@ App.Itinerary = (function () {
   var S = App.Store, U = App.UI;
   var activeDay = 0;
   var filterMember = '';   // 空字串 = 看全部的人
-  /* 編輯模式：平常每一天只有一顆「編輯」，按下去才展開每一筆的上下移動與刪除。
-     換一天、切篩選、按「完成」都會收回來。 */
-  var editMode = false;
 
   var WEEK = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -36,8 +33,6 @@ App.Itinerary = (function () {
     if (filterMember && !trip.members.some(function (m) { return m.id === filterMember; })) filterMember = '';
 
     var day = trip.days[activeDay];
-    // 這天沒有行程、或正在篩選某個人時，編輯模式沒有意義，直接收起來
-    if (day.items.length === 0 || filterMember || readOnly) editMode = false;
 
     // 永遠用「原本的位置」當索引，這樣篩選中按上下箭頭也不會移錯
     var rows = day.items.map(function (it, i) { return { item: it, index: i }; });
@@ -49,18 +44,15 @@ App.Itinerary = (function () {
       : rows;
 
     var emptyText = day.items.length === 0
-      ? (readOnly ? '這天還沒有安排行程。' : '這天還沒有行程。')
+      ? (readOnly ? '這天還沒有安排行程。' : '這天還沒有行程。按右邊的 ＋ 新增第一個行程點。')
       : '這一天沒有這個人的行程。';
-    var emptyAct = (day.items.length === 0 && !readOnly)
-      ? '<button class="btn btn-primary" data-act="add-item">' + U.icon('plus', 16) + '新增行程</button>'
-      : '';
 
     view.innerHTML =
       '<section class="block">' +
         dayTabs(trip) +
         dayHeader(trip, activeDay, readOnly, shown.length, day.items.length) +
         (shown.length === 0
-          ? U.empty(emptyText, emptyAct)
+          ? U.empty(emptyText)
           : '<ol class="timeline">' + shown.map(function (r) {
               return itemRow(trip, r.item, r.index, day.items.length, readOnly);
             }).join('') + '</ol>') +
@@ -70,7 +62,6 @@ App.Itinerary = (function () {
     view.onchange = function (e) {
       if (e.target && e.target.id === 'memberFilter') {
         filterMember = e.target.value;
-        editMode = false;      // 篩選中不能調順序，編輯工具一併收起來
         App.render();
       }
     };
@@ -108,32 +99,15 @@ App.Itinerary = (function () {
         '</select>'
       : '';
 
-    /* 一般狀態只有兩顆按鈕：「編輯」和「＋ 新增行程」。
-       每一筆的上移、下移、修改、刪除要按下「編輯」才會出現。
-       這天沒有行程的話連「編輯」都不顯示 —— 沒有東西可以編。 */
-    var canEdit = !readOnly && !filterMember && totalCount > 0;
-    var tools = '';
-    if (canEdit) {
-      tools += '<button class="btn btn-ghost btn-sm" data-act="toggle-edit"' +
-        ' aria-pressed="' + (editMode ? 'true' : 'false') + '">' +
-        (editMode ? '完成' : '編輯') + '</button>';
-    }
-    if (canEdit && editMode && totalCount > 1) {
-      tools += '<button class="btn btn-ghost btn-sm" data-act="sort-time">依時間排序</button>';
-    }
-    if (!readOnly && totalCount > 0) {
-      tools += '<button class="btn btn-primary btn-sm" data-act="add-item">' +
-        U.icon('plus', 15) + '新增行程</button>';
-    }
-
     return '<div class="day-head">' +
       '<h3>' + U.esc(text) + '</h3>' +
       '<div class="day-head-side">' +
         filterHtml +
-        '<span class="day-count">' + countText + '</span>' +
-        tools +
+        '<span class="muted">' + countText + '</span>' +
+        (!readOnly && !filterMember && totalCount > 1 ? '<button class="btn btn-ghost btn-sm" data-act="sort-time">依時間排序</button>' : '') +
+        (readOnly ? '' : '<button class="icon-add" data-act="add-item" title="新增行程點" aria-label="新增行程點">' + U.icon('plus', 16) + '</button>') +
       '</div>' +
-      (filterMember ? '<div class="filter-note">篩選中只能瀏覽。要編輯或調整順序請先切回「全部的人」。</div>' : '') +
+      (filterMember ? '<div class="filter-note">篩選中只能瀏覽。要調整順序請先切回「全部的人」。</div>' : '') +
     '</div>';
   }
 
@@ -142,50 +116,36 @@ App.Itinerary = (function () {
     var linked = it.expenseId && trip.expenses.some(function (e) { return e.id === it.expenseId; });
     var cost = '';
     if (it.amount) {
-      cost = '<span class="tl-cost">' + U.money(App.Settle.toCents(it.amount), it.currency || trip.baseCurrency) + '</span>' +
-        (linked ? ' <span class="tag tag-ok">已加入分帳</span>' :
-          (readOnly ? '' : ' <button class="btn btn-ghost btn-sm" data-act="to-expense" data-id="' + U.esc(it.id) + '">加到分帳</button>'));
+      cost = '<span class="tl-cost">' + U.money(App.Settle.toCents(it.amount), it.currency || trip.baseCurrency) +
+        (linked ? ' <span class="tag tag-ok">已加入分帳</span>' : '') + '</span>';
     }
 
     var party = partyOf(trip, it);
     var partyTag = party.isAll ? ''
       : '<span class="tl-party">' + U.icon('people', 13) + U.esc(party.names.join('、')) + '</span>';
 
-    var img = '';
-    if (it.image) {
-      // 預覽統一 16:9，點一下才在新分頁看完整的原圖（不為了看圖引入任何套件）
-      var src = U.esc(imageUrl(it.image));
-      img = '<div class="tl-image">' +
-        '<a href="' + src + '" target="_blank" rel="noopener noreferrer" title="點開看完整圖片">' +
-          '<img src="' + src + '" alt="' + U.esc(it.title) + ' 示意圖" loading="lazy"' +
-          ' onerror="var b=this.closest(&quot;.tl-image&quot;);b.textContent=&quot;圖片載入失敗，請檢查網址&quot;;b.className=&quot;img-bad&quot;">' +
-        '</a></div>';
-    }
-
-    // 編輯工具平常整排都不存在，按下「編輯」才長出來
-    var actions = (readOnly || !editMode || filterMember) ? '' :
-      '<div class="tl-actions">' +
-        '<button class="icon-btn" data-act="up" data-id="' + U.esc(it.id) + '"' + (i === 0 ? ' disabled' : '') + ' title="往上移" aria-label="往上移">' + U.icon('up') + '</button>' +
-        '<button class="icon-btn" data-act="down" data-id="' + U.esc(it.id) + '"' + (i === total - 1 ? ' disabled' : '') + ' title="往下移" aria-label="往下移">' + U.icon('down') + '</button>' +
-        '<button class="icon-btn" data-act="edit" data-id="' + U.esc(it.id) + '" title="修改" aria-label="修改">' + U.icon('edit') + '</button>' +
-        '<button class="icon-btn" data-act="del" data-id="' + U.esc(it.id) + '" title="刪除" aria-label="刪除">' + U.icon('trash') + '</button>' +
-      '</div>';
-
     return '<li class="tl-item' + (party.isAll ? '' : ' tl-split') + '" data-id="' + U.esc(it.id) + '">' +
       '<div class="tl-when">' +
         '<div class="tl-time">' + U.esc(it.time || '—') + '</div>' +
         '<div class="tl-kind type-' + U.esc(type.key) + '">' + U.esc(type.label) + '</div>' +
       '</div>' +
-      '<span class="tl-rail" aria-hidden="true"></span>' +
       '<div class="tl-body">' +
         '<div class="tl-title">' + U.esc(it.title) + partyTag + '</div>' +
         (it.place ? '<div class="tl-place">' + U.esc(it.place) + '</div>' : '') +
-        img +
+        (it.image ? '<div class="tl-image"><img src="' + U.esc(imageUrl(it.image)) + '" alt="' + U.esc(it.title) + ' 示意圖" loading="lazy" onerror="this.parentNode.innerHTML=\'<span class=&quot;img-bad&quot;>圖片載入失敗，請檢查網址</span>\'"></div>' : '') +
         (it.note ? '<div class="tl-note">' + U.esc(it.note) + '</div>' : '') +
         (it.link ? '<div class="tl-link"><a href="' + U.esc(safeUrl(it.link)) + '" target="_blank" rel="noopener noreferrer">開啟連結 ↗</a></div>' : '') +
         (cost ? '<div class="tl-costline">' + cost + '</div>' : '') +
       '</div>' +
-      actions +
+      (readOnly ? '' :
+      '<div class="tl-actions">' +
+        (filterMember ? '' :
+          '<button class="icon-btn" data-act="up" data-id="' + U.esc(it.id) + '"' + (i === 0 ? ' disabled' : '') + ' title="往上移">' + U.icon('up') + '</button>' +
+          '<button class="icon-btn" data-act="down" data-id="' + U.esc(it.id) + '"' + (i === total - 1 ? ' disabled' : '') + ' title="往下移">' + U.icon('down') + '</button>') +
+        '<button class="icon-btn" data-act="edit" data-id="' + U.esc(it.id) + '" title="編輯">' + U.icon('edit') + '</button>' +
+        '<button class="icon-btn" data-act="del" data-id="' + U.esc(it.id) + '" title="刪除">' + U.icon('trash') + '</button>' +
+        (it.amount && !linked ? '<button class="btn btn-ghost btn-sm" data-act="to-expense" data-id="' + U.esc(it.id) + '">加到分帳</button>' : '') +
+      '</div>') +
     '</li>';
   }
 
@@ -223,16 +183,9 @@ App.Itinerary = (function () {
 
     if (act === 'day') {
       activeDay = Number(btn.getAttribute('data-i'));
-      editMode = false;        // 換一天就把編輯工具收起來
       return App.render();
     }
     if (readOnly) return;
-
-    // 「編輯」↔「完成」：切換這一天要不要顯示每一筆的上下移動、修改、刪除
-    if (act === 'toggle-edit') {
-      editMode = !editMode;
-      return App.render();
-    }
 
     var day = trip.days[activeDay];
     var id = btn.getAttribute('data-id');
@@ -388,7 +341,7 @@ App.Itinerary = (function () {
     });
   }
 
-  function goToDay(i) { activeDay = i; editMode = false; }
+  function goToDay(i) { activeDay = i; }
 
   return { render: render, goToDay: goToDay };
 })();

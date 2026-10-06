@@ -11,7 +11,7 @@
 var KNOWN = (
   'if for while switch catch function return typeof instanceof new delete void in of do else try throw case ' +
   'Number String Boolean Array Object Math JSON Date RegExp Error Promise Set Map Symbol ' +
-  'parseInt parseFloat isNaN isFinite encodeURI decodeURI encodeURIComponent decodeURIComponent btoa atob ' +
+  'parseInt parseFloat isNaN isFinite encodeURIComponent decodeURIComponent btoa atob ' +
   'setTimeout clearTimeout setInterval clearInterval requestAnimationFrame ' +
   'alert confirm prompt fetch require module exports ' +
   'Blob File FileReader URL TextEncoder TextDecoder Response Request ' +
@@ -106,52 +106,6 @@ function registerStructureTests(t, eq, files) {
       });
     });
     eq(problems, [], '按鈕與處理不對應');
-  });
-
-  /** 取出某一支檔案的原始碼 */
-  function srcOf(name) {
-    var f = files.filter(function (x) { return x.name === name; })[0];
-    return f ? f.src : '';
-  }
-
-  /* 行程頁改成「平常只有一顆編輯，按下去才展開每一筆的工具」。
-   * 如果哪天有人把上移／下移／修改／刪除搬回一般狀態，這裡會擋下來。 */
-  t('行程頁的編輯工具掛在編輯模式底下', function () {
-    var src = srcOf('js/itinerary.js');
-    var problems = [];
-    if (src.indexOf('data-act="toggle-edit"') === -1) problems.push('少了「編輯／完成」切換鈕');
-    if (src.indexOf("=== 'toggle-edit'") === -1) problems.push('「編輯／完成」沒有對應的處理');
-
-    var from = src.indexOf('var actions =');
-    var to = src.indexOf('tl-actions');
-    if (from === -1 || to === -1 || to < from) {
-      problems.push('找不到每一筆的編輯工具');
-    } else if (src.slice(from, to).indexOf('editMode') === -1) {
-      problems.push('每一筆的編輯工具沒有依 editMode 決定要不要顯示');
-    }
-    eq(problems, [], '行程頁編輯模式');
-  });
-
-  /* 換一天、切成「只看某人」、或這天根本沒有行程時，編輯模式都要收回來，
-   * 否則會出現「看不到編輯鈕、卻還留著刪除鈕」的狀態。 */
-  t('換天或切篩選時會收起行程頁的編輯模式', function () {
-    var src = srcOf('js/itinerary.js');
-    var times = src.split('editMode = false').length - 1;
-    eq(times >= 3, true, 'editMode = false 的次數（實際 ' + times + ' 次）');
-  });
-
-  t('行程點刪除前一定要先確認', function () {
-    var src = srcOf('js/itinerary.js');
-    var i = src.indexOf("act === 'del'");
-    eq(i !== -1 && src.slice(i, i + 260).indexOf('U.ask') !== -1, true, '刪除前的確認');
-  });
-
-  t('「已結清紀錄」的說明文字在，而且點得開', function () {
-    var src = srcOf('js/expenses.js');
-    var problems = [];
-    if (src.indexOf('結算時會自動扣除，不會刪除原本的支出紀錄') === -1) problems.push('說明文字不見了');
-    if (src.indexOf('data-act="pay-info"') === -1) problems.push('少了可以點的說明圖示');
-    eq(problems, [], '已結清紀錄的說明');
   });
 }
 

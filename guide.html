@@ -4,30 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="旅遊規劃工具的使用說明：四個分頁怎麼用、分帳的進階功能、分享與備份。">
-<meta name="theme-color" content="#F6F0E6">
+<meta name="theme-color" content="#faf6ee">
 <title>使用說明 — 旅遊規劃</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23A13B27' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'><path d='M12 21v-5'/><path d='m12 16 5.5-3.2-1.6-.6 3.6-2.6-1.7-.5 2.2-2.6-4.3.5.4-2.3-2.6 1.3L12 3 10.5 6l-2.6-1.3.4 2.3-4.3-.5L6.2 9.1l-1.7.5 3.6 2.6-1.6.6z'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍁</text></svg>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Noto+Serif+TC:wght@500&display=swap" rel="stylesheet">
 <style>
 /* 單欄長文，靠留白與細線分段；配色沿用工具本身的日本傳統秋色 */
 :root {
-  /* 跟工具本身同一組秋日配色（css/style.css 的 :root） */
-  --bg:        #F6F0E6;   /* 和紙 */
-  --surface:   #FFFDF8;   /* 象牙白 */
-  --line:      #DED2C3;   /* 淺茶 */
-  --line-2:    #E9E0D2;
-  --text:      #35271F;   /* 深咖啡 */
-  --text-soft: #6F6257;
-  --muted:     #85776B;   /* 灰棕 */
-  --maple:     #A13B27;   /* 楓葉紅 */
-  --maple-soft:#F1E1DB;
-  --gold:      #A26720;   /* 銀杏金（白底上調深一階） */
-  --moss:      #687255;   /* 苔綠：只代表完成 */
-  --moss-soft: #E9EADE;
-  --deep:      #35271F;
-  --deep-ink:  #F6F0E6;
+  --bg:        #faf6ee;   /* 砥粉調淡 */
+  --surface:   #ffffff;
+  --line:      #e6dac6;
+  --line-2:    #f1e9dc;
+  --text:      #2b1d14;   /* 赤銅調深 */
+  --text-soft: #6d5a4a;
+  --muted:     #a3907c;
+  --maple:     #9e3119;   /* 落栗 */
+  --maple-soft:#f6e6de;
+  --gold:      #a8761f;   /* 狐色調深 */
+  --moss:      #5f6e47;
+  --moss-soft: #edf0e6;
+  --deep:      #3b2317;   /* 深咖啡 */
+  --deep-ink:  #faf6ee;
 
   --serif: "Noto Serif TC", Georgia, "Songti TC", serif;
   --sans:  "Noto Sans TC", system-ui, -apple-system, "PingFang TC", "Microsoft JhengHei", sans-serif;
@@ -35,20 +34,20 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg:#211913; --surface:#2A201A; --line:#42352B; --line-2:#362B23;
-    --text:#F2E9DD; --text-soft:#C7B8A8; --muted:#A0907F;
-    --maple:#D9705A; --maple-soft:#3C241D;
-    --gold:#D8A354; --moss:#9BA67E; --moss-soft:#2C3225;
-    --deep:#4A382B; --deep-ink:#F6EFE4;
+    --bg:#1d1511; --surface:#271d17; --line:#3d2f24; --line-2:#2f241c;
+    --text:#f2e9dd; --text-soft:#bba894; --muted:#8d7b68;
+    --maple:#d4714f; --maple-soft:#3a211a;
+    --gold:#d9a24a; --moss:#93a876; --moss-soft:#2a3225;
+    --deep:#4d3a2b; --deep-ink:#f6efe4;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
-  --bg:#211913; --surface:#2A201A; --line:#42352B; --line-2:#362B23;
-  --text:#F2E9DD; --text-soft:#C7B8A8; --muted:#A0907F;
-  --maple:#D9705A; --maple-soft:#3C241D;
-  --gold:#D8A354; --moss:#9BA67E; --moss-soft:#2C3225;
-  --deep:#4A382B; --deep-ink:#F6EFE4;
+  --bg:#1d1511; --surface:#271d17; --line:#3d2f24; --line-2:#2f241c;
+  --text:#f2e9dd; --text-soft:#bba894; --muted:#8d7b68;
+  --maple:#d4714f; --maple-soft:#3a211a;
+  --gold:#d9a24a; --moss:#93a876; --moss-soft:#2a3225;
+  --deep:#4d3a2b; --deep-ink:#f6efe4;
   color-scheme: dark;
 }
 
@@ -148,9 +147,9 @@ code {
 
 .dots {
   display: inline-flex; align-items: center; justify-content: center;
-  padding: 1px 10px; border-radius: 999px;
+  width: 22px; height: 22px; border-radius: 50%;
   border: 1px solid var(--line); background: var(--surface);
-  color: var(--maple); font-size: 12.5px; vertical-align: -2px; margin: 0 2px;
+  color: var(--maple); font-size: 13px; vertical-align: -5px; margin: 0 2px;
 }
 .qm {
   display: inline-flex; align-items: center; justify-content: center;
@@ -192,7 +191,7 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
     </div>
     <div class="tab">
       <h3>行程</h3>
-      <p>一天一條時間軸。每個行程點可以填時間、地點、備註、連結、示意圖和花費。平常只負責看，要調順序或刪東西時按當天的「編輯」。</p>
+      <p>一天一條時間軸。每個行程點可以填時間、地點、備註、連結、示意圖和花費。順序用上下箭頭調。</p>
     </div>
     <div class="tab">
       <h3>分帳</h3>
@@ -207,21 +206,6 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
   <h2>幾個不太明顯的功能</h2>
 
   <div class="feat">
-    <h3>想改行程的順序或刪掉某一筆</h3>
-    <p>平常每一天只有一顆「編輯」。按下去之後，每一筆行程才會長出上移、下移、修改、刪除；
-      改完按「完成」就收起來。這樣平常看行程的時候畫面乾淨，也比較不會手滑誤按。</p>
-    <div class="eg">
-      看行程 → 按 <b>編輯</b> → 調順序或刪除 → 按 <b>完成</b><br>
-      這天還沒有行程的話，直接按 <b>＋ 新增行程</b> 就好。
-    </div>
-  </div>
-
-  <div class="feat">
-    <h3>行程點的示意圖</h3>
-    <p>列表上統一用橫式預覽，不會一張圖就把整個手機畫面吃掉。想看完整的圖，點一下圖片會在新分頁打開原圖。</p>
-  </div>
-
-  <div class="feat">
     <h3>一餐裡有人多點了東西</h3>
     <p>記支出時打開「指定項目」，那筆錢會先算給指定的人，剩下的才均分。</p>
     <div class="eg">
@@ -234,11 +218,6 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
   <div class="feat">
     <h3>旅途中有人先還錢了</h3>
     <p>在結算結果那一列按「記錄還款」，金額會自動幫你填好。可以改成只還一部分，也可以選當地幣別 —— 用韓幣現金還就選 KRW，系統依匯率換算。</p>
-    <div class="eg">
-      記下來的錢會列在<b>已結清紀錄</b>。那裡只是「誰已經先還過多少」的紀錄，
-      結算時會自動扣掉，<b>原本的支出紀錄不會被刪掉</b>。
-      標題旁邊的 <span class="qm">i</span> 點一下也看得到這段說明。
-    </div>
   </div>
 
   <div class="feat">
@@ -252,19 +231,18 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
   </div>
 
   <div class="feat">
-    <h3>示意圖要填什麼</h3>
-    <p>「示意圖」欄位貼圖片網址就會顯示。想永久保存的話，把圖片放進專案的 images 資料夾，填 <code>images/檔名.jpg</code> 就好。
-      這趟旅程的第一張圖，也會變成「旅程」頁上方那條淺淺的封面。</p>
+    <h3>行程點想放示意圖</h3>
+    <p>「示意圖」欄位貼圖片網址就會顯示。想永久保存的話，把圖片放進專案的 images 資料夾，填 <code>images/檔名.jpg</code> 就好。</p>
   </div>
 
   <div class="feat">
     <h3>看不懂某個設定</h3>
-    <p>畫面上的 <span class="qm">?</span> 和 <span class="qm">i</span> 都可以點，會跳出說明。手機直接點就好，不用一直按著。</p>
+    <p>畫面上的 <span class="qm">?</span> 點一下（電腦滑過去）會跳出說明。</p>
   </div>
 
   <h2>傳給同行的人</h2>
   <ol class="steps">
-    <li>按右下角的 <span class="dots">工具</span> → <b>分享</b>，複製那串網址</li>
+    <li>按右下角的 <span class="dots">⋯</span> → <b>分享</b>，複製那串網址</li>
     <li>傳到 LINE 群組<small>朋友點開就看得到行程和自己該付多少</small></li>
     <li>他們想自己編輯的話，按「存一份到我的裝置」<small>會變成他自己的一份，你這邊不受影響</small></li>
   </ol>
@@ -277,7 +255,7 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
     <h3>資料只存在你打開網頁的那台裝置</h3>
     <p>換一台裝置、或清除瀏覽器資料，內容就會不見。不會上傳到任何伺服器，所以也沒有人能幫你救回來。</p>
     <div class="do">
-      → 定期按 <span class="dots" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:inherit">工具</span>
+      → 定期按 <span class="dots" style="background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);color:inherit">⋯</span>
       <b>設定 → 下載備份檔</b>，存到雲端硬碟
     </div>
   </div>
@@ -294,7 +272,7 @@ a:focus-visible, .link-card:focus-visible { outline: 2px solid var(--maple); out
   </p>
 
   <div class="foot">
-    分帳的計算與程式結構有 93 項自動測試守著。想自己驗證的話，打開
+    分帳的計算有 82 項自動測試守著。想自己驗證的話，打開
     <a href="tests/test.html">tests/test.html</a>，全部綠色就代表算得對。
   </div>
 

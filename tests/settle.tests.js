@@ -18,6 +18,9 @@ function registerSettleTests(t, eq, Settle) {
   function net(r, id) {
     return r.perMember.filter(function (m) { return m.id === id; })[0].netCents;
   }
+  function share(r, id) {
+    return r.perMember.filter(function (m) { return m.id === id; })[0].shareCents;
+  }
 
   // ===================================================================
   t('一筆 300 元三人均分，付錢的人應該淨賺 200', function () {
@@ -152,6 +155,172 @@ function registerSettleTests(t, eq, Settle) {
     }));
     eq(net(r, 'a'), 0, 'Allie 淨額');
     eq(r.transfers.length, 0, '不該產生轉帳');
+  });
+
+  // =================================================================
+  // 指定項目（一筆支出裡，有些錢是某幾個人專屬的）
+  // =================================================================
+
+  t('指定項目：午餐 1000，生魚片 100 算小明的，剩下 900 三人均分', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '午餐', amount: 1000, currency: 'TWD', payerId: 'a',
+        shareIds: ['a', 'b', 'c'],
+        extras: [{ label: '生魚片', amount: 100, memberIds: ['b'] }]
+      }]
+    }));
+    // 應分攤：Allie 300、小明 100+300=400、小華 300
+    eq(share(r, 'a'), 30000, 'Allie 該分攤');
+    eq(share(r, 'b'), 40000, '小明 該分攤');
+    eq(share(r, 'c'), 30000, '小華 該分攤');
+    eq(net(r, 'a'), 70000, 'Allie 淨額（付 1000 減自己的 300）');
+  });
+
+  t('指定項目：那 100 由兩個人平分，各負擔 50', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '午餐', amount: 1000, currency: 'TWD', payerId: 'a',
+        shareIds: ['a', 'b', 'c'],
+        extras: [{ label: '生魚片', amount: 100, memberIds: ['b', 'c'] }]
+      }]
+    }));
+    eq(share(r, 'a'), 30000, 'Allie 該分攤 300');
+    eq(share(r, 'b'), 35000, '小明 該分攤 350');
+    eq(share(r, 'c'), 35000, '小華 該分攤 350');
+  });
+
+  t('指定項目：吃生魚片的人可以不分剩下的錢', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '午餐', amount: 1000, currency: 'TWD', payerId: 'a',
+        shareIds: ['a', 'c'],          // 小明不分剩下的 900
+        extras: [{ label: '生魚片', amount: 100, memberIds: ['b'] }]
+      }]
+    }));
+    eq(share(r, 'a'), 45000, 'Allie 該分攤 450');
+    eq(share(r, 'b'), 10000, '小明只負擔生魚片 100');
+    eq(share(r, 'c'), 45000, '小華 該分攤 450');
+  });
+
+  t('可以好幾條指定項目同時存在', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '晚餐', amount: 1000, currency: 'TWD', payerId: 'a',
+        shareIds: ['a', 'b', 'c'],
+        extras: [
+          { label: '生魚片', amount: 100, memberIds: ['b'] },
+          { label: '甜點', amount: 160, memberIds: ['a', 'c'] }
+        ]
+      }]
+    }));
+    // 剩下 1000-100-160 = 740，三人各 246.67 → 24667/24667/24666 分
+    eq(share(r, 'a') + share(r, 'b') + share(r, 'c'), 100000, '分攤總和必須等於 1000');
+    eq(share(r, 'b'), 10000 + 24667, '小明 = 生魚片 100 + 均分');
+  });
+
+  t('全部都指定完、沒有剩餘時也可以（等於完全逐項分攤）', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '各付各的', amount: 300, currency: 'TWD', payerId: 'a',
+        shareIds: [],
+        extras: [
+          { label: 'A 的餐', amount: 100, memberIds: ['a'] },
+          { label: 'B 的餐', amount: 200, memberIds: ['b'] }
+        ]
+      }]
+    }));
+    eq(share(r, 'a'), 10000, 'Allie 100');
+    eq(share(r, 'b'), 20000, '小明 200');
+    eq(share(r, 'c'), 0, '小華沒份');
+    eq(net(r, 'b'), -20000, '小明要付 200');
+  });
+
+  t('有指定項目時，淨額總和仍然是 0', function () {
+    var r = Settle.compute(trip({
+      expenses: [
+        {
+          title: '午餐', amount: 1234.56, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'],
+          extras: [{ label: '加點', amount: 333.33, memberIds: ['b', 'c'] }]
+        },
+        {
+          title: '晚餐', amount: 777, currency: 'TWD', payerId: 'c', shareIds: ['a', 'c'],
+          extras: [{ label: '酒', amount: 250, memberIds: ['a'] }]
+        }
+      ]
+    }));
+    eq(r.perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和');
+  });
+
+  t('有指定項目時，結算後每個人仍然剛好歸零', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '午餐', amount: 1000, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'],
+        extras: [{ label: '生魚片', amount: 100, memberIds: ['b'] }]
+      }]
+    }));
+    var bal = {};
+    r.perMember.forEach(function (m) { bal[m.id] = m.netCents; });
+    r.transfers.forEach(function (x) { bal[x.fromId] += x.cents; bal[x.toId] -= x.cents; });
+    eq([bal.a, bal.b, bal.c], [0, 0, 0], '結算後餘額');
+  });
+
+  t('指定項目加起來超過總額時，發出警告並退回單純均分', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '午餐', amount: 300, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'],
+        extras: [{ label: '太貴了', amount: 500, memberIds: ['b'] }]
+      }]
+    }));
+    if (r.warnings.length === 0) throw new Error('應該要有警告訊息');
+    eq(share(r, 'a'), 10000, '退回三人均分');
+    eq(share(r, 'b'), 10000, '退回三人均分');
+    eq(r.perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和仍為 0');
+  });
+
+  t('還有剩餘金額、卻沒人分攤時，由有指定項目的人承擔並發出警告', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '午餐', amount: 1000, currency: 'TWD', payerId: 'a', shareIds: [],
+        extras: [{ label: '生魚片', amount: 100, memberIds: ['b'] }]
+      }]
+    }));
+    if (r.warnings.length === 0) throw new Error('應該要有警告訊息');
+    eq(share(r, 'b'), 100000, '小明承擔全部 1000');
+    eq(r.perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和仍為 0');
+  });
+
+  t('指定項目也會依匯率換算', function () {
+    var r = Settle.compute(trip({
+      currencies: [{ code: 'JPY', rate: 0.21 }],
+      expenses: [{
+        title: '午餐', amount: 1000, currency: 'JPY', payerId: 'a', shareIds: ['a', 'b', 'c'],
+        extras: [{ label: '生魚片', amount: 100, memberIds: ['b'] }]
+      }]
+    }));
+    eq(r.totalCents, 21000, '總額 1000 日幣 = 210 台幣');
+    eq(share(r, 'b'), 2100 + 6300, '小明 = 生魚片 21 + 均分 63');
+  });
+
+  t('指定項目裡有已刪除的成員時，只算還在的人', function () {
+    var r = Settle.compute(trip({
+      expenses: [{
+        title: '午餐', amount: 1000, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'],
+        extras: [{ label: '生魚片', amount: 100, memberIds: ['b', '已刪除'] }]
+      }]
+    }));
+    eq(share(r, 'b'), 10000 + 30000, '小明承擔整個 100');
+    eq(r.perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和仍為 0');
+  });
+
+  t('備註欄位不影響計算', function () {
+    var withNote = Settle.compute(trip({
+      expenses: [{ title: '午餐', note: '小明請客的那餐', amount: 300, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'] }]
+    }));
+    var without = Settle.compute(trip({
+      expenses: [{ title: '午餐', amount: 300, currency: 'TWD', payerId: 'a', shareIds: ['a', 'b', 'c'] }]
+    }));
+    eq(withNote.perMember.map(function (m) { return m.netCents; }),
+       without.perMember.map(function (m) { return m.netCents; }), '淨額');
   });
 }
 

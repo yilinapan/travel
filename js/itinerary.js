@@ -79,6 +79,7 @@ App.Itinerary = (function () {
       '<div class="tl-body">' +
         '<div class="tl-title">' + U.esc(it.title) + '</div>' +
         (it.place ? '<div class="tl-place">📍 ' + U.esc(it.place) + '</div>' : '') +
+        (it.image ? '<div class="tl-image"><img src="' + U.esc(imageUrl(it.image)) + '" alt="' + U.esc(it.title) + ' 示意圖" loading="lazy" onerror="this.parentNode.innerHTML=\'<span class=&quot;img-bad&quot;>圖片載入失敗，請檢查網址</span>\'"></div>' : '') +
         (it.note ? '<div class="tl-note">' + U.esc(it.note) + '</div>' : '') +
         (it.link ? '<div class="tl-link"><a href="' + U.esc(safeUrl(it.link)) + '" target="_blank" rel="noopener noreferrer">開啟連結 ↗</a></div>' : '') +
         (cost ? '<div class="tl-costline">' + cost + '</div>' : '') +
@@ -105,6 +106,19 @@ App.Itinerary = (function () {
     var s = String(u).trim();
     if (/^https?:\/\//i.test(s)) return s;
     return 'https://' + s.replace(/^\/+/, '');
+  }
+
+  /**
+   * 圖片欄位同時接受兩種寫法：
+   *   - 完整網址：https://example.com/photo.jpg
+   *   - 專案裡的短路徑：images/kiyomizu.jpg（放在 repo 的 images/ 資料夾）
+   * 短路徑的好處是分享連結不會變長，而且圖片跟著專案走、不會失效。
+   */
+  function imageUrl(v) {
+    var s = String(v || '').trim();
+    if (!s) return '';
+    if (/^(https?:)?\/\//i.test(s) || /^data:image\//i.test(s)) return s;
+    return s.replace(/^\/+/, '');   // 相對路徑，照原樣交給瀏覽器
   }
 
   // ---------------------------------------------------------------
@@ -172,6 +186,11 @@ App.Itinerary = (function () {
         },
         { name: 'place', label: '地點', value: item ? item.place : '', placeholder: '例如：京都市東山區' },
         { name: 'link', label: '連結', value: item ? item.link : '', placeholder: '貼 Google Maps 網址、訂房頁面都可以' },
+        {
+          name: 'image', label: '示意圖', value: item ? item.image : '',
+          placeholder: 'images/kiyomizu.jpg 或 https://…',
+          hint: '可以貼圖片網址，也可以用放在專案 images/ 資料夾裡的檔名（短路徑比較不佔分享連結的長度）'
+        },
         { name: 'note', label: '備註', type: 'textarea', value: item ? item.note : '', placeholder: '訂位代號、營業時間、記得帶現金…' },
         { name: 'amount', label: '花費金額', type: 'number', value: item ? item.amount : '', hint: '填了之後可以一鍵加到分帳。不花錢就留空。' },
         { name: 'currency', label: '幣別', type: 'select', value: item ? (item.currency || trip.baseCurrency) : trip.baseCurrency, options: currencies }
@@ -180,7 +199,7 @@ App.Itinerary = (function () {
       if (!v) return;
       var data = {
         title: v.title, time: v.time, type: v.type, place: v.place,
-        link: v.link, note: v.note,
+        link: v.link, image: v.image, note: v.note,
         amount: v.amount ? Number(v.amount) : '',
         currency: v.currency
       };

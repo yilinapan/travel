@@ -73,24 +73,73 @@ App.Settle = (function () {
     var total = 0;
 
     expenses.forEach(function (exp) {
+      var name = exp.title || '未命名支出';
       var cents = expenseBaseCents(trip, exp, warnings);
       if (cents === 0) return;
 
-      // 只採計還存在的成員
-      var sharers = (exp.shareIds || []).filter(function (id) { return paid.hasOwnProperty(id); });
-      if (sharers.length === 0) {
-        warnings.push('「' + (exp.title || '未命名支出') + '」沒有指定分攤的人，這筆不列入計算。');
+      if (!paid.hasOwnProperty(exp.payerId)) {
+        warnings.push('「' + name + '」的付款人已被刪除，這筆不列入計算。');
         return;
       }
-      if (!paid.hasOwnProperty(exp.payerId)) {
-        warnings.push('「' + (exp.title || '未命名支出') + '」的付款人已被刪除，這筆不列入計算。');
-        return;
+
+      // 只採計還存在的成員
+      var sharers = (exp.shareIds || []).filter(function (id) { return paid.hasOwnProperty(id); });
+
+      // --- 指定項目：某幾個人專屬的金額，先從總額扣掉 ---
+      var rate = rateOf(trip, exp.currency);
+      if (rate === null) rate = 1;
+      var extras = (exp.extras || []).map(function (ex) {
+        return {
+          label: ex.label || '指定項目',
+          cents: Math.round(toCents(ex.amount) * rate),
+          members: (ex.memberIds || []).filter(function (id) { return paid.hasOwnProperty(id); })
+        };
+      }).filter(function (ex) {
+        if (ex.cents <= 0) return false;
+        if (ex.members.length === 0) {
+          warnings.push('「' + name + '」的指定項目「' + ex.label + '」沒有有效的分攤對象，已改為由大家一起分。');
+          return false;
+        }
+        return true;
+      });
+
+      var extrasTotal = extras.reduce(function (s, ex) { return s + ex.cents; }, 0);
+      if (extrasTotal > cents) {
+        warnings.push('「' + name + '」的指定項目加起來（' + fromCents(extrasTotal) + '）超過支出總額（' +
+          fromCents(cents) + '），指定項目已略過，改為單純均分。');
+        extras = [];
+        extrasTotal = 0;
+      }
+
+      var remainder = cents - extrasTotal;
+
+      // 還有剩餘金額卻沒人分攤 → 由有指定項目的人一起承擔，不能讓錢憑空消失
+      if (remainder > 0 && sharers.length === 0) {
+        var fallback = [];
+        extras.forEach(function (ex) {
+          ex.members.forEach(function (id) { if (fallback.indexOf(id) === -1) fallback.push(id); });
+        });
+        if (fallback.length === 0) {
+          warnings.push('「' + name + '」沒有指定分攤的人，這筆不列入計算。');
+          return;
+        }
+        warnings.push('「' + name + '」扣掉指定項目後還剩 ' + fromCents(remainder) +
+          '，但沒有勾選分攤的人，已改由有指定項目的人一起承擔。');
+        sharers = fallback;
       }
 
       total += cents;
       paid[exp.payerId] += cents;
-      var parts = splitEvenly(cents, sharers);
-      Object.keys(parts).forEach(function (id) { share[id] += parts[id]; });
+
+      extras.forEach(function (ex) {
+        var parts = splitEvenly(ex.cents, ex.members);
+        Object.keys(parts).forEach(function (id) { share[id] += parts[id]; });
+      });
+
+      if (remainder > 0) {
+        var rest = splitEvenly(remainder, sharers);
+        Object.keys(rest).forEach(function (id) { share[id] += rest[id]; });
+      }
     });
 
     var perMember = members.map(function (m) {

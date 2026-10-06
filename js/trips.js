@@ -20,6 +20,7 @@ App.Trips = (function () {
           : '<div class="trip-list">' + trips.map(function (t) { return tripCard(t, cur); }).join('') + '</div>') +
       '</section>' +
       (cur ? settingsBlock(cur) : '') +
+      cloudBlock() +
       backupBlock();
 
     view.onclick = function (e) { onClick(e, view); };
@@ -91,6 +92,32 @@ App.Trips = (function () {
     '</section>';
   }
 
+  function cloudBlock() {
+    var C = App.Cloud;
+    var cfg = C.getConfig();
+    var on = C.isOn();
+
+    return '<section class="block">' +
+      '<div class="block-head"><h2>雲端同步<span class="count">' + (on ? '已開啟' : '未開啟') + '</span></h2></div>' +
+      (on
+        ? '<p class="muted">這台裝置會自動跟你的 Google 試算表同步，手機和電腦看到的是同一份資料。' +
+            '這台裝置顯示的名稱是「' + U.esc(cfg.device) + '」。</p>' +
+          '<div class="btn-row">' +
+            '<button class="btn btn-primary" data-act="cloud-pull">⬇ 從雲端重新讀取</button>' +
+            '<button class="btn btn-ghost" data-act="cloud-push">⬆ 立即上傳</button>' +
+            '<button class="btn btn-ghost" data-act="cloud-edit">修改設定</button>' +
+            '<button class="btn btn-ghost" data-act="cloud-off">關閉同步</button>' +
+          '</div>' +
+          '<div class="notice">⚠️ 這個做法沒有帳號登入，安全性靠「那串網址很難猜」。' +
+            '行程、花費、打包清單放進去沒問題，<strong>但不要填護照號碼、信用卡號、訂房密碼</strong>。</div>'
+        : '<p class="muted">開啟之後，手機和電腦就能接續編輯同一份資料。資料會存在你自己的 Google 試算表裡，你隨時打開就看得到。</p>' +
+          '<div class="btn-row">' +
+            '<button class="btn btn-primary" data-act="cloud-edit">設定雲端同步</button>' +
+            '<button class="btn btn-ghost" data-act="cloud-help">怎麼設定？</button>' +
+          '</div>') +
+    '</section>';
+  }
+
   function backupBlock() {
     return '<section class="block">' +
       '<div class="block-head"><h2>備份與還原</h2></div>' +
@@ -133,6 +160,110 @@ App.Trips = (function () {
     if (act === 'edit-base') return editBase(t);
     if (act === 'export') return doExport();
     if (act === 'import') return doImport();
+    if (act === 'cloud-edit') return editCloud();
+    if (act === 'cloud-off') return offCloud();
+    if (act === 'cloud-pull') return pullCloud();
+    if (act === 'cloud-push') return pushCloud();
+    if (act === 'cloud-help') return helpCloud();
+  }
+
+  // ---- 雲端同步 ----
+  function editCloud() {
+    var cfg = App.Cloud.getConfig();
+    U.modal({
+      title: '雲端同步設定',
+      submitText: '測試連線並儲存',
+      fields: [
+        {
+          name: 'url', label: 'Apps Script 網頁應用程式網址', required: true, value: cfg.url,
+          placeholder: 'https://script.google.com/macros/s/.../exec',
+          hint: '還沒有這串網址的話，先按上一頁的「怎麼設定？」照步驟做一次。'
+        },
+        {
+          name: 'device', label: '這台裝置叫什麼', value: cfg.device, placeholder: '例如：公司電腦、我的手機',
+          hint: '兩邊資料不一樣時，會用這個名稱告訴你是哪一台改的。'
+        }
+      ]
+    }).then(function (v) {
+      if (!v) return;
+      if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(v.url.trim())) {
+        if (!U.ask('這串網址看起來不像 Apps Script 的網頁應用程式網址。\n正常應該長得像 https://script.google.com/macros/s/.../exec\n\n還是要繼續嗎？')) return;
+      }
+      App.Cloud.setConfig(v.url, v.device);
+      U.toast('測試連線中…');
+      App.Cloud.ping().then(function (res) {
+        if (!res.ok) throw new Error(res.error || '試算表沒有正常回應');
+        U.toast('連線成功！');
+        App.render();
+        // 設定完立刻做一次同步，讓兩邊對齊
+        if (typeof App.syncAfterSetup === 'function') App.syncAfterSetup();
+      }, function (err) {
+        App.Cloud.disable();
+        U.modal({
+          title: '連線失敗',
+          submitText: '知道了',
+          fields: [{
+            name: '_n', type: 'note', label: '',
+            hint: err.message + '\n\n常見原因：\n' +
+              '1. 部署時「誰可以存取」沒有選「所有人」\n' +
+              '2. 複製到的是編輯器網址，不是「網頁應用程式」網址（結尾要是 /exec）\n' +
+              '3. 改過 Apps Script 程式後沒有重新部署新版本'
+          }]
+        });
+        App.render();
+      });
+    });
+  }
+
+  function offCloud() {
+    if (!U.ask('要關閉雲端同步嗎？\n資料會留在這台裝置和試算表裡，只是不再自動同步。')) return;
+    App.Cloud.disable();
+    U.toast('已關閉雲端同步');
+    App.render();
+  }
+
+  function pullCloud() {
+    if (!U.ask('要用雲端的版本覆蓋這台裝置嗎？\n這台裝置上還沒上傳的改動會不見。\n\n不確定的話，建議先下載一份備份檔。')) return;
+    App.Cloud.pull().then(function (res) {
+      S.replaceAll(res.trips, S.currentTrip() ? S.currentTrip().name : '');
+      res.warnings.slice(0, 3).forEach(function (w) { U.toast(w, 'bad'); });
+      U.toast('已讀取 ' + res.trips.length + ' 趟旅程');
+      App.render();
+    }, function (err) {
+      U.toast('讀取失敗：' + err.message, 'bad');
+    });
+  }
+
+  function pushCloud() {
+    App.Cloud.push(S.allTrips()).then(function (r) {
+      if (r && r.conflict) {
+        if (typeof App.onCloudConflict === 'function') App.onCloudConflict(r);
+        return;
+      }
+      U.toast('已上傳到雲端');
+      App.render();
+    }, function (err) {
+      U.toast('上傳失敗：' + err.message, 'bad');
+    });
+  }
+
+  function helpCloud() {
+    U.modal({
+      title: '怎麼設定雲端同步',
+      submitText: '知道了',
+      fields: [{
+        name: '_n', type: 'note', label: '',
+        hint: '完整的圖文步驟在專案的 docs/setup-google-sheets.md，大約 10 分鐘、只要做一次。\n\n' +
+          '簡要流程：\n' +
+          '1. 建一個新的 Google 試算表\n' +
+          '2. 選單「擴充功能 → Apps Script」\n' +
+          '3. 把專案裡 apps-script/Code.gs 的內容整個貼進去，存檔\n' +
+          '4. 按「部署 → 新增部署作業 → 網頁應用程式」\n' +
+          '5. 「執行身分」選自己，「誰可以存取」選「所有人」\n' +
+          '6. 複製那串以 /exec 結尾的網址，回來貼進設定\n\n' +
+          '中間 Google 會跳出「這個應用程式未經驗證」的警告，那是你自己寫的程式，按「進階 → 繼續前往」即可。'
+      }]
+    });
   }
 
   function editTrip(trip) {
@@ -144,12 +275,13 @@ App.Trips = (function () {
         { name: 'name', label: '旅程名稱', required: true, value: trip ? trip.name : '', placeholder: '例如：2026 日本關西 5 天' },
         { name: 'startDate', label: '出發日期', type: 'date', value: trip ? trip.startDate : '' },
         { name: 'endDate', label: '回程日期', type: 'date', value: trip ? trip.endDate : '', hint: '天數會依這兩個日期自動產生' }
-      ]
+      ],
+      validate: function (v) {
+        if (v.startDate && v.endDate && v.endDate < v.startDate) return '回程日期不能早於出發日期';
+        return null;
+      }
     }).then(function (v) {
       if (!v) return;
-      if (v.startDate && v.endDate && v.endDate < v.startDate) {
-        return U.toast('回程日期不能早於出發日期', 'bad');
-      }
       if (isNew) {
         S.createTrip(v.name, v.startDate, v.endDate);
         U.toast('旅程已建立');
@@ -173,12 +305,13 @@ App.Trips = (function () {
     U.modal({
       title: '加入成員',
       submitText: '加入',
-      fields: [{ name: 'name', label: '名字', required: true, placeholder: '例如：小明' }]
+      fields: [{ name: 'name', label: '名字', required: true, placeholder: '例如：小明' }],
+      validate: function (v) {
+        if (t.members.some(function (m) { return m.name === v.name; })) return '已經有同名的成員了';
+        return null;
+      }
     }).then(function (v) {
       if (!v) return;
-      if (t.members.some(function (m) { return m.name === v.name; })) {
-        return U.toast('已經有同名的成員了', 'bad');
-      }
       t.members.push({ id: S.uid('m'), name: v.name });
       S.touch(t);
       App.render();
@@ -209,16 +342,20 @@ App.Trips = (function () {
       fields: [
         { name: 'code', label: '幣別代碼', required: true, value: cur ? cur.code : '', placeholder: '例如：JPY、USD、KRW' },
         { name: 'rate', label: '1 單位等於多少 ' + t.baseCurrency, type: 'number', required: true, value: cur ? cur.rate : '', hint: '例如 1 日幣 ≈ 0.21 台幣，就填 0.21' }
-      ]
+      ],
+      validate: function (v) {
+        var newCode = v.code.toUpperCase();
+        if (!(Number(v.rate) > 0)) return '匯率要大於 0';
+        if (newCode === t.baseCurrency) return '這就是基準幣別，不用另外設定';
+        if (newCode !== code && t.currencies.some(function (c) { return c.code === newCode; })) {
+          return '這個幣別已經設定過了';
+        }
+        return null;
+      }
     }).then(function (v) {
       if (!v) return;
       var newCode = v.code.toUpperCase();
       var rate = Number(v.rate);
-      if (!(rate > 0)) return U.toast('匯率要大於 0', 'bad');
-      if (newCode === t.baseCurrency) return U.toast('這就是基準幣別，不用另外設定', 'bad');
-      if (newCode !== code && t.currencies.some(function (c) { return c.code === newCode; })) {
-        return U.toast('這個幣別已經設定過了', 'bad');
-      }
       if (cur) {
         // 幣別代碼改了的話，既有支出要跟著改，否則那些支出會查不到匯率
         if (newCode !== cur.code) {

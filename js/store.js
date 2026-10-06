@@ -28,6 +28,10 @@ App.Store = (function () {
 
   var state = { trips: [], currentTripId: null };
 
+  // 從雲端把資料拉下來的時候會暫時關掉自動上傳，
+  // 否則「剛下載完」會立刻被當成「有改動」又傳回去。
+  var syncSuspended = false;
+
   function uid(prefix) {
     return (prefix || 'id') + '_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
@@ -47,14 +51,39 @@ App.Store = (function () {
     return state;
   }
 
-  function save() {
+  function save(opts) {
+    var ok = true;
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
-      return true;
     } catch (e) {
       alert('儲存失敗。可能是瀏覽器空間已滿，或你正在使用無痕視窗。\n建議先用「備份」把資料匯出成檔案。');
-      return false;
+      ok = false;
     }
+    // 存到本機之後，如果有開雲端同步就排程上傳（會等幾秒，不會每改一下就連線）
+    if (ok && !syncSuspended && !(opts && opts.localOnly) &&
+        App.Cloud && App.Cloud.isOn && App.Cloud.isOn()) {
+      App.Cloud.scheduleSave();
+    }
+    return ok;
+  }
+
+  /** 執行一段「不要往雲端回傳」的操作（例如剛從雲端下載完資料） */
+  function withoutSync(fn) {
+    syncSuspended = true;
+    try { return fn(); } finally { syncSuspended = false; }
+  }
+
+  /** 直接換掉全部旅程（從雲端拉下來時用） */
+  function replaceAll(trips, keepCurrentName) {
+    withoutSync(function () {
+      trips.forEach(migrateTrip);
+      state.trips = trips;
+      var keep = keepCurrentName
+        ? trips.filter(function (t) { return t.name === keepCurrentName; })[0]
+        : null;
+      state.currentTripId = keep ? keep.id : (trips.length ? trips[0].id : null);
+      save({ localOnly: true });
+    });
   }
 
   /** 舊資料補上後來新增的欄位，避免更新後打不開 */
@@ -223,6 +252,8 @@ App.Store = (function () {
     dayDate: dayDate,
     parseDate: parseDate,
     exportAll: exportAll,
-    importAll: importAll
+    importAll: importAll,
+    withoutSync: withoutSync,
+    replaceAll: replaceAll
   };
 })();

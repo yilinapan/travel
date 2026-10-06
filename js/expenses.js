@@ -74,10 +74,20 @@ App.Expenses = (function () {
   function expenseTable(trip, readOnly) {
     var rows = trip.expenses.slice().reverse().map(function (e) {
       var sharers = (e.shareIds || []).map(function (id) { return nameOf(trip, id); }).filter(Boolean);
-      var sharerText = sharers.length === trip.members.length ? '全部' : sharers.join('、');
+      var sharerText = sharers.length === 0 ? '—'
+        : sharers.length === trip.members.length ? '全部' : sharers.join('、');
+
+      var extras = (e.extras || []).map(function (ex) {
+        var who = (ex.memberIds || []).map(function (id) { return nameOf(trip, id); }).filter(Boolean).join('、');
+        return '<div class="exp-extra">↳ ' + U.esc(ex.label) + ' ' +
+          U.money(App.Settle.toCents(ex.amount), e.currency) + ' → ' + U.esc(who) + '</div>';
+      }).join('');
+
       return '<tr>' +
         '<td><div class="exp-title">' + U.esc(e.title || '未命名') +
           (e.fromItemId ? ' <span class="tag">來自行程</span>' : '') + '</div>' +
+          (e.note ? '<div class="exp-note">' + U.esc(e.note) + '</div>' : '') +
+          extras +
           '<div class="exp-sub">' + U.esc(e.date || '') + '</div></td>' +
         '<td class="right nowrap">' + U.money(App.Settle.toCents(e.amount), e.currency) + '</td>' +
         '<td>' + U.esc(nameOf(trip, e.payerId) || '（已刪除）') + '</td>' +
@@ -134,36 +144,58 @@ App.Expenses = (function () {
       submitText: isNew ? '新增' : '儲存',
       fields: [
         { name: 'title', label: '項目', required: true, value: exp ? exp.title : '', placeholder: '例如：第一天晚餐' },
-        { name: 'amount', label: '金額', type: 'number', required: true, value: exp ? exp.amount : '' },
+        { name: 'amount', label: '總金額', type: 'number', required: true, value: exp ? exp.amount : '' },
         { name: 'currency', label: '幣別', type: 'select', value: exp ? exp.currency : trip.baseCurrency, options: currencies },
         {
           name: 'payerId', label: '誰付的', type: 'select', required: true, value: exp ? exp.payerId : all[0],
           options: trip.members.map(function (m) { return { value: m.id, label: m.name }; })
         },
         {
-          name: 'shareIds', label: '這筆分給誰', type: 'checks', required: true,
+          name: 'extras', label: '指定項目（某幾個人專屬的金額）', type: 'extras',
+          value: exp ? (exp.extras || []) : [],
+          options: trip.members.map(function (m) { return { value: m.id, label: m.name }; }),
+          hint: '例如午餐 1000 元，其中生魚片 100 只有小明吃 —— 就加一條「生魚片 / 100 / 小明」。這 100 會先扣給小明，剩下的 900 才由下面勾選的人均分。沒有這種狀況就留空。'
+        },
+        {
+          name: 'shareIds', label: '剩下的分給誰', type: 'checks',
           value: exp ? (exp.shareIds || []) : all,
           options: trip.members.map(function (m) { return { value: m.id, label: m.name }; }),
-          hint: '勾選的人之間平均分攤。這餐誰沒吃，就把誰取消勾選。'
+          hint: '扣掉指定項目後，剩下的金額在勾選的人之間平均分攤。這餐誰沒吃，就把誰取消勾選。'
         },
+        { name: 'note', label: '備註', type: 'textarea', value: exp ? exp.note : '', placeholder: '例如：小明生日，大家請客' },
         { name: 'date', label: '日期', type: 'date', value: exp ? exp.date : (trip.startDate || '') }
-      ]
+      ],
+      // 在視窗關閉「之前」檢查，有問題就留在原地，使用者填的內容不會不見
+      validate: function (v) {
+        var amount = Number(v.amount);
+        if (!(amount > 0)) return '金額要大於 0';
+
+        var extrasTotal = (v.extras || []).reduce(function (s, ex) { return s + Number(ex.amount); }, 0);
+        if (extrasTotal > amount + 1e-9) {
+          return '指定項目加起來是 ' + U.num(extrasTotal) + '，超過總金額 ' + U.num(amount) + ' 了';
+        }
+        if (amount - extrasTotal > 1e-9 && (v.shareIds || []).length === 0) {
+          return '扣掉指定項目後還剩 ' + U.num(amount - extrasTotal) + '，請勾選要分攤的人';
+        }
+        return null;
+      }
     }).then(function (v) {
       if (!v) return;
       var amount = Number(v.amount);
-      if (!(amount > 0)) return U.toast('金額要大於 0', 'bad');
 
       if (isNew) {
         trip.expenses.push({
-          id: S.uid('e'), title: v.title, amount: amount, currency: v.currency,
-          payerId: v.payerId, shareIds: v.shareIds, date: v.date
+          id: S.uid('e'), title: v.title, note: v.note, amount: amount, currency: v.currency,
+          payerId: v.payerId, shareIds: v.shareIds, extras: v.extras, date: v.date
         });
       } else {
         exp.title = v.title;
+        exp.note = v.note;
         exp.amount = amount;
         exp.currency = v.currency;
         exp.payerId = v.payerId;
         exp.shareIds = v.shareIds;
+        exp.extras = v.extras;
         exp.date = v.date;
         // 從行程帶過來的支出，金額改了要同步回行程點
         if (exp.fromItemId) {

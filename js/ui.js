@@ -82,6 +82,11 @@ App.UI = (function () {
         var out = {};
         var missing = null;
         fields.forEach(function (f) {
+          if (f.type === 'note') return;
+          if (f.type === 'extras') {
+            out[f.name] = collectExtras(wrap, f.name);
+            return;
+          }
           if (f.type === 'checks') {
             out[f.name] = Array.prototype.slice
               .call(wrap.querySelectorAll('[data-check="' + f.name + '"]:checked'))
@@ -103,19 +108,49 @@ App.UI = (function () {
 
       wrap.addEventListener('click', function (e) {
         if (e.target === wrap) return close(null);
+        var btn = e.target.closest ? e.target.closest('[data-act]') : null;
+        var btnAct = btn && btn.getAttribute('data-act');
+
+        // 指定項目：新增一列 / 刪除一列
+        if (btnAct === 'add-extra') {
+          var fname = btn.getAttribute('data-for');
+          var f = fields.filter(function (x) { return x.name === fname; })[0];
+          var box = wrap.querySelector('[data-extras="' + fname + '"]');
+          box.insertAdjacentHTML('beforeend', extraRowHtml(f.options || [], null));
+          var rows = box.querySelectorAll('.extra-row');
+          rows[rows.length - 1].querySelector('.extra-label').focus();
+          return;
+        }
+        if (btnAct === 'del-extra') {
+          var row = btn.closest('.extra-row');
+          if (row) row.remove();
+          return;
+        }
+
         var act = e.target.getAttribute && e.target.getAttribute('data-act');
         if (act === 'cancel') close(null);
         if (act === 'danger') close({ __danger: true });
-        if (act === 'ok') {
-          var v = collect();
-          if (v) close(v);
-        }
+        if (act === 'ok') submit();
       });
       wrap.querySelector('form').addEventListener('submit', function (e) {
         e.preventDefault();
-        var v = collect();
-        if (v) close(v);
+        submit();
       });
+
+      /**
+       * 按下確定時走這裡。
+       * opts.validate 回傳錯誤訊息字串時，視窗會「留在原地」，
+       * 使用者填的內容不會不見 —— 這點很重要，不然改到一半的資料會白填。
+       */
+      function submit() {
+        var v = collect();
+        if (!v) return;
+        if (typeof opts.validate === 'function') {
+          var err = opts.validate(v);
+          if (err) { toast(err, 'bad'); return; }
+        }
+        close(v);
+      }
       document.addEventListener('keydown', onKey);
       document.body.appendChild(wrap);
       var first = wrap.querySelector('input,select,textarea');
@@ -123,7 +158,61 @@ App.UI = (function () {
     });
   }
 
+  /**
+   * 「指定項目」欄位：一筆支出裡，某幾個人專屬的金額。
+   * 例如午餐 1000 元，其中生魚片 100 只有小明吃 —— 這 100 先扣給小明，
+   * 剩下的 900 才由「分給誰」勾選的人均分。
+   */
+  function extrasFieldHtml(f) {
+    var rows = (f.value || []).map(function (ex) { return extraRowHtml(f.options || [], ex); }).join('');
+    return '<div class="field">' +
+      '<label>' + esc(f.label) + '</label>' +
+      '<div class="extras" data-extras="' + esc(f.name) + '">' + rows + '</div>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-act="add-extra" data-for="' + esc(f.name) + '">+ 新增指定項目</button>' +
+      (f.hint ? '<div class="hint">' + esc(f.hint) + '</div>' : '') +
+    '</div>';
+  }
+
+  function extraRowHtml(options, ex) {
+    var picked = (ex && ex.memberIds) || [];
+    return '<div class="extra-row">' +
+      '<div class="extra-top">' +
+        '<input class="extra-label" placeholder="說明，例如：生魚片" value="' + esc(ex ? ex.label : '') + '">' +
+        '<input class="extra-amount" type="number" step="any" inputmode="decimal" placeholder="金額" value="' + esc(ex ? ex.amount : '') + '">' +
+        '<button type="button" class="icon-btn" data-act="del-extra" title="移除這一項">✕</button>' +
+      '</div>' +
+      '<div class="extra-members">' + options.map(function (o) {
+        var on = picked.indexOf(o.value) !== -1;
+        return '<label class="check check-sm"><input type="checkbox" value="' + esc(o.value) + '"' + (on ? ' checked' : '') + '><span>' + esc(o.label) + '</span></label>';
+      }).join('') + '</div>' +
+    '</div>';
+  }
+
+  function collectExtras(wrap, name) {
+    var box = wrap.querySelector('[data-extras="' + name + '"]');
+    if (!box) return [];
+    return Array.prototype.slice.call(box.querySelectorAll('.extra-row')).map(function (row) {
+      return {
+        label: row.querySelector('.extra-label').value.trim(),
+        amount: Number(row.querySelector('.extra-amount').value),
+        memberIds: Array.prototype.slice.call(row.querySelectorAll('.extra-members input:checked'))
+          .map(function (c) { return c.value; })
+      };
+    }).filter(function (ex) {
+      // 金額沒填或沒選人的那一列直接忽略，不要擋住使用者存檔
+      return ex.amount > 0 && ex.memberIds.length > 0;
+    });
+  }
+
   function fieldHtml(f) {
+    if (f.type === 'extras') return extrasFieldHtml(f);
+    // 純說明文字，沒有輸入框（確認視窗用）
+    if (f.type === 'note') {
+      return '<div class="field field-note">' +
+        (f.label ? '<label>' + esc(f.label) + '</label>' : '') +
+        (f.hint ? '<div class="note-text">' + esc(f.hint) + '</div>' : '') +
+      '</div>';
+    }
     var id = 'f_' + f.name;
     var label = '<label for="' + id + '">' + esc(f.label) + (f.required ? ' <span class="req">*</span>' : '') + '</label>';
     var hint = f.hint ? '<div class="hint">' + esc(f.hint) + '</div>' : '';

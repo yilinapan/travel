@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>分帳計算 — 自動測試</title>
+<style>
+  body{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;max-width:780px;margin:40px auto;padding:0 20px;line-height:1.7;color:#222;background:#fff}
+  h1{font-size:22px;margin-bottom:4px}
+  p.lead{color:#555;margin-top:0}
+  #summary{padding:14px 18px;border-radius:10px;font-weight:700;font-size:17px;margin:18px 0}
+  .ok{background:#e6f6ed;color:#11633a;border:1px solid #9fdcbb}
+  .bad{background:#fdecec;color:#8c1c1c;border:1px solid #f0b0b0}
+  ul{padding-left:20px}
+  li{margin:5px 0}
+  .pass{color:#11633a}
+  .fail{color:#c02626;font-weight:700}
+  .detail{color:#666;font-size:13px;margin-left:22px}
+</style>
+</head>
+<body>
+<h1>分帳計算 — 自動測試</h1>
+<p class="lead">這一頁會自動驗算分帳邏輯。<strong>全部綠色就代表計算是對的。</strong>直接雙擊這個檔案就能打開，不用安裝任何東西。</p>
+<div id="summary">執行中…</div>
+<ul id="results"></ul>
+
+<script src="../js/settle.js"></script>
+<script src="settle.tests.js"></script>
+<script>
+(function () {
+  var pass = 0, fail = 0;
+  var out = document.getElementById('results');
+
+  function t(name, fn) {
+    var li = document.createElement('li');
+    try {
+      fn();
+      pass++;
+      li.innerHTML = '<span class="pass">✓ ' + name + '</span>';
+    } catch (e) {
+      fail++;
+      li.innerHTML = '<span class="fail">✗ ' + name + '</span><div class="detail">' + e.message + '</div>';
+    }
+    out.appendChild(li);
+  }
+  function eq(actual, expected, msg) {
+    var a = JSON.stringify(actual), b = JSON.stringify(expected);
+    if (a !== b) throw new Error((msg || '') + ' 期望 ' + b + '，實際得到 ' + a);
+  }
+
+  registerSettleTests(t, eq, App.Settle);
+
+  var s = document.getElementById('summary');
+  if (fail === 0) {
+    s.className = 'ok';
+    s.textContent = '✓ 全部通過：' + pass + ' 項測試，0 項失敗。分帳計算正常。';
+  } else {
+    s.className = 'bad';
+    s.textContent = '✗ 有 ' + fail + ' 項失敗（通過 ' + pass + ' 項）。請往下看紅色項目。';
+  }
+})();
+</script>
+</body>
+</html>

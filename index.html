@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="旅遊規劃工具：行程安排、分帳結算、打包清單。資料存在自己的瀏覽器，不上傳任何伺服器。">
+<meta name="theme-color" content="#1f6f5c">
+<title>旅遊規劃 — 行程 · 分帳 · 打包清單</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>✈️</text></svg>">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="brand-mark">✈️</span>
+      <span class="brand-text">旅遊規劃</span>
+    </div>
+    <div class="header-mid">
+      <div id="headerSub" class="header-sub"></div>
+    </div>
+    <div id="headerActions" class="header-actions"></div>
+  </div>
+</header>
+
+<div id="readonlyBar" class="readonly-bar" hidden>
+  👀 你正在看別人分享的行程「<strong id="readonlyName"></strong>」，這是唯讀的，改不了。
+</div>
+
+<nav id="tabs" class="tabs" aria-label="主要分頁"></nav>
+
+<main id="view" class="view"></main>
+
+<footer class="foot">
+  <p>資料只存在你這台裝置的瀏覽器，不會上傳到任何伺服器。請定期到「我的旅程」下載備份檔。</p>
+  <p class="foot-small">分帳計算有自動測試，可打開 <code>tests/test.html</code> 自行驗證。</p>
+</footer>
+
+<script src="js/settle.js"></script>
+<script src="js/store.js"></script>
+<script src="js/share.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/trips.js"></script>
+<script src="js/itinerary.js"></script>
+<script src="js/expenses.js"></script>
+<script src="js/checklist.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

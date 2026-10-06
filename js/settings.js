@@ -1,4 +1,4 @@
-/* settings.js — ⚙️ 設定面板：雲端同步、備份與還原
+/* settings.js — 設定面板：雲端同步、備份與還原
  * 這些是「偶爾才會動」的功能，收在這裡，讓主要畫面保持乾淨。
  */
 window.App = window.App || {};
@@ -12,7 +12,7 @@ App.Settings = (function () {
     panel = U.el(
       '<div class="modal-back">' +
         '<div class="modal modal-wide">' +
-          '<div class="modal-head"><h3>⚙️ 設定</h3><button class="icon-btn" data-act="close" aria-label="關閉">✕</button></div>' +
+          '<div class="modal-head"><h3>設定</h3><button class="icon-btn" data-act="close" aria-label="關閉">' + U.icon('close') + '</button></div>' +
           '<div class="modal-body" id="settingsBody"></div>' +
           '<div class="modal-foot"><span class="spacer"></span><button class="btn btn-ghost" data-act="close">關閉</button></div>' +
         '</div>' +
@@ -52,12 +52,12 @@ App.Settings = (function () {
     var on = C.isOn();
 
     return '<section class="set-sec">' +
-      '<h4 class="set-title">☁️ 雲端同步<span class="pill-sm' + (on ? ' on' : '') + '">' + (on ? '已開啟' : '未開啟') + '</span></h4>' +
+      '<h4 class="set-title">雲端同步<span class="pill-sm' + (on ? ' on' : '') + '">' + (on ? '已開啟' : '未開啟') + '</span></h4>' +
       (on
         ? '<p class="muted">這台裝置會自動跟你的 Google 試算表同步，手機和電腦看到的是同一份資料。這台顯示的名稱是「' + U.esc(cfg.device) + '」。</p>' +
           '<div class="btn-row">' +
-            '<button class="btn btn-primary" data-act="cloud-pull">⬇ 從雲端重新讀取</button>' +
-            '<button class="btn btn-ghost" data-act="cloud-push">⬆ 立即上傳</button>' +
+            '<button class="btn btn-primary" data-act="cloud-pull">' + U.icon('download', 15) + ' 從雲端重新讀取</button>' +
+            '<button class="btn btn-ghost" data-act="cloud-push">' + U.icon('upload', 15) + ' 立即上傳</button>' +
             '<button class="btn btn-ghost" data-act="cloud-edit">修改設定</button>' +
             '<button class="btn btn-ghost" data-act="cloud-off">關閉同步</button>' +
           '</div>' +
@@ -73,12 +73,12 @@ App.Settings = (function () {
 
   function backupSection() {
     return '<section class="set-sec">' +
-      '<h4 class="set-title">💾 備份與還原</h4>' +
+      '<h4 class="set-title">備份與還原</h4>' +
       '<p class="muted">備份檔是一個 .json 檔，可以存到雲端硬碟，也可以傳給同行的人讓他們匯入。' +
         '沒開雲端同步的話，<strong>請定期備份</strong> —— 清除瀏覽器資料就會把旅程一起清掉。</p>' +
       '<div class="btn-row">' +
-        '<button class="btn btn-primary" data-act="export">⬇ 下載備份檔</button>' +
-        '<button class="btn btn-ghost" data-act="import">⬆ 從備份檔還原</button>' +
+        '<button class="btn btn-primary" data-act="export">' + U.icon('download', 15) + ' 下載備份檔</button>' +
+        '<button class="btn btn-ghost" data-act="import">' + U.icon('upload', 15) + ' 從備份檔還原</button>' +
       '</div>' +
     '</section>';
   }

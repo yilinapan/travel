@@ -4,59 +4,64 @@
  */
 
 :root {
-  /* ===== 秋天賞楓配色 =====
-     楓紅 #B3452F ・ 銀杏黃 #C2912E ・ 苔綠 #6B7A52
-     和紙白 #FAF7F1 ・ 樹幹棕 #2B2420                      */
-  --bg:        #faf7f1;   /* 和紙白 */
+  /* ===== 日本傳統色：秋天賞楓 =====
+     砥粉 #D4BE9A ・ 狐色 #C68E3F ・ 琥珀 #C96B1E ・ 落栗 #9E3119 ・ 赤銅 #76210F
+     底色與線條由「砥粉」調淡而來，文字由「赤銅」調深而來。            */
+  --bg:        #faf6ee;   /* 砥粉調到最淡 */
   --surface:   #ffffff;
-  --surface-2: #f5f0e7;
-  --line:      #e8e0d4;
-  --line-2:    #f2ece2;
-  --text:      #2b2420;   /* 樹幹棕 */
-  --text-soft: #6e6358;
-  --muted:     #a3978a;
+  --surface-2: #f4ece0;
+  --line:      #e6dac6;
+  --line-2:    #f1e9dc;
+  --text:      #2b1d14;   /* 赤銅調深 */
+  --text-soft: #6d5a4a;
+  --muted:     #a3907c;
 
-  --brand:     #b3452f;   /* 楓紅 */
-  --brand-ink: #fffaf6;
-  --brand-soft:#f7e8e3;
+  --brand:     #9e3119;   /* 落栗：主強調色 */
+  --brand-ink: #fff8f4;
+  --brand-soft:#f6e6de;
 
-  --ok:        #5f6e47;   /* 苔綠（加深以確保在白底上看得清楚） */
-  --ok-soft:   #eef1e7;
-  --warn:      #8a6516;   /* 銀杏黃加深 */
-  --warn-soft: #faf0d8;
-  --danger:    #9b2226;   /* 比楓紅更深更冷，才分得出「刪除」和「重點」 */
-  --danger-soft:#f9e8e6;
-  --gold:      #c2912e;   /* 銀杏黃，用在金額 */
+  --gold:      #a8761f;   /* 狐色調深，白底上才讀得清楚（金額用） */
+  --amber:     #c96b1e;   /* 琥珀 */
+
+  /* 完成狀態刻意留一個低彩度的綠。這組傳統色全是暖色，
+     若「已完成」也用暖色，就跟金額、強調色分不出來了。 */
+  --ok:        #5f6e47;
+  --ok-soft:   #edf0e6;
+  --warn:      #a8761f;
+  --warn-soft: #faf0dc;
+  --danger:    #76210f;   /* 赤銅：比落栗更深，刪除才分得出來 */
+  --danger-soft:#f7e7e2;
 
   --radius:    8px;
   --radius-sm: 6px;
-  --shadow:    0 1px 2px rgba(74,53,38,.05), 0 4px 16px rgba(74,53,38,.04);
+  --shadow:    0 1px 2px rgba(74,45,26,.05), 0 4px 16px rgba(74,45,26,.04);
   --maxw:      920px;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    /* 深色＝暮楓：傍晚的楓林 */
-    --bg:        #1b1613;
-    --surface:   #262019;
-    --surface-2: #2f2820;
-    --line:      #3a3027;
-    --line-2:    #2f2820;
-    --text:      #f1e9dd;
-    --text-soft: #b6a999;
-    --muted:     #8a7d6e;
+    --bg:        #1d1511;
+    --surface:   #271d17;
+    --surface-2: #2f241c;
+    --line:      #3d2f24;
+    --line-2:    #2f241c;
+    --text:      #f2e9dd;
+    --text-soft: #bba894;
+    --muted:     #8d7b68;
 
-    --brand:     #e0694a;   /* 深底上要打亮才看得清 */
-    --brand-ink: #231a16;
-    --brand-soft:#3a2219;
+    --brand:     #d4714f;   /* 落栗打亮，深底上才看得清 */
+    --brand-ink: #241611;
+    --brand-soft:#3a211a;
 
-    --ok:        #94a97a;
-    --ok-soft:   #2b3326;
-    --warn:      #e5b54e;
-    --warn-soft: #352a12;
-    --danger:    #e08073;
-    --danger-soft:#3a201c;
-    --gold:      #e5b54e;
+    --gold:      #d9a24a;
+    --amber:     #e08a3e;
+
+    --ok:        #93a876;
+    --ok-soft:   #2a3225;
+    --warn:      #d9a24a;
+    --warn-soft: #342711;
+    --danger:    #e08168;
+    --danger-soft:#3a1f17;
 
     --shadow:    0 1px 2px rgba(0,0,0,.45), 0 4px 16px rgba(0,0,0,.3);
   }
@@ -158,23 +163,22 @@ a { color: var(--brand); }
   border-bottom: 1px solid var(--line);
 }
 .block.is-card > .block-head { border-bottom: 0; padding-bottom: 0; }
+/* 主標：大、深色，一眼看得出是這一頁的主題 */
 .block-head h2 {
-  font-size: 11.5px; letter-spacing: .2em; text-transform: uppercase;
-  color: var(--muted); font-weight: 500; flex: 1; min-width: 0;
+  font-size: 19px; font-weight: 500; letter-spacing: -.005em;
+  color: var(--text); flex: 1; min-width: 0;
 }
-.block.is-card .block-head h2 { font-size: 16px; letter-spacing: 0; text-transform: none; color: var(--text); }
+.block-head-tag {
+  font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--muted); border: 1px solid var(--line);
+  border-radius: 20px; padding: 1px 9px;
+}
 .count {
   display: inline-block; margin-left: 7px;
   background: var(--surface-2); color: var(--text-soft);
   border-radius: 20px; padding: 1px 9px; font-size: 12px; font-weight: 600;
 }
 .total { font-weight: 700; color: var(--brand); }
-h4.sub {
-  font-size: 14px; margin: 20px 0 8px;
-  padding-top: 14px; border-top: 1px solid var(--line);
-  display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
-}
-h4.sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
 .sub-hint { font-weight: 400; font-size: 12px; color: var(--muted); }
 .muted { color: var(--muted); font-size: 13px; margin: 6px 0; }
 .muted.pad { padding: 0 2px 8px; }
@@ -332,17 +336,7 @@ h4.sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
   font-variant-numeric: tabular-nums; color: var(--brand);
 }
 .tl-kind { font-size: 11px; color: var(--muted); margin-top: 1px; }
-.tl-kind.type-spot { color: #6b7a52; }
-.tl-kind.type-food { color: #a8702f; }
-.tl-kind.type-stay { color: #8a6f4f; }
-.tl-kind.type-move { color: #5f7488; }
 .tl-kind.type-fly  { color: var(--brand); }
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) .tl-kind.type-spot { color: #94a97a; }
-  :root:not([data-theme="light"]) .tl-kind.type-food { color: #d79a5a; }
-  :root:not([data-theme="light"]) .tl-kind.type-stay { color: #c0a481; }
-  :root:not([data-theme="light"]) .tl-kind.type-move { color: #8fa6bb; }
-}
 
 .tl-body { min-width: 0; }
 .tl-title { font-weight: 600; }
@@ -597,10 +591,6 @@ h4.sub:first-of-type { border-top: 0; padding-top: 0; margin-top: 4px; }
 .day-head h3 { font-weight: 500; }
 
 /* 區塊小標改成間距較開的灰字，像書的章節標 */
-h4.sub {
-  font-size: 11.5px; font-weight: 500; letter-spacing: .14em;
-  color: var(--muted); text-transform: uppercase;
-}
 .sub-hint { letter-spacing: 0; text-transform: none; font-size: 12px; }
 
 /* 金額用銀杏黃，跟楓紅的「重點」區隔開 */
@@ -615,9 +605,6 @@ h4.sub {
 
 
 /* 小標與上一段之間要留白，不然會黏在一起 */
-h4.sub { margin-top: 26px; }
-h4.sub:first-of-type { margin-top: 18px; }
-.block-settle .muted + h4.sub { margin-top: 22px; }
 
 /* ---------- 已結清 ---------- */
 .settle-btn { margin-left: 10px; flex: none; }
@@ -677,3 +664,72 @@ h4.sub:first-of-type { margin-top: 18px; }
 
 /* 同步狀態移到頁首標題下方 */
 .sync-status { margin-top: 7px; }
+
+
+/* =====================================================================
+   區塊標題列：標題在左、「＋」在右
+   主標（block-head h2）比小標（sec-title）大一級，層次才看得出來
+   ===================================================================== */
+.sec-head {
+  display: flex; align-items: baseline; gap: 10px;
+  margin: 30px 0 11px; padding-bottom: 9px;
+  border-bottom: 1px solid var(--line);
+}
+.sec-head:first-of-type { margin-top: 4px; }
+.sec-title { font-size: 14px; font-weight: 600; color: var(--text); flex: none; }
+.sec-hint { font-size: 12px; color: var(--muted); }
+.sec-head .spacer { flex: 1; }
+.sec-head .btn-sm { align-self: center; }
+
+.icon-add {
+  appearance: none; cursor: pointer; font: inherit;
+  width: 28px; height: 28px; flex: none; align-self: center;
+  display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--line); border-radius: 50%;
+  background: var(--surface); color: var(--brand);
+  font-size: 15px; line-height: 1; padding: 0;
+}
+.icon-add:hover { background: var(--brand); border-color: var(--brand); color: var(--brand-ink); }
+
+/* 小標底下的內容要有呼吸空間 */
+.sec-head + .chip-row, .sec-head + .table, .sec-head + .empty { margin-top: 2px; }
+
+/* =====================================================================
+   旅程清單：列表式，不用方框卡片
+   ===================================================================== */
+.trip-list { display: block; }
+.trip-row {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 16px 0 16px 14px;
+  border-bottom: 1px solid var(--line-2);
+  border-left: 3px solid transparent;
+}
+.trip-row:last-child { border-bottom: 0; }
+.trip-row:hover { background: var(--surface-2); }
+.trip-row.is-current { border-left-color: var(--brand); }
+.trip-row-main { flex: 1; min-width: 0; cursor: pointer; }
+.trip-row-title {
+  font-size: 17px; font-weight: 500;
+  display: flex; align-items: center; gap: 9px; flex-wrap: wrap;
+}
+.trip-row-main:hover .trip-row-title { color: var(--brand); }
+.trip-row-range {
+  font-size: 12.5px; color: var(--text-soft); margin-top: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.trip-row-stats { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.trip-row-side { display: flex; flex-direction: column; gap: 2px; flex: none; opacity: .5; }
+.trip-row:hover .trip-row-side { opacity: 1; }
+@media (hover: none) { .trip-row-side { opacity: .8; } }
+
+/* ---------- 單色線條圖示 ---------- */
+.ic { display: block; flex: none; }
+.btn .ic, .act .ic { display: inline-block; vertical-align: -2px; }
+.act .ic { display: block; margin: 0 auto; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; }
+.tl-party { display: inline-flex; align-items: center; gap: 4px; }
+.tl-party .ic { opacity: .8; }
+
+/* 使用者自己填的分類圖示仍是 emoji；調成灰階，不跟主色搶注意力 */
+.cl-group-head h3 { display: flex; align-items: center; gap: 7px; }
+.cl-emoji { filter: grayscale(1); opacity: .65; font-size: 15px; }

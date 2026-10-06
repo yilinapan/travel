@@ -11,12 +11,9 @@ App.Trips = (function () {
     view.innerHTML =
       storageNotice() +
       '<section class="block">' +
-        '<div class="block-head">' +
-          '<h2>我的旅程</h2>' +
-          '<button class="btn btn-primary" data-act="new-trip">+ 新增旅程</button>' +
-        '</div>' +
+        secHead('我的旅程', '', 'new-trip', '新增旅程') +
         (trips.length === 0
-          ? U.empty('還沒有任何旅程。按上面的「新增旅程」開始規劃第一趟。')
+          ? U.empty('還沒有任何旅程。按右上角的 ＋ 開始規劃第一趟。')
           : '<div class="trip-list">' + trips.map(function (t) { return tripCard(t, cur); }).join('') + '</div>') +
       '</section>' +
       (cur ? settingsBlock(cur) : '');
@@ -36,48 +33,65 @@ App.Trips = (function () {
       '</div>';
   }
 
+  /** 區塊標題列：標題在左，右邊一個「＋」 */
+  function secHead(title, hint, act, addTitle, extraHtml) {
+    return '<div class="sec-head">' +
+      '<h3 class="sec-title">' + U.esc(title) + '</h3>' +
+      (hint ? '<span class="sec-hint">' + hint + '</span>' : '') +
+      '<span class="spacer"></span>' +
+      (extraHtml || '') +
+      (act ? '<button class="icon-add" data-act="' + act + '" title="' + U.esc(addTitle) + '"' +
+             ' aria-label="' + U.esc(addTitle) + '">' + U.icon('plus', 16) + '</button>' : '') +
+    '</div>';
+  }
+
   function tripCard(t, cur) {
     var days = S.dayCount(t);
     var spots = t.days.reduce(function (s, d) { return s + d.items.length; }, 0);
     var r = App.Settle.compute(t);
-    var range = t.startDate && t.endDate ? t.startDate + ' ~ ' + t.endDate : '尚未設定日期';
     var done = 0, total = 0;
     t.checklist.forEach(function (g) {
       g.items.forEach(function (i) { total++; if (i.done) done++; });
     });
 
-    return '<article class="trip-card' + (cur && cur.id === t.id ? ' is-current' : '') + '" data-trip="' + U.esc(t.id) + '">' +
-      '<div class="trip-card-main" data-act="open-trip" data-trip="' + U.esc(t.id) + '">' +
-        '<h3>' + U.esc(t.name) + (cur && cur.id === t.id ? '<span class="pill">目前</span>' : '') + '</h3>' +
-        '<div class="trip-meta">' + U.esc(range) + ' · 共 ' + days + ' 天</div>' +
-        '<div class="trip-stats">' +
-          '<span>🗺 ' + spots + ' 個行程點</span>' +
-          '<span>👥 ' + t.members.length + ' 人</span>' +
-          '<span>💰 ' + U.money(r.totalCents, t.baseCurrency) + '</span>' +
-          '<span>🎒 ' + done + '/' + total + '</span>' +
-        '</div>' +
+    var range = t.startDate && t.endDate
+      ? t.startDate.replace(/-/g, '.') + ' — ' + t.endDate.slice(5).replace('-', '.') + '　' + days + ' 天'
+      : '尚未設定日期';
+    var stats = [
+      spots + ' 個行程點',
+      t.members.length + ' 人',
+      U.money(r.totalCents, t.baseCurrency),
+      '已打包 ' + done + '/' + total
+    ].join('　·　');
+
+    return '<article class="trip-row' + (cur && cur.id === t.id ? ' is-current' : '') + '">' +
+      '<div class="trip-row-main" data-act="open-trip" data-trip="' + U.esc(t.id) + '">' +
+        '<div class="trip-row-title">' + U.esc(t.name) +
+          (cur && cur.id === t.id ? '<span class="pill">目前</span>' : '') + '</div>' +
+        '<div class="trip-row-range">' + U.esc(range) + '</div>' +
+        '<div class="trip-row-stats">' + U.esc(stats) + '</div>' +
       '</div>' +
-      '<div class="trip-card-side">' +
-        '<button class="icon-btn" data-act="edit-trip" data-trip="' + U.esc(t.id) + '" title="編輯名稱與日期">✏️</button>' +
-        '<button class="icon-btn" data-act="del-trip" data-trip="' + U.esc(t.id) + '" title="刪除旅程">🗑</button>' +
+      '<div class="trip-row-side">' +
+        '<button class="icon-btn" data-act="edit-trip" data-trip="' + U.esc(t.id) + '" title="編輯名稱與日期">' + U.icon('edit') + '</button>' +
+        '<button class="icon-btn" data-act="del-trip" data-trip="' + U.esc(t.id) + '" title="刪除旅程">' + U.icon('trash') + '</button>' +
       '</div>' +
     '</article>';
   }
 
   function settingsBlock(t) {
     return '<section class="block">' +
-      '<div class="block-head"><h2>「' + U.esc(t.name) + '」的設定</h2></div>' +
+      '<div class="block-head"><h2>' + U.esc(t.name) + '</h2><span class="block-head-tag">設定</span></div>' +
 
-      '<h4 class="sub">同行成員<span class="sub-hint">分帳會用到</span></h4>' +
+      secHead('同行成員', '分帳會用到', 'add-member', '加入成員') +
       (t.members.length === 0
         ? U.empty('還沒有成員。至少加兩個人才能分帳。')
         : '<div class="chip-row">' + t.members.map(function (m) {
             return '<span class="chip">' + U.esc(m.name) +
-              '<button class="chip-x" data-act="del-member" data-id="' + U.esc(m.id) + '" title="移除">✕</button></span>';
+              '<button class="chip-x" data-act="del-member" data-id="' + U.esc(m.id) + '" title="移除">' + U.icon('close', 13) + '</button></span>';
           }).join('') + '</div>') +
-      '<button class="btn btn-ghost" data-act="add-member">+ 加入成員</button>' +
 
-      '<h4 class="sub">幣別與匯率<span class="sub-hint">基準幣別：' + U.esc(t.baseCurrency) + '</span></h4>' +
+      secHead('幣別與匯率', '結算以 ' + U.esc(t.baseCurrency) + ' 顯示', 'add-cur', '加入幣別',
+        '<button class="btn btn-ghost btn-sm" data-act="edit-base">改基準幣別</button>') +
       '<p class="muted">匯率請自己填' +
       U.hint('例如 1 日幣 ≈ 0.21 台幣，就填 0.21。' +
              '這裡刻意不自動抓網路匯率 —— 自動抓要依賴外部服務，哪天對方改規則或關掉，' +
@@ -87,13 +101,9 @@ App.Trips = (function () {
         : '<table class="table"><thead><tr><th>幣別</th><th>1 單位 = 多少 ' + U.esc(t.baseCurrency) + '</th><th></th></tr></thead><tbody>' +
           t.currencies.map(function (c) {
             return '<tr><td><strong>' + U.esc(c.code) + '</strong></td><td>' + U.esc(c.rate) + '</td>' +
-              '<td class="right"><button class="icon-btn" data-act="edit-cur" data-code="' + U.esc(c.code) + '">✏️</button>' +
-              '<button class="icon-btn" data-act="del-cur" data-code="' + U.esc(c.code) + '">🗑</button></td></tr>';
+              '<td class="right"><button class="icon-btn" data-act="edit-cur" data-code="' + U.esc(c.code) + '">' + U.icon('edit') + '</button>' +
+              '<button class="icon-btn" data-act="del-cur" data-code="' + U.esc(c.code) + '">' + U.icon('trash') + '</button></td></tr>';
           }).join('') + '</tbody></table>') +
-      '<button class="btn btn-ghost" data-act="add-cur">+ 加入幣別</button>' +
-
-      '<h4 class="sub">基準幣別</h4>' +
-      '<button class="btn btn-ghost" data-act="edit-base">改成別的幣別（目前 ' + U.esc(t.baseCurrency) + '）</button>' +
     '</section>';
   }
 

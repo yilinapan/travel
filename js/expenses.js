@@ -58,8 +58,8 @@ App.Expenses = (function () {
         '<p class="muted">共 ' + r.transfers.length + ' 筆轉帳就能全部結清。'
         + (r.settledCents ? '（已經結清了 ' + U.money(r.settledCents, cur) + '）' : '') + '</p>'
       : (r.settledCents
-          ? '<div class="all-clear">✅ 全部結清了，不用再轉帳。共已結清 ' + U.money(r.settledCents, cur) + '。</div>'
-          : '<div class="all-clear">✅ 目前沒有人欠人，不用轉帳。</div>');
+          ? '<div class="all-clear">' + U.icon('check', 16) + ' 全部結清了，不用再轉帳。共已結清 ' + U.money(r.settledCents, cur) + '。</div>'
+          : '<div class="all-clear">' + U.icon('check', 16) + ' 目前沒有人欠人，不用轉帳。</div>');
 
     return '<section class="block is-card block-settle">' +
       '<div class="block-head"><h2>結算結果</h2><span class="total">總支出 ' + U.money(r.totalCents, cur) + '</span></div>' +
@@ -101,8 +101,8 @@ App.Expenses = (function () {
                 (p.note ? '<div class="exp-note">' + U.esc(p.note) + '</div>' : '') + '</td>' +
               '<td class="right nowrap">' + U.money(App.Settle.toCents(p.amount), p.currency) + '</td>' +
               (readOnlyNow ? '' : '<td class="right nowrap">' +
-                '<button class="icon-btn" data-act="pay-edit" data-id="' + U.esc(p.id) + '">✏️</button>' +
-                '<button class="icon-btn" data-act="pay-del" data-id="' + U.esc(p.id) + '">🗑</button></td>') +
+                '<button class="icon-btn" data-act="pay-edit" data-id="' + U.esc(p.id) + '">' + U.icon('edit') + '</button>' +
+                '<button class="icon-btn" data-act="pay-del" data-id="' + U.esc(p.id) + '">' + U.icon('trash') + '</button></td>') +
             '</tr>';
           }).join('') + '</tbody></table>') +
       (readOnlyNow ? '' : '<button class="btn btn-ghost btn-sm" data-act="pay-add">+ 記一筆還款</button>');
@@ -130,8 +130,8 @@ App.Expenses = (function () {
         '<td>' + U.esc(nameOf(trip, e.payerId) || '（已刪除）') + '</td>' +
         '<td class="small">' + U.esc(sharerText) + '</td>' +
         (readOnly ? '' : '<td class="right nowrap">' +
-          '<button class="icon-btn" data-act="edit" data-id="' + U.esc(e.id) + '">✏️</button>' +
-          '<button class="icon-btn" data-act="del" data-id="' + U.esc(e.id) + '">🗑</button></td>') +
+          '<button class="icon-btn" data-act="edit" data-id="' + U.esc(e.id) + '">' + U.icon('edit') + '</button>' +
+          '<button class="icon-btn" data-act="del" data-id="' + U.esc(e.id) + '">' + U.icon('trash') + '</button></td>') +
       '</tr>';
     }).join('');
 

@@ -42,12 +42,12 @@ App.Checklist = (function () {
     var done = g.items.filter(function (i) { return i.done; }).length;
     return '<div class="cl-group">' +
       '<div class="cl-group-head">' +
-        '<h3>' + (g.emoji ? g.emoji + ' ' : '') + U.esc(g.name) +
+        '<h3>' + (g.emoji ? '<span class="cl-emoji">' + U.esc(g.emoji) + '</span>' : '') + U.esc(g.name) +
           '<span class="count">' + done + '/' + g.items.length + '</span></h3>' +
         (readOnly ? '' : '<div class="cl-group-act">' +
-          '<button class="icon-btn" data-act="add-item" data-g="' + U.esc(g.id) + '" title="新增項目">＋</button>' +
-          '<button class="icon-btn" data-act="edit-group" data-g="' + U.esc(g.id) + '" title="改名">✏️</button>' +
-          '<button class="icon-btn" data-act="del-group" data-g="' + U.esc(g.id) + '" title="刪除分類">🗑</button>' +
+          '<button class="icon-btn" data-act="add-item" data-g="' + U.esc(g.id) + '" title="新增項目">' + U.icon('plus', 15) + '</button>' +
+          '<button class="icon-btn" data-act="edit-group" data-g="' + U.esc(g.id) + '" title="改名">' + U.icon('edit', 15) + '</button>' +
+          '<button class="icon-btn" data-act="del-group" data-g="' + U.esc(g.id) + '" title="刪除分類">' + U.icon('trash', 15) + '</button>' +
         '</div>') +
       '</div>' +
       (g.items.length === 0
@@ -59,7 +59,7 @@ App.Checklist = (function () {
                   ' data-act="toggle" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '">' +
                 '<span>' + U.esc(it.text) + '</span>' +
               '</label>' +
-              (readOnly ? '' : '<button class="icon-btn" data-act="del-item" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '" title="刪除">✕</button>') +
+              (readOnly ? '' : '<button class="icon-btn" data-act="del-item" data-g="' + U.esc(g.id) + '" data-id="' + U.esc(it.id) + '" title="刪除">' + U.icon('close', 14) + '</button>') +
             '</li>';
           }).join('') + '</ul>') +
     '</div>';

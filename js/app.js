@@ -46,12 +46,12 @@ window.App = window.App || {};
     document.getElementById('headerMeta').innerHTML = trip ? metaHtml(trip) : '';
 
     if (readOnly) {
-      acts.innerHTML = '<button class="act" data-act="adopt"><i>⬇</i>存一份到我的裝置</button>';
+      acts.innerHTML = '<button class="act" data-act="adopt">' + U.icon('download', 19) + '存一份到我的裝置</button>';
     } else {
       acts.innerHTML =
-        (trip ? '<button class="act" data-act="share"><i>🔗</i>分享</button>' : '') +
-        (App.Cloud.isOn() ? '<button class="act" data-act="sync"><i>⟳</i>同步</button>' : '') +
-        '<button class="act" data-act="settings"><i>⚙</i>設定</button>';
+        (trip ? '<button class="act" data-act="share">' + U.icon('share', 19) + '分享</button>' : '') +
+        (App.Cloud.isOn() ? '<button class="act" data-act="sync">' + U.icon('sync', 19) + '同步</button>' : '') +
+        '<button class="act" data-act="settings">' + U.icon('gear', 19) + '設定</button>';
     }
     renderSyncStatus();
     renderFootNote();

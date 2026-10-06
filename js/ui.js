@@ -60,7 +60,7 @@ App.UI = (function () {
           '<div class="modal" role="dialog" aria-modal="true">' +
             '<div class="modal-head">' +
               '<h3>' + esc(opts.title || '') + '</h3>' +
-              '<button class="icon-btn" data-act="cancel" aria-label="關閉">✕</button>' +
+              '<button class="icon-btn" data-act="cancel" aria-label="關閉">' + icon('close') + '</button>' +
             '</div>' +
             '<form class="modal-body">' + body + '</form>' +
             '<div class="modal-foot">' +
@@ -179,7 +179,7 @@ App.UI = (function () {
       '<div class="extra-top">' +
         '<input class="extra-label" placeholder="說明，例如：生魚片" value="' + esc(ex ? ex.label : '') + '">' +
         '<input class="extra-amount" type="number" step="any" inputmode="decimal" placeholder="金額" value="' + esc(ex ? ex.amount : '') + '">' +
-        '<button type="button" class="icon-btn" data-act="del-extra" title="移除這一項">✕</button>' +
+        '<button type="button" class="icon-btn" data-act="del-extra" title="移除這一項">' + icon('close', 15) + '</button>' +
       '</div>' +
       '<div class="extra-members">' + options.map(function (o) {
         var on = picked.indexOf(o.value) !== -1;
@@ -304,6 +304,38 @@ App.UI = (function () {
     });
   }
 
+  /* ---------------------------------------------------------------
+   * 單色線條圖示
+   * 用 SVG 而不是 emoji：emoji 自己帶顏色，會跟配色打架；
+   * 這些圖示吃 currentColor，放在哪就跟著那裡的文字顏色走。
+   * --------------------------------------------------------------- */
+  var ICONS = {
+    edit:    '<path d="M4 20h4L19 9a2.1 2.1 0 0 0-3-3L5 17v3z"/>',
+    trash:   '<path d="M4 7h16M10 7V5h4v2M6 7l1 13h10l1-13"/>',
+    plus:    '<path d="M12 5v14M5 12h14"/>',
+    close:   '<path d="M18 6 6 18M6 6l12 12"/>',
+    up:      '<path d="M6 14l6-6 6 6"/>',
+    down:    '<path d="M6 10l6 6 6-6"/>',
+    share:   '<path d="M9.5 13.5a4 4 0 0 0 6 .5l2.5-2.5a4 4 0 0 0-5.7-5.7L11 7"/><path d="M14.5 10.5a4 4 0 0 0-6-.5L6 12.5a4 4 0 0 0 5.7 5.7L13 17"/>',
+    gear:    '<circle cx="12" cy="12" r="3"/><path d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6l1.4 1.4m10 10 1.4 1.4m0-12.8-1.4 1.4m-10 10-1.4 1.4"/>',
+    sync:    '<path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/>',
+    people:  '<circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6.5a3 3 0 0 1 0 5.8M17 20a6 6 0 0 0-2-4.4"/>',
+    download:'<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M5 19h14"/>',
+    upload:  '<path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 19h14"/>',
+    cloud:   '<path d="M7 18a4 4 0 0 1 .6-8 5.5 5.5 0 0 1 10.5 1.6A3.5 3.5 0 0 1 17.5 18z"/>',
+    check:   '<path d="M5 12.5 10 17 19 7"/>'
+  };
+
+  /** 回傳一個吃 currentColor 的小圖示 */
+  function icon(name, size) {
+    var d = ICONS[name];
+    if (!d) return '';
+    var n = size || 17;
+    return '<svg class="ic" width="' + n + '" height="' + n + '" viewBox="0 0 24 24" fill="none" ' +
+      'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" ' +
+      'aria-hidden="true" focusable="false">' + d + '</svg>';
+  }
+
   /**
    * 說明圓圈：把長句收起來，點一下（電腦滑過去）才顯示。
    * 手機沒有 hover，所以一定要支援點擊，不能只靠 CSS。
@@ -377,6 +409,6 @@ App.UI = (function () {
     esc: esc, el: el, num: num, money: money, toast: toast, modal: modal,
     confirmDanger: confirmDanger, ask: ask, copyText: copyText,
     downloadText: downloadText, pickTextFile: pickTextFile, empty: empty,
-    hint: hint, hideHint: hideHint
+    hint: hint, hideHint: hideHint, icon: icon
   };
 })();

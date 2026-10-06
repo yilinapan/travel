@@ -96,7 +96,7 @@ App.Itinerary = (function () {
     // 有兩個以上成員才需要篩選
     var filterHtml = trip.members.length > 1
       ? '<select id="memberFilter" class="member-filter" title="只看某個人的行程">' +
-          '<option value="">👥 全部的人</option>' +
+          '<option value="">全部的人</option>' +
           trip.members.map(function (m) {
             return '<option value="' + U.esc(m.id) + '"' + (m.id === filterMember ? ' selected' : '') + '>' +
               '只看 ' + U.esc(m.name) + '</option>';
@@ -126,7 +126,7 @@ App.Itinerary = (function () {
 
     var party = partyOf(trip, it);
     var partyTag = party.isAll ? ''
-      : '<span class="tl-party">👥 ' + U.esc(party.names.join('、')) + '</span>';
+      : '<span class="tl-party">' + U.icon('people', 13) + U.esc(party.names.join('、')) + '</span>';
 
     return '<li class="tl-item' + (party.isAll ? '' : ' tl-split') + '" data-id="' + U.esc(it.id) + '">' +
       '<div class="tl-when">' +
@@ -144,10 +144,10 @@ App.Itinerary = (function () {
       (readOnly ? '' :
       '<div class="tl-actions">' +
         (filterMember ? '' :
-          '<button class="icon-btn" data-act="up" data-id="' + U.esc(it.id) + '"' + (i === 0 ? ' disabled' : '') + ' title="往上移">▲</button>' +
-          '<button class="icon-btn" data-act="down" data-id="' + U.esc(it.id) + '"' + (i === total - 1 ? ' disabled' : '') + ' title="往下移">▼</button>') +
-        '<button class="icon-btn" data-act="edit" data-id="' + U.esc(it.id) + '" title="編輯">✏️</button>' +
-        '<button class="icon-btn" data-act="del" data-id="' + U.esc(it.id) + '" title="刪除">🗑</button>' +
+          '<button class="icon-btn" data-act="up" data-id="' + U.esc(it.id) + '"' + (i === 0 ? ' disabled' : '') + ' title="往上移">' + U.icon('up') + '</button>' +
+          '<button class="icon-btn" data-act="down" data-id="' + U.esc(it.id) + '"' + (i === total - 1 ? ' disabled' : '') + ' title="往下移">' + U.icon('down') + '</button>') +
+        '<button class="icon-btn" data-act="edit" data-id="' + U.esc(it.id) + '" title="編輯">' + U.icon('edit') + '</button>' +
+        '<button class="icon-btn" data-act="del" data-id="' + U.esc(it.id) + '" title="刪除">' + U.icon('trash') + '</button>' +
         (it.amount && !linked ? '<button class="btn btn-ghost btn-sm" data-act="to-expense" data-id="' + U.esc(it.id) + '">加到分帳</button>' : '') +
       '</div>') +
     '</li>';

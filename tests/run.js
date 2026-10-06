@@ -27,9 +27,14 @@ vm.createContext(sandbox);
 });
 const App = sandbox.App;
 
+// 結構檢查要讀原始碼，所以只在終端機跑（瀏覽器版不含這一組）
+const SRC_FILES = ['settle', 'store', 'cloud', 'share', 'ui', 'trips', 'itinerary', 'expenses', 'checklist', 'settings', 'app']
+  .map(n => ({ name: 'js/' + n + '.js', src: fs.readFileSync(path.join(root, 'js', n + '.js'), 'utf8') }));
+
 const suites = [
   { title: '分帳計算', register: require('./settle.tests.js'), args: [App.Settle] },
-  { title: '試算表格式轉換', register: require('./cloud.tests.js'), args: [App] }
+  { title: '試算表格式轉換', register: require('./cloud.tests.js'), args: [App] },
+  { title: '程式結構', register: require('./structure.tests.js'), args: [SRC_FILES] }
 ];
 
 let pass = 0;

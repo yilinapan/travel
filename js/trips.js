@@ -138,5 +138,142 @@ App.Trips = (function () {
     if (act === 'edit-base') return editBase(t);
   }
 
+  function editTrip(trip) {
+    var isNew = !trip;
+    U.modal({
+      title: isNew ? '新增旅程' : '編輯旅程',
+      submitText: isNew ? '建立' : '儲存',
+      fields: [
+        { name: 'name', label: '旅程名稱', required: true, value: trip ? trip.name : '', placeholder: '例如：2026 日本關西 5 天' },
+        { name: 'startDate', label: '出發日期', type: 'date', value: trip ? trip.startDate : '' },
+        { name: 'endDate', label: '回程日期', type: 'date', value: trip ? trip.endDate : '', hint: '天數會依這兩個日期自動產生' }
+      ],
+      validate: function (v) {
+        if (v.startDate && v.endDate && v.endDate < v.startDate) return '回程日期不能早於出發日期';
+        return null;
+      }
+    }).then(function (v) {
+      if (!v) return;
+      if (isNew) {
+        S.createTrip(v.name, v.startDate, v.endDate);
+        U.toast('旅程已建立');
+        App.go('itinerary');
+        return;
+      }
+      trip.name = v.name;
+      trip.startDate = v.startDate;
+      trip.endDate = v.endDate;
+      var dropped = S.syncDays(trip);
+      S.touch(trip);
+      if (dropped.length) {
+        U.toast('天數變少了，有 ' + dropped.length + ' 天的行程被移除', 'bad');
+      }
+      App.render();
+    });
+  }
+
+  function addMember(t) {
+    if (!t) return;
+    U.modal({
+      title: '加入成員',
+      submitText: '加入',
+      fields: [{ name: 'name', label: '名字', required: true, placeholder: '例如：小明' }],
+      validate: function (v) {
+        if (t.members.some(function (m) { return m.name === v.name; })) return '已經有同名的成員了';
+        return null;
+      }
+    }).then(function (v) {
+      if (!v) return;
+      t.members.push({ id: S.uid('m'), name: v.name });
+      S.touch(t);
+      App.render();
+    });
+  }
+
+  function delMember(t, id) {
+    if (!t) return;
+    var m = t.members.filter(function (x) { return x.id === id; })[0];
+    if (!m) return;
+    var used = t.expenses.filter(function (e) {
+      return e.payerId === id || (e.shareIds || []).indexOf(id) !== -1;
+    }).length;
+    var msg = '確定要移除「' + m.name + '」嗎？';
+    if (used) msg += '\n\n注意：有 ' + used + ' 筆支出跟這個人有關，移除後那些支出會從結算中被排除。';
+    if (!U.ask(msg)) return;
+    t.members = t.members.filter(function (x) { return x.id !== id; });
+    S.touch(t);
+    App.render();
+  }
+
+  function editCurrency(t, code) {
+    if (!t) return;
+    var cur = code ? t.currencies.filter(function (c) { return c.code === code; })[0] : null;
+    U.modal({
+      title: cur ? '編輯幣別' : '加入幣別',
+      submitText: '儲存',
+      fields: [
+        { name: 'code', label: '幣別代碼', required: true, value: cur ? cur.code : '', placeholder: '例如：JPY、USD、KRW' },
+        { name: 'rate', label: '1 單位等於多少 ' + t.baseCurrency, type: 'number', required: true, value: cur ? cur.rate : '', hint: '例如 1 日幣 ≈ 0.21 台幣，就填 0.21' }
+      ],
+      validate: function (v) {
+        var newCode = v.code.toUpperCase();
+        if (!(Number(v.rate) > 0)) return '匯率要大於 0';
+        if (newCode === t.baseCurrency) return '這就是基準幣別，不用另外設定';
+        if (newCode !== code && t.currencies.some(function (c) { return c.code === newCode; })) {
+          return '這個幣別已經設定過了';
+        }
+        return null;
+      }
+    }).then(function (v) {
+      if (!v) return;
+      var newCode = v.code.toUpperCase();
+      var rate = Number(v.rate);
+      if (cur) {
+        // 幣別代碼改了的話，既有支出要跟著改，否則那些支出會查不到匯率
+        if (newCode !== cur.code) {
+          t.expenses.forEach(function (e) { if (e.currency === cur.code) e.currency = newCode; });
+        }
+        cur.code = newCode;
+        cur.rate = rate;
+      } else {
+        t.currencies.push({ code: newCode, rate: rate });
+      }
+      S.touch(t);
+      App.render();
+    });
+  }
+
+  function delCurrency(t, code) {
+    if (!t) return;
+    var used = t.expenses.filter(function (e) { return e.currency === code; }).length;
+    var msg = '確定要移除幣別 ' + code + ' 嗎？';
+    if (used) msg += '\n\n注意：有 ' + used + ' 筆支出是用這個幣別記的，移除後那些支出會算不出正確金額。';
+    if (!U.ask(msg)) return;
+    t.currencies = t.currencies.filter(function (c) { return c.code !== code; });
+    S.touch(t);
+    App.render();
+  }
+
+  function editBase(t) {
+    if (!t) return;
+    U.modal({
+      title: '改變基準幣別',
+      submitText: '儲存',
+      fields: [{
+        name: 'code', label: '基準幣別代碼', required: true, value: t.baseCurrency,
+        hint: '這是結算結果顯示的幣別。改了之後，原本用舊基準幣別記的支出要自己重新確認匯率。'
+      }]
+    }).then(function (v) {
+      if (!v) return;
+      var code = v.code.toUpperCase();
+      if (code === t.baseCurrency) return;
+      t.baseCurrency = code;
+      t.currencies = t.currencies.filter(function (c) { return c.code !== code; });
+      S.touch(t);
+      U.toast('基準幣別已改為 ' + code);
+      App.render();
+    });
+  }
+
   return { render: render };
 })();

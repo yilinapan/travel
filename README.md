@@ -123,6 +123,7 @@ travel/
 │   ├── test.html           測試頁（雙擊打開）
 │   ├── settle.tests.js     分帳計算的測試
 │   ├── cloud.tests.js      試算表格式轉換的測試
+│   ├── structure.tests.js  程式結構檢查（函式有沒有被誤刪、按鈕有沒有對應處理）
 │   └── run.js              終端機版測試
 └── docs/
     ├── design.md                設計說明與當初的取捨

@@ -3,70 +3,99 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>三個視覺方向 — 旅遊規劃工具</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<title>視覺方向 — 旅遊規劃工具</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f6f7f8;--card:#fff;--line:#e3e7ea;--ink:#1a1f24;--soft:#5c6670;--faint:#8e979f}
+:root{--bg:#faf7f1;--card:#fff;--line:#e8e0d4;--ink:#2b2420;--soft:#6e6358;--faint:#a3978a;--maple:#b3452f}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);
   font-family:"Noto Sans TC",system-ui,sans-serif;font-size:15px;line-height:1.75}
-.wrap{max-width:720px;margin:0 auto;padding:40px 20px 70px}
-h1{font-size:25px;margin:0 0 6px}
-.lead{color:var(--soft);margin:0 0 30px;font-size:14.5px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;
-  padding:20px;margin-bottom:16px;text-decoration:none;color:inherit;display:block;
+.wrap{max-width:720px;margin:0 auto;padding:40px 22px 70px}
+h1{font-size:27px;font-weight:300;margin:0 0 6px}
+.lead{color:var(--soft);margin:0 0 8px;font-size:14.5px}
+h2.round{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);
+  font-weight:500;margin:36px 0 14px;padding-bottom:9px;border-bottom:1px solid var(--line)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+  padding:19px 20px;margin-bottom:13px;text-decoration:none;color:inherit;display:block;
   transition:transform .12s, box-shadow .12s}
-.card:hover{transform:translateY(-2px);box-shadow:0 6px 22px rgba(26,31,36,.09)}
-.card h2{font-size:18px;margin:0 0 4px;display:flex;align-items:center;gap:10px}
+.card:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(74,53,38,.09)}
+.card h3{font-size:17px;font-weight:500;margin:0 0 4px;display:flex;align-items:center;gap:10px}
 .swatch{display:flex;gap:4px;margin-left:auto}
-.swatch i{width:17px;height:17px;border-radius:50%;display:block}
-.card p{margin:6px 0 0;color:var(--soft);font-size:14px}
-.tags{margin-top:11px;display:flex;gap:6px;flex-wrap:wrap}
+.swatch i{width:16px;height:16px;border-radius:50%;display:block;border:1px solid rgba(0,0,0,.07)}
+.card p{margin:5px 0 0;color:var(--soft);font-size:13.5px}
+.tags{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
 .tag{font-size:11.5px;background:var(--bg);border:1px solid var(--line);
   border-radius:20px;padding:2px 10px;color:var(--soft)}
-.go{font-size:13px;color:#0b7f78;font-weight:500;margin-top:12px;display:block}
-.note{background:#fff8e6;border:1px solid #f0e0b8;border-radius:10px;
-  padding:13px 16px;font-size:13.5px;color:#6b5420;margin-top:28px}
-.note b{color:#4a3a12}
+.go{font-size:13px;color:var(--maple);font-weight:500;margin-top:11px;display:block}
+.old{opacity:.6}
+.note{background:#fdf6e4;border:1px solid #ecdcb8;border-radius:9px;
+  padding:13px 16px;font-size:13.5px;color:#6b5420;margin-top:14px}
+.palette{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0 4px}
+.pc{text-align:center;font-size:10.5px;color:var(--faint)}
+.pc i{display:block;width:46px;height:46px;border-radius:8px;margin-bottom:4px;border:1px solid rgba(0,0,0,.07)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>三個視覺方向</h1>
-  <p class="lead">同一天的行程、同一筆結算、同一份打包清單，用三種風格呈現。
-     <b>建議用手機打開</b>看，因為實際用的時候多半在手機上。</p>
+  <h1>視覺方向</h1>
+  <p class="lead">同一天的行程、同一筆結算、同一份打包清單，用不同風格呈現。<b>建議用手機打開看</b>。</p>
 
-  <a class="card" href="a-journal.html">
-    <h2>A · 旅行誌
-      <span class="swatch"><i style="background:#f7f3ec"></i><i style="background:#b5653f"></i><i style="background:#6f8368"></i></span>
-    </h2>
-    <p>米白紙感底色、襯線體標題、陶土紅重點色。像一本手寫的旅遊筆記，溫暖、適合在家慢慢規劃時看。</p>
-    <div class="tags"><span class="tag">思源宋體標題</span><span class="tag">紙紋底色</span><span class="tag">低彩度</span><span class="tag">閱讀感強</span></div>
+  <div class="palette">
+    <div class="pc"><i style="background:#b3452f"></i>楓紅</div>
+    <div class="pc"><i style="background:#c2912e"></i>銀杏黃</div>
+    <div class="pc"><i style="background:#6b7a52"></i>苔綠</div>
+    <div class="pc"><i style="background:#faf7f1"></i>和紙白</div>
+    <div class="pc"><i style="background:#2b2420"></i>樹幹棕</div>
+  </div>
+
+  <h2 class="round">第二輪 · C 的排版 ＋ 賞楓配色</h2>
+
+  <a class="card" href="c1-washi.html">
+    <h3>秋 1 · 和紙
+      <span class="swatch"><i style="background:#faf7f1"></i><i style="background:#b3452f"></i><i style="background:#6b7a52"></i></span>
+    </h3>
+    <p>最克制的一版。行程點維持 C 原本的細線分隔，只有「結算」和「打包」是卡片。楓紅只出現在時間和金額上。</p>
+    <div class="tags"><span class="tag">留白最多</span><span class="tag">卡片最少</span><span class="tag">最像 C</span></div>
     <span class="go">打開看 →</span>
   </a>
 
-  <a class="card" href="b-app.html">
-    <h2>B · 現代 App
-      <span class="swatch"><i style="background:#0b7f78"></i><i style="background:#14b8a6"></i><i style="background:#f2994a"></i></span>
-    </h2>
-    <p>漸層標題區、圓角卡片、彩色類型圖示、底部導覽列。最接近一般旅遊 App，手機上手指好按，資訊一眼就抓得到。</p>
-    <div class="tags"><span class="tag">底部導覽</span><span class="tag">漸層 hero</span><span class="tag">大按鈕</span><span class="tag">手機優先</span></div>
+  <a class="card" href="c2-maple.html">
+    <h3>秋 2 · 楓紅
+      <span class="swatch"><i style="background:#f4eee3"></i><i style="background:#a63a26"></i><i style="background:#b8862b"></i></span>
+    </h3>
+    <p>每個行程點都是一張卡片，區塊標題前面有一道楓紅短線。分段最清楚，手機上也最好點。楓紅當主調，秋意最濃。</p>
+    <div class="tags"><span class="tag">卡片最多</span><span class="tag">分段清楚</span><span class="tag">手機好按</span></div>
     <span class="go">打開看 →</span>
   </a>
 
-  <a class="card" href="c-minimal.html">
-    <h2>C · 極簡
-      <span class="swatch"><i style="background:#fcfcfc;border:1px solid #e3e7ea"></i><i style="background:#111"></i><i style="background:#d94f2b"></i></span>
-    </h2>
-    <p>大量留白、細線分隔、幾乎只有黑白，強調色只用在真正重要的地方。靠排版本身撐起層次，看起來最冷靜、最不花俏。</p>
-    <div class="tags"><span class="tag">黑白為主</span><span class="tag">細線</span><span class="tag">留白多</span><span class="tag">排版驅動</span></div>
+  <a class="card" href="c3-dusk.html">
+    <h3>秋 3 · 暮楓
+      <span class="swatch"><i style="background:#1b1613"></i><i style="background:#e0694a"></i><i style="background:#e5b54e"></i></span>
+    </h3>
+    <p>深色基調，像傍晚的楓林。排版跟秋 2 一樣，只是整個暗下來。晚上在床上看最舒服，但白天在戶外陽光下會比較難看清楚。</p>
+    <div class="tags"><span class="tag">深色</span><span class="tag">夜間舒適</span><span class="tag">戶外較吃力</span></div>
     <span class="go">打開看 →</span>
   </a>
 
   <div class="note">
-    <b>這些只是外觀草稿</b>，內容是寫死的假資料，按了不會有反應。
-    挑好方向（也可以說「A 的配色＋B 的底部導覽」這種混搭）再套用到真正的工具上。
+    這三版的<b>排版完全一樣</b>，差別只在配色深淺和卡片多寡。
+    所以你也可以說「我要秋 2 的卡片，但顏色用秋 1 的淺一點」這種混搭。
   </div>
+
+  <h2 class="round">第一輪 · 三種不同骨架（已挑定 C）</h2>
+
+  <a class="card old" href="a-journal.html">
+    <h3>A · 旅行誌</h3>
+    <p>襯線標題、紙紋底色。</p><span class="go">打開看 →</span>
+  </a>
+  <a class="card old" href="b-app.html">
+    <h3>B · 現代 App</h3>
+    <p>漸層 hero、底部導覽。</p><span class="go">打開看 →</span>
+  </a>
+  <a class="card old" href="c-minimal.html">
+    <h3>C · 極簡（第二輪的骨架來源）</h3>
+    <p>大量留白、細線、黑白為主。</p><span class="go">打開看 →</span>
+  </a>
 </div>
 </body>
 </html>

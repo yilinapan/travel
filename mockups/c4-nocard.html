@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>秋 4 · 無卡片</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="v2.css">
+<style>
+/* ===== 秋 4 · 無卡片（配色同秋 2） ===== */
+:root{
+  --bg:#f4eee3;          /* 偏深的和紙 */
+  --card:#fffdf9;
+  --line:#e3d7c4;
+  --line-2:#f0e8da;
+  --ink:#2a211c;
+  --ink-soft:#6b5f52;
+  --ink-faint:#9d9084;
+  --maple:#a63a26;       /* 楓紅（主調） */
+  --maple-on:#fff8f4;
+  --ginkgo:#b8862b;
+  --moss:#62714a;
+  --moss-soft:#ebefe3;
+  --r:10px;
+  --shadow:0 1px 3px rgba(74,53,38,.05), 0 6px 18px rgba(74,53,38,.04);
+  --thumb-r:7px;
+  --thumb-bg:linear-gradient(135deg,#d99a6c,#b3452f);
+  --thumb-ink:#fff6ef;
+}
+/* 沒有卡片時，分段全靠這幾條線，所以線要留著 */
+.dayhead{border-bottom-width:2px;border-bottom-color:var(--maple)}
+</style>
+</head>
+<body class="no-cards">
+<div class="wrap">
+
+  <div class="top">
+    <div class="eyebrow">Trip</div>
+    <h1>關西五日</h1>
+    <div class="meta">
+      <span>2026.03.01 — 03.05</span>
+      <span><b>5</b> 天</span>
+      <span><b>3</b> 人</span>
+      <span><b>12,222</b> TWD</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab">旅程</button>
+    <button class="tab on">行程</button>
+    <button class="tab">分帳</button>
+    <button class="tab">打包</button>
+  </div>
+
+  <div class="days">
+    <div class="day">01</div><div class="day on">02</div><div class="day">03</div>
+    <div class="day">04</div><div class="day">05</div>
+  </div>
+
+  <div class="dayhead">
+    <h2>3月2日　週一</h2>
+    <div class="r">4 個行程點</div>
+  </div>
+
+  <ol class="tl">
+    <li class="ti">
+      <div><div class="time">09:00</div><div class="kind">景點</div></div>
+      <div>
+        <h3>清水寺</h3>
+        <div class="p">京都市東山區清水 1-294</div>
+        <div class="thumb">示 意 圖</div>
+        <div class="n">早點去避開人潮，記得帶現金</div>
+        <div class="cost">¥400　<b>已記入分帳</b></div>
+      </div>
+    </li>
+    <li class="ti">
+      <div><div class="time">13:00</div><div class="kind">景點</div></div>
+      <div>
+        <h3>環球影城 <span class="who">Allie・小明</span></h3>
+        <div class="p">大阪市此花區</div>
+        <div class="n">快速通關券已買</div>
+        <div class="cost">¥8,600</div>
+      </div>
+    </li>
+    <li class="ti">
+      <div><div class="time">13:00</div><div class="kind">購物</div></div>
+      <div>
+        <h3>心齋橋 <span class="who">小華</span></h3>
+        <div class="p">大阪市中央區</div>
+      </div>
+    </li>
+    <li class="ti">
+      <div><div class="time">19:00</div><div class="kind">吃飯</div></div>
+      <div>
+        <h3>道頓堀晚餐</h3>
+        <div class="p">大阪市中央區道頓堀</div>
+        <div class="n">在固力果看板前會合</div>
+        <div class="cost">¥9,000</div>
+      </div>
+    </li>
+  </ol>
+
+  <div class="sec">
+    <h2>結算 <em>2 筆轉帳結清</em></h2>
+    <div class="card">
+      <div class="pay">小明 <span class="arrow">轉給</span> Allie <span class="amt"><b>2,100</b></span></div>
+      <div class="pay">小華 <span class="arrow">轉給</span> Allie <span class="amt"><b>3,864</b></span></div>
+      <div class="sum"><span>總支出 12,222 TWD</span><span>以台幣計</span></div>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>打包清單 <em>16 / 41</em></h2>
+    <div class="card">
+      <div class="bar"><i></i></div>
+      <div class="ck done"><span class="box"></span><span>護照（效期 6 個月以上）</span></div>
+      <div class="ck done"><span class="box"></span><span>機票訂位代號</span></div>
+      <div class="ck"><span class="box"></span><span>行動電源（須隨身，不可託運）</span></div>
+      <div class="ck"><span class="box"></span><span>萬國轉接頭</span></div>
+    </div>
+  </div>
+
+  <div class="foot">秋 4 · 無卡片 ── 第一輪 C 的排版，配秋 2 的顏色 ・ <a href="index.html">回到選單</a></div>
+</div>
+</body>
+</html>

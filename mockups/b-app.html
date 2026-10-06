@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方向 B · 現代 App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f2f5f9; --card:#fff; --line:#e4e9f0;
+  --ink:#131c2b; --ink-soft:#5a6678; --ink-faint:#8e9aab;
+  --brand:#0b7f78;         /* 深青綠 */
+  --brand-2:#14b8a6;
+  --brand-soft:#e0f4f2;
+  --warm:#f2994a; --warm-soft:#fdf0e2;
+  --pink:#e8537a; --pink-soft:#fde8ee;
+  --blue:#3a7bd5; --blue-soft:#e6eefb;
+  --r:18px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Noto Sans TC",system-ui,sans-serif;font-size:15px;line-height:1.6;
+  padding-bottom:86px}
+h1,h2,h3{margin:0;line-height:1.35}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px}
+
+/* 頁首：有漸層的 hero */
+.hero{background:linear-gradient(135deg,var(--brand) 0%,#0e9e8f 55%,var(--brand-2) 100%);
+  color:#fff;padding:22px 20px 56px;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
+.hero:before{content:"";position:absolute;right:-50px;top:-60px;width:200px;height:200px;
+  border-radius:50%;background:rgba(255,255,255,.1)}
+.hero:after{content:"";position:absolute;right:30px;bottom:-70px;width:140px;height:140px;
+  border-radius:50%;background:rgba(255,255,255,.07)}
+.hero .row{display:flex;align-items:center;justify-content:space-between;position:relative}
+.hero .mini{font-size:12px;opacity:.85;letter-spacing:.05em}
+.hero h1{font-size:25px;font-weight:900;margin:5px 0 3px;letter-spacing:.01em}
+.hero .sub{font-size:13px;opacity:.9}
+.iconbtn{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.18);
+  display:flex;align-items:center;justify-content:center;font-size:16px;border:0;color:#fff;cursor:pointer}
+.stats{display:flex;gap:8px;margin-top:16px;position:relative}
+.stat{flex:1;background:rgba(255,255,255,.16);border-radius:12px;padding:9px 11px;backdrop-filter:blur(6px)}
+.stat b{display:block;font-size:17px;font-weight:900}
+.stat span{font-size:11px;opacity:.85}
+
+/* 天數膠囊 */
+.days{display:flex;gap:9px;overflow-x:auto;padding:0 0 4px;margin:-34px 0 0;position:relative;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.day{flex:0 0 auto;background:var(--card);border-radius:15px;padding:10px 16px;text-align:center;
+  box-shadow:0 3px 14px rgba(19,28,43,.09);cursor:pointer;border:2px solid transparent}
+.day.on{border-color:var(--brand);background:var(--brand)}
+.day.on *{color:#fff}
+.day .n{font-weight:900;font-size:15px;display:block;color:var(--ink)}
+.day .d{font-size:10.5px;color:var(--ink-faint)}
+
+.sechead{display:flex;align-items:center;gap:10px;margin:22px 0 11px}
+.sechead h2{font-size:17px;font-weight:700;flex:1}
+.chip{font-size:12px;background:var(--card);border:1px solid var(--line);
+  border-radius:30px;padding:5px 13px;color:var(--ink-soft);cursor:pointer}
+.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* 行程卡 */
+.ti{background:var(--card);border-radius:var(--r);padding:14px;margin-bottom:11px;
+  display:grid;grid-template-columns:auto 1fr;gap:13px;box-shadow:0 2px 10px rgba(19,28,43,.05)}
+.ic{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:19px}
+.ic.spot{background:var(--blue-soft)} .ic.food{background:var(--warm-soft)}
+.ic.shop{background:var(--pink-soft)} .ic.fun{background:var(--brand-soft)}
+.ti .t{font-size:11.5px;font-weight:700;color:var(--brand);letter-spacing:.04em}
+.ti h3{font-size:16px;font-weight:700;margin:1px 0 2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ti .p{font-size:12.5px;color:var(--ink-faint)}
+.ti .n{font-size:12.5px;color:var(--ink-soft);background:var(--bg);border-radius:9px;padding:6px 10px;margin-top:8px}
+.who{font-size:11px;font-weight:700;background:var(--brand-soft);color:var(--brand);
+  padding:3px 10px;border-radius:30px}
+.thumb{margin-top:9px;border-radius:12px;width:100%;aspect-ratio:16/9;
+  background:linear-gradient(135deg,#7fb5d6,#3a7bd5);
+  display:flex;align-items:center;justify-content:center;color:#fff;font-size:12px;letter-spacing:.12em}
+.money{display:inline-block;margin-top:8px;font-size:12.5px;font-weight:700;
+  background:var(--warm-soft);color:#9a5a12;padding:4px 11px;border-radius:30px}
+
+/* 結算 */
+.card{background:var(--card);border-radius:var(--r);padding:18px;margin-top:14px;box-shadow:0 2px 10px rgba(19,28,43,.05)}
+.settle{background:linear-gradient(135deg,#0b7f78,#14b8a6);color:#fff}
+.settle h2{font-size:16px;font-weight:700}
+.settle .s{font-size:12px;opacity:.85;margin-bottom:12px}
+.pay{display:flex;align-items:center;gap:9px;background:rgba(255,255,255,.17);
+  border-radius:13px;padding:11px 14px;margin-bottom:8px;font-size:14px;font-weight:500}
+.pay .amt{margin-left:auto;font-weight:900;font-size:17px}
+.av{width:26px;height:26px;border-radius:50%;background:rgba(255,255,255,.3);
+  display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+
+.bar{height:8px;background:var(--bg);border-radius:30px;overflow:hidden;margin:9px 0 13px}
+.bar i{display:block;height:100%;width:38%;background:linear-gradient(90deg,var(--brand),var(--brand-2));border-radius:30px}
+.ck{display:flex;align-items:center;gap:11px;font-size:14px;padding:7px 0}
+.ck .box{width:21px;height:21px;border:2px solid var(--line);border-radius:7px;flex:none}
+.ck.done .box{background:var(--brand);border-color:var(--brand);position:relative}
+.ck.done .box:after{content:"✓";color:#fff;font-size:13px;font-weight:700;position:absolute;left:4px;top:-2px}
+.ck.done span{color:var(--ink-faint);text-decoration:line-through}
+
+/* 底部導覽 */
+.nav{position:fixed;left:0;right:0;bottom:0;background:rgba(255,255,255,.93);
+  backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;
+  padding:9px 8px calc(9px + env(safe-area-inset-bottom));z-index:9}
+.nav a{flex:1;text-align:center;text-decoration:none;color:var(--ink-faint);font-size:11px;font-weight:500}
+.nav a i{display:block;font-size:21px;font-style:normal;line-height:1.3}
+.nav a.on{color:var(--brand);font-weight:700}
+.foot{text-align:center;font-size:11.5px;color:var(--ink-faint);padding:26px 0 10px}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap" style="padding:0">
+    <div class="row">
+      <div><div class="mini">進行中的旅程</div><h1>關西五日</h1>
+        <div class="sub">2026/03/01 – 03/05 ・ 三人同行</div></div>
+      <button class="iconbtn">⚙</button>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>18</b><span>行程點</span></div>
+      <div class="stat"><b>12,222</b><span>總支出 TWD</span></div>
+      <div class="stat"><b>16/41</b><span>已打包</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="days">
+    <div class="day"><span class="n">Day 1</span><span class="d">3/01</span></div>
+    <div class="day on"><span class="n">Day 2</span><span class="d">3/02</span></div>
+    <div class="day"><span class="n">Day 3</span><span class="d">3/03</span></div>
+    <div class="day"><span class="n">Day 4</span><span class="d">3/04</span></div>
+    <div class="day"><span class="n">Day 5</span><span class="d">3/05</span></div>
+  </div>
+
+  <div class="sechead">
+    <h2>3月2日 · 週一</h2>
+    <button class="chip on">全部</button>
+    <button class="chip">只看我</button>
+  </div>
+
+  <div class="ti">
+    <div class="ic spot">🏛</div>
+    <div>
+      <div class="t">09:00 · 景點</div>
+      <h3>清水寺</h3>
+      <div class="p">京都市東山區清水 1-294</div>
+      <div class="thumb">示 意 圖</div>
+      <div class="n">早點去避開人潮，記得帶現金</div>
+      <span class="money">¥400 已記帳</span>
+    </div>
+  </div>
+
+  <div class="ti">
+    <div class="ic fun">🎢</div>
+    <div>
+      <div class="t">13:00 · 景點</div>
+      <h3>環球影城 <span class="who">Allie・小明</span></h3>
+      <div class="p">大阪市此花區</div>
+      <span class="money">¥8,600</span>
+    </div>
+  </div>
+
+  <div class="ti">
+    <div class="ic shop">🛍</div>
+    <div>
+      <div class="t">13:00 · 購物</div>
+      <h3>心齋橋 <span class="who">小華</span></h3>
+      <div class="p">大阪市中央區</div>
+    </div>
+  </div>
+
+  <div class="ti">
+    <div class="ic food">🍜</div>
+    <div>
+      <div class="t">19:00 · 吃飯</div>
+      <h3>道頓堀晚餐</h3>
+      <div class="p">大阪市中央區道頓堀</div>
+      <div class="n">在固力果看板前會合</div>
+      <span class="money">¥9,000</span>
+    </div>
+  </div>
+
+  <div class="card settle">
+    <h2>結算結果</h2>
+    <div class="s">共 2 筆轉帳就能全部結清</div>
+    <div class="pay"><span class="av">明</span>小明 → Allie<span class="amt">2,100</span></div>
+    <div class="pay"><span class="av">華</span>小華 → Allie<span class="amt">3,864</span></div>
+  </div>
+
+  <div class="card">
+    <div class="sechead" style="margin:0 0 2px"><h2>打包清單</h2><span style="font-size:12px;color:var(--ink-faint)">16 / 41</span></div>
+    <div class="bar"><i></i></div>
+    <div class="ck done"><span class="box"></span><span>護照（效期 6 個月以上）</span></div>
+    <div class="ck done"><span class="box"></span><span>機票訂位代號</span></div>
+    <div class="ck"><span class="box"></span><span>行動電源（須隨身，不可託運）</span></div>
+    <div class="ck"><span class="box"></span><span>萬國轉接頭</span></div>
+  </div>
+
+  <div class="foot">方向 B · 現代 App ── 漸層 hero、圓角卡片、底部導覽</div>
+</div>
+
+<nav class="nav">
+  <a href="#"><i>🧳</i>旅程</a>
+  <a href="#" class="on"><i>🗺</i>行程</a>
+  <a href="#"><i>💰</i>分帳</a>
+  <a href="#"><i>🎒</i>打包</a>
+</nav>
+</body>
+</html>

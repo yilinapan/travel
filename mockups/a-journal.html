@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>方向 A · 旅行誌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f7f3ec; --card:#fffdf9; --line:#e6ded1; --line-soft:#f0e9de;
+  --ink:#2e2a24; --ink-soft:#6b6153; --ink-faint:#9a9083;
+  --accent:#b5653f;        /* 陶土紅 */
+  --accent-soft:#f6e9e1;
+  --sage:#6f8368;          /* 鼠尾草綠 */
+  --sage-soft:#e9efe6;
+  --gold:#b08b3f;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:"Noto Sans TC",system-ui,sans-serif;font-size:15px;line-height:1.75;
+  background-image:radial-gradient(circle at 1px 1px, rgba(140,120,90,.055) 1px, transparent 0);
+  background-size:18px 18px;
+}
+h1,h2,h3{font-family:"Noto Serif TC",serif;margin:0;line-height:1.4}
+.wrap{max-width:560px;margin:0 auto;padding:0 18px 60px}
+
+/* 頁首 */
+.top{padding:26px 0 18px;text-align:center;border-bottom:1px solid var(--line)}
+.kicker{font-size:11px;letter-spacing:.3em;color:var(--ink-faint);text-transform:uppercase}
+.top h1{font-size:27px;margin:7px 0 5px;letter-spacing:.02em}
+.dates{font-size:13px;color:var(--ink-soft)}
+.dates b{color:var(--accent);font-weight:500}
+
+/* 分頁 */
+.tabs{display:flex;justify-content:center;gap:4px;padding:14px 0 4px;flex-wrap:wrap}
+.tab{font-size:13.5px;padding:6px 15px;border-radius:30px;color:var(--ink-soft);
+  border:1px solid transparent;cursor:pointer;background:none;font-family:inherit}
+.tab.on{background:var(--ink);color:var(--paper);font-weight:500}
+
+/* 天數 */
+.days{display:flex;gap:8px;overflow-x:auto;padding:16px 0 6px;scrollbar-width:none}
+.days::-webkit-scrollbar{display:none}
+.day{flex:0 0 auto;text-align:center;padding:7px 15px;border-radius:4px;cursor:pointer;
+  border:1px solid var(--line);background:var(--card)}
+.day.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.day .n{font-family:"Noto Serif TC",serif;font-weight:700;font-size:14px;display:block}
+.day .d{font-size:10.5px;opacity:.75}
+
+.daytitle{display:flex;align-items:baseline;gap:10px;margin:22px 0 4px}
+.daytitle h2{font-size:19px}
+.daytitle span{font-size:12px;color:var(--ink-faint)}
+.rule{height:1px;background:linear-gradient(90deg,var(--line),transparent);margin-bottom:6px}
+
+/* 時間軸 */
+.tl{list-style:none;margin:0;padding:0}
+.ti{display:grid;grid-template-columns:50px 1fr;gap:14px;padding:16px 0;
+  border-bottom:1px dashed var(--line-soft);position:relative}
+.ti:last-child{border-bottom:0}
+.time{font-family:"Noto Serif TC",serif;font-size:14px;font-weight:700;color:var(--accent);padding-top:1px}
+.tag{font-size:10.5px;color:var(--ink-faint);display:block;font-family:"Noto Sans TC";font-weight:400}
+.ti h3{font-size:16.5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.place{font-size:13px;color:var(--ink-soft);margin-top:2px}
+.note{font-size:13px;color:var(--ink-faint);margin-top:3px;font-style:italic}
+.thumb{margin-top:9px;border-radius:3px;overflow:hidden;border:1px solid var(--line);
+  width:100%;max-width:300px;aspect-ratio:3/2;
+  background:linear-gradient(135deg,#d9c9b4,#b89f84);
+  display:flex;align-items:center;justify-content:center;color:#fff8ee;font-size:12px;letter-spacing:.1em}
+.who{font-size:11px;background:var(--sage-soft);color:var(--sage);
+  padding:2px 10px;border-radius:30px;font-weight:500}
+.cost{font-size:13px;color:var(--gold);margin-top:5px;font-weight:500}
+.split{background:linear-gradient(90deg,rgba(111,131,104,.07),transparent 60%);
+  margin:0 -12px;padding-left:12px;padding-right:12px;border-radius:3px}
+
+/* 區塊 */
+.card{background:var(--card);border:1px solid var(--line);border-radius:4px;padding:20px;margin-top:26px;
+  box-shadow:0 1px 0 rgba(140,120,90,.06)}
+.card h2{font-size:17px;margin-bottom:3px}
+.sub{font-size:12px;color:var(--ink-faint);margin-bottom:14px}
+
+.pay{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px dotted var(--line)}
+.pay:last-of-type{border-bottom:0}
+.pay .arrow{color:var(--accent);font-family:"Noto Serif TC",serif}
+.pay .amt{margin-left:auto;font-family:"Noto Serif TC",serif;font-weight:700;font-size:17px;color:var(--accent)}
+.total{text-align:center;font-size:12px;color:var(--ink-faint);padding-top:12px;border-top:1px solid var(--line);margin-top:6px}
+
+.bar{height:4px;background:var(--line-soft);border-radius:30px;overflow:hidden;margin:4px 0 10px}
+.bar i{display:block;height:100%;width:38%;background:var(--sage)}
+.ck{display:flex;align-items:center;gap:10px;font-size:14px;padding:5px 0}
+.ck .box{width:15px;height:15px;border:1.5px solid var(--line);border-radius:2px;flex:none}
+.ck.done .box{background:var(--sage);border-color:var(--sage);position:relative}
+.ck.done .box:after{content:"✓";color:#fff;font-size:11px;position:absolute;left:2px;top:-3px}
+.ck.done span{color:var(--ink-faint);text-decoration:line-through}
+
+.foot{text-align:center;font-size:11.5px;color:var(--ink-faint);padding-top:34px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="top">
+    <div class="kicker">T R A V E L&nbsp;&nbsp;N O T E S</div>
+    <h1>關西五日</h1>
+    <div class="dates">2026 <b>3.01</b> — <b>3.05</b> ・ 三人同行</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab">旅程</button>
+    <button class="tab on">行程</button>
+    <button class="tab">分帳</button>
+    <button class="tab">打包</button>
+  </div>
+
+  <div class="days">
+    <div class="day"><span class="n">一</span><span class="d">3/01</span></div>
+    <div class="day on"><span class="n">二</span><span class="d">3/02</span></div>
+    <div class="day"><span class="n">三</span><span class="d">3/03</span></div>
+    <div class="day"><span class="n">四</span><span class="d">3/04</span></div>
+    <div class="day"><span class="n">五</span><span class="d">3/05</span></div>
+  </div>
+
+  <div class="daytitle"><h2>第二天</h2><span>3月2日・週一</span></div>
+  <div class="rule"></div>
+
+  <ol class="tl">
+    <li class="ti">
+      <div class="time">09:00<span class="tag">景點</span></div>
+      <div>
+        <h3>清水寺</h3>
+        <div class="place">京都市東山區清水 1-294</div>
+        <div class="note">早點去避開人潮，記得帶現金</div>
+        <div class="thumb">示 意 圖</div>
+        <div class="cost">¥400 ・ 已記入分帳</div>
+      </div>
+    </li>
+    <li class="ti split">
+      <div class="time">13:00<span class="tag">景點</span></div>
+      <div>
+        <h3>環球影城 <span class="who">Allie・小明</span></h3>
+        <div class="place">大阪市此花區</div>
+        <div class="note">快速通關券已買</div>
+        <div class="cost">¥8,600</div>
+      </div>
+    </li>
+    <li class="ti split">
+      <div class="time">13:00<span class="tag">購物</span></div>
+      <div>
+        <h3>心齋橋 <span class="who">小華</span></h3>
+        <div class="place">大阪市中央區</div>
+      </div>
+    </li>
+    <li class="ti">
+      <div class="time">19:00<span class="tag">吃飯</span></div>
+      <div>
+        <h3>道頓堀晚餐</h3>
+        <div class="place">大阪市中央區道頓堀</div>
+        <div class="note">在固力果看板前會合</div>
+        <div class="cost">¥9,000</div>
+      </div>
+    </li>
+  </ol>
+
+  <div class="card">
+    <h2>結算</h2>
+    <div class="sub">共 2 筆轉帳就能結清</div>
+    <div class="pay"><b>小明</b><span class="arrow">→</span><b>Allie</b><span class="amt">2,100</span></div>
+    <div class="pay"><b>小華</b><span class="arrow">→</span><b>Allie</b><span class="amt">3,864</span></div>
+    <div class="total">總支出 12,222 TWD ・ 以台幣計</div>
+  </div>
+
+  <div class="card">
+    <h2>打包清單</h2>
+    <div class="sub">已完成 16 / 41</div>
+    <div class="bar"><i></i></div>
+    <div class="ck done"><span class="box"></span><span>護照（效期 6 個月以上）</span></div>
+    <div class="ck done"><span class="box"></span><span>機票訂位代號</span></div>
+    <div class="ck"><span class="box"></span><span>行動電源（須隨身，不可託運）</span></div>
+    <div class="ck"><span class="box"></span><span>萬國轉接頭</span></div>
+  </div>
+
+  <div class="foot">方向 A · 旅行誌 ── 襯線標題、米紙底色、陶土紅重點</div>
+</div>
+</body>
+</html>

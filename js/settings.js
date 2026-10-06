@@ -42,7 +42,18 @@ App.Settings = (function () {
   function refresh() { if (panel) paint(); }
 
   function paint() {
-    panel.querySelector('#settingsBody').innerHTML = cloudSection() + backupSection();
+    panel.querySelector('#settingsBody').innerHTML =
+      cloudSection() + backupSection() + helpSection();
+  }
+
+  function helpSection() {
+    return '<section class="set-sec">' +
+      '<h4 class="set-title">使用說明</h4>' +
+      '<p class="muted">四個分頁怎麼用、分帳的進階功能、怎麼分享給同行的人。</p>' +
+      '<div class="btn-row">' +
+        '<a class="btn btn-ghost" href="guide.html">打開使用說明</a>' +
+      '</div>' +
+    '</section>';
   }
 
   // ---------------------------------------------------------------

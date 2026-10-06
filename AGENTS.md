@@ -6,6 +6,7 @@
 - **線上網址：** https://yilinapan.github.io/travel/
 - **Repo：** https://github.com/yilinapan/travel
 - **使用者：** Allie（yilinapan）
+- **使用說明：** [guide.html](guide.html)（改了功能記得同步更新那一頁）
 
 ---
 
@@ -74,6 +75,7 @@ U.modal({
 ```
 travel/
 ├── index.html            網頁主體（版本號在這裡）
+├── guide.html            使用說明（獨立一頁，有自己的樣式，不吃 css/style.css）
 ├── css/style.css         全部樣式。配色在最上面的 :root
 ├── js/
 │   ├── settle.js         分帳計算（純函式，不碰畫面 → 好測試）

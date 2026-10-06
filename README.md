@@ -3,6 +3,7 @@
 一個不用註冊、不用安裝、打開就能用的旅遊規劃網頁。
 
 **線上版本：** https://yilinapan.github.io/travel/
+**使用說明：** https://yilinapan.github.io/travel/guide.html
 
 ---
 
@@ -109,6 +110,7 @@ node tests/run.js
 ```
 travel/
 ├── index.html              網頁主體
+├── guide.html              使用說明（給使用者看的一頁）
 ├── css/style.css           外觀樣式（顏色都在檔案最上面的 :root）
 ├── js/
 │   ├── settle.js           分帳計算（純計算，不碰畫面）

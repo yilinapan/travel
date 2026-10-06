@@ -307,16 +307,21 @@ App.Cloud = (function () {
 
     // --- 行程 ---
     var pending = [];
+    var staleScript = false;   // 試算表回傳的時間長得像日期 → Apps Script 是舊版
+
     (rows.items || []).forEach(function (r, idx) {
       var t = ensureTrip(r[0]);
       if (!t) return;
+      // 舊版的 Apps Script 會把「09:00」讀成 1899-12-30（試算表存時間的內部起始日）。
+      // 這裡擋下來，至少不要在時間欄顯示一個日期。
+      if (/^\d{4}-\d{2}-\d{2}/.test(String(r[3] || '').trim())) staleScript = true;
       pending.push({
         trip: t,
         day: Math.max(1, Number(r[1]) || 1),
         order: Number(r[2]) || (idx + 1) * 1000,   // 順序空白時保持試算表上的先後
         item: {
           id: S.uid('it'),
-          time: String(r[3] || '').trim(),
+          time: S.cleanTime(r[3]),
           type: typeKey(r[4]),
           title: String(r[5] || '').trim(),
           place: String(r[6] || '').trim(),
@@ -329,6 +334,12 @@ App.Cloud = (function () {
         }
       });
     });
+    if (staleScript) {
+      warnings.push('你的 Apps Script 是舊版，行程時間被存成日期（1899-12-30）而讀不回來。' +
+        '請重新部署一次：Apps Script →「部署」→「管理部署作業」→ ✏️ →「版本」選「新版本」→「部署」。' +
+        '網址不會變。重新部署前新存的時間都會再壞掉。');
+    }
+
     pending.sort(function (a, b) {
       return a.day - b.day || a.order - b.order;
     });

@@ -303,6 +303,36 @@ function registerCloudTests(t, eq, App) {
     eq(Settle.compute(t0).perMember.reduce(function (s, m) { return s + m.netCents; }, 0), 0, '淨額總和為 0');
   });
 
+  // --- 舊版 Apps Script 造成的壞時間 ---
+
+  t('試算表回傳 1899-12-30 當時間時，不會顯示成日期，並提醒去重新部署', function () {
+    var r = Cloud.fromRows({
+      items: [['測試', '1', '1', '1899-12-30', '景點', '清水寺', '', '', '', '', '', '', '']]
+    });
+    eq(r.trips[0].days[0].items[0].time, '', '壞掉的時間清成空白');
+    eq(r.trips[0].days[0].items[0].title, '清水寺', '其他欄位照常保留');
+    if (!r.warnings.some(function (w) { return w.indexOf('重新部署') !== -1; })) {
+      throw new Error('應該要提醒使用者重新部署 Apps Script');
+    }
+  });
+
+  t('帶時間的壞值還救得回來（1899-12-30T14:25 → 14:25）', function () {
+    var r = Cloud.fromRows({
+      items: [['測試', '1', '1', '1899-12-30T14:25:00.000Z', '航班', '回程', '', '', '', '', '', '', '']]
+    });
+    eq(r.trips[0].days[0].items[0].time, '14:25', '時間');
+  });
+
+  t('時間正常時不會誤報', function () {
+    var r = Cloud.fromRows({
+      items: [['測試', '1', '1', '09:00', '景點', '清水寺', '', '', '', '', '', '', '']]
+    });
+    eq(r.trips[0].days[0].items[0].time, '09:00', '時間');
+    if (r.warnings.some(function (w) { return w.indexOf('重新部署') !== -1; })) {
+      throw new Error('時間正常時不該提醒重新部署');
+    }
+  });
+
   // --- 打包清單的「誰要帶」---
 
   t('打包項目的「誰要帶」會存成名字，大家都要帶時留空白', function () {

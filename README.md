@@ -99,6 +99,11 @@ node tests/run.js
 
 ---
 
+## 想改這個工具（給 AI 助理）
+
+接手的 AI 請先讀 **[AGENTS.md](AGENTS.md)** —— 裡面有架構、資料結構、
+設計系統、測試方式，以及幾個容易踩的坑（例如改完程式要把版本號加 1）。
+
 ## 程式檔案在哪
 
 ```
@@ -125,6 +130,7 @@ travel/
 │   ├── cloud.tests.js      試算表格式轉換的測試
 │   ├── structure.tests.js  程式結構檢查（函式有沒有被誤刪、按鈕有沒有對應處理）
 │   └── run.js              終端機版測試
+├── AGENTS.md               交接說明（給接手的 AI）
 └── docs/
     ├── design.md                設計說明與當初的取捨
     ├── setup-google-sheets.md   雲端同步設定步驟

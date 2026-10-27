@@ -431,6 +431,16 @@ function registerCloudTests(t, eq, App) {
     eq(shared.days.length > 0, true, '行程要在');
     eq(shared.expenses.length > 0, true, '分帳要在');
   });
+
+  t('分享連結帶還款紀錄，對方看到的結算有扣掉已還的錢', function () {
+    var trip = sampleTrip();
+    trip.payments = [{ id: 'p1', date: '2026-03-02', fromId: 'm3', toId: 'm1', amount: 100, currency: 'JPY' }];
+    var shared = App.Share.stripForShare(trip);
+    eq(shared.payments, trip.payments, '還款紀錄要在');
+    eq(Settle.compute(shared).settledCents > 0, true, '還款要算進結算');
+    eq(Settle.compute(shared).settledCents, Settle.compute(trip).settledCents, '已結清金額要一樣');
+    eq(Settle.compute(shared).transfers, Settle.compute(trip).transfers, '還要轉帳的金額要一樣');
+  });
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = registerCloudTests;

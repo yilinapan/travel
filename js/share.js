@@ -68,6 +68,7 @@ App.Share = (function () {
   /**
    * 分享時去掉用不到的欄位，讓連結短一點。
    * 打包清單是自己的事，不分享出去（對方只看得到行程和分帳）。
+   * 還款紀錄一定要帶，不然對方看到的結算金額會沒扣掉已經還的錢。
    */
   function stripForShare(trip) {
     return {
@@ -78,7 +79,8 @@ App.Share = (function () {
       currencies: trip.currencies,
       members: trip.members,
       days: trip.days,
-      expenses: trip.expenses
+      expenses: trip.expenses,
+      payments: trip.payments
     };
   }
 

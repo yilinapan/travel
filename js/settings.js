@@ -72,7 +72,10 @@ App.Settings = (function () {
             '<button class="btn btn-ghost" data-act="cloud-edit">修改設定</button>' +
             '<button class="btn btn-ghost" data-act="cloud-off">關閉同步</button>' +
           '</div>' +
-          '<div class="notice notice-warn">沒有帳號登入，安全性靠「那串網址很難猜」。' +
+          (cfg.key
+            ? '<p class="muted">已填同步密碼：只拿到網址、沒有密碼的人讀不到你的資料。</p>'
+            : '<p class="muted">還沒填同步密碼。建議到試算表上方選單「旅遊工具 → 設定同步密碼」設一組，再按「修改設定」填進來 —— 設了之後才能產生「自動更新的分享連結」。</p>') +
+          '<div class="notice notice-warn">沒有帳號登入，安全性靠「網址很難猜」加上同步密碼。' +
             '行程、花費、打包清單放進去沒問題，<strong>但不要填護照號碼、信用卡號、訂房密碼</strong>。</div>'
         : '<p class="muted">開啟之後，手機和電腦就能接續編輯同一份資料。資料存在你自己的 Google 試算表裡，你隨時打開就看得到。設定一次約 10 分鐘。</p>' +
           '<div class="btn-row">' +
@@ -144,6 +147,11 @@ App.Settings = (function () {
           hint: '還沒有這串網址的話，先按「怎麼設定？」照步驟做一次。'
         },
         {
+          name: 'key', label: '同步密碼', type: 'password', value: cfg.key,
+          placeholder: '試算表沒設密碼就留空白',
+          hint: '在試算表上方選單「旅遊工具 → 設定同步密碼」設的那一組。手機和電腦都要填同一組。'
+        },
+        {
           name: 'device', label: '這台裝置叫什麼', value: cfg.device, placeholder: '例如：公司電腦、我的手機',
           hint: '兩邊資料不一樣時，會用這個名稱告訴你是哪一台改的。'
         }
@@ -153,16 +161,22 @@ App.Settings = (function () {
       if (!/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(v.url.trim())) {
         if (!U.ask('這串網址看起來不像 Apps Script 的網頁應用程式網址。\n正常應該長得像 https://script.google.com/macros/s/.../exec\n\n還是要繼續嗎？')) return;
       }
-      App.Cloud.setConfig(v.url, v.device);
+      var prev = Object.assign({}, App.Cloud.getConfig());
+      App.Cloud.setConfig(v.url, v.device, v.key);
       U.toast('測試連線中…');
+      // 試算表有回應但說失敗（例如密碼不對）也要算連線失敗，
+      // 所以先檢查完再分成功／失敗兩條路，錯誤訊息才會顯示出來
       App.Cloud.ping().then(function (res) {
         if (!res.ok) throw new Error(res.error || '試算表沒有正常回應');
+        return res;
+      }).then(function () {
         U.toast('連線成功！');
         App.render();
         refresh();
         if (typeof App.syncAfterSetup === 'function') App.syncAfterSetup();
       }, function (err) {
-        App.Cloud.disable();
+        // 失敗就維持改之前的設定（原本沒開就還是沒開），不要讓一次打錯就把同步關掉
+        App.Cloud.restoreConfig(prev);
         App.render();
         refresh();
         U.modal({
@@ -173,7 +187,8 @@ App.Settings = (function () {
             hint: err.message + '\n\n常見原因：\n' +
               '1. 部署時「誰可以存取」沒有選「所有人」\n' +
               '2. 複製到的是編輯器網址，不是「網頁應用程式」網址（結尾要是 /exec）\n' +
-              '3. 改過 Apps Script 程式後沒有重新部署新版本'
+              '3. 改過 Apps Script 程式後沒有重新部署新版本\n' +
+              '4. 同步密碼跟試算表「旅遊工具 → 設定同步密碼」設的不一樣'
           }]
         });
       });

@@ -20,12 +20,24 @@ sandbox.localStorage = {
 };
 sandbox.navigator = { userAgent: 'node' };
 sandbox.alert = () => {};
+// share.js 會用到這幾個瀏覽器內建的東西
+sandbox.btoa = btoa;
+sandbox.atob = atob;
+sandbox.TextEncoder = TextEncoder;
+sandbox.TextDecoder = TextDecoder;
+sandbox.crypto = require('crypto').webcrypto;
+sandbox.location = { origin: 'https://yilinapan.github.io', pathname: '/travel/', hash: '' };
 vm.createContext(sandbox);
 
 ['js/settle.js', 'js/store.js', 'js/cloud.js', 'js/share.js'].forEach(f => {
   vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), sandbox, { filename: f });
 });
 const App = sandbox.App;
+
+// Apps Script 的程式獨立載入（它是貼到 Google 那邊跑的，不跟網頁共用環境）
+const gas = {};
+vm.createContext(gas);
+vm.runInContext(fs.readFileSync(path.join(root, 'apps-script/Code.gs'), 'utf8'), gas, { filename: 'apps-script/Code.gs' });
 
 // 結構檢查要讀原始碼，所以只在終端機跑（瀏覽器版不含這一組）
 const SRC_FILES = ['settle', 'store', 'cloud', 'share', 'ui', 'trips', 'itinerary', 'expenses', 'checklist', 'settings', 'app']
@@ -34,6 +46,7 @@ const SRC_FILES = ['settle', 'store', 'cloud', 'share', 'ui', 'trips', 'itinerar
 const suites = [
   { title: '分帳計算', register: require('./settle.tests.js'), args: [App.Settle] },
   { title: '試算表格式轉換', register: require('./cloud.tests.js'), args: [App] },
+  { title: '雲端分享（Apps Script）', register: require('./apps-script.tests.js'), args: [gas] },
   { title: '程式結構', register: require('./structure.tests.js'), args: [SRC_FILES] }
 ];
 

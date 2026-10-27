@@ -12,7 +12,8 @@
 var SHEETS = {
   trips: {
     name: '旅程',
-    headers: ['名稱', '出發', '回程', '基準幣別', '成員', '匯率']
+    // 「分享代號」是網頁產生「自動更新的分享連結」時填的，清空就等於停用那個連結
+    headers: ['名稱', '出發', '回程', '基準幣別', '成員', '匯率', '分享代號']
   },
   items: {
     name: '行程',
@@ -41,13 +42,28 @@ var SHEETS = {
 
 var META_SHEET = '_設定';
 
+// 同步密碼存在「指令碼屬性」裡，不寫在程式碼中 —— 之後貼新版程式時才不會被蓋掉。
+// 設定方式：打開試算表，上方選單「旅遊工具 → 設定同步密碼」。
+var PASSWORD_PROP = 'SYNC_PASSWORD';
+
+// 分享連結看得到的分頁。刻意不含「清單」：打包清單只給自己看。
+var SHARED_SHEETS = ['trips', 'items', 'expenses', 'payments'];
+var SHARE_KEY_COL = 6;      // 「旅程」分頁的「分享代號」在第 7 欄（從 0 開始數是 6）
+
 // =====================================================================
 // 對外的兩個入口
 // =====================================================================
 
-/** 網頁讀取資料時會打到這裡 */
+/**
+ * 網頁讀取資料時會打到這裡。
+ *   ?share=代號 → 旅伴打開分享連結：只回傳那一趟旅程，而且不含打包清單，不需要密碼
+ *   ?key=密碼   → 你自己的裝置：回傳全部資料
+ */
 function doGet(e) {
   try {
+    var p = (e && e.parameter) || {};
+    if (p.share) return jsonOut(loadShared_(p.share));
+    if (!checkKey_(p.key, syncPassword_())) return jsonOut(denied_());
     return jsonOut(load_());
   } catch (err) {
     return jsonOut({ ok: false, error: String(err) });
@@ -62,14 +78,42 @@ function doPost(e) {
     }
     var req = JSON.parse(e.postData.contents);
 
+    var password = syncPassword_();
+    if (!checkKey_(req.key, password)) return jsonOut(denied_());
+
     if (req.action === 'save') return jsonOut(save_(req));
     if (req.action === 'append') return jsonOut(append_(req));
-    if (req.action === 'ping') return jsonOut({ ok: true, message: '連線正常', updatedAt: readMeta_().updatedAt });
+    if (req.action === 'ping') {
+      // protected：有沒有設同步密碼。網頁要確認有設，才肯產生「自動更新的分享連結」
+      return jsonOut({ ok: true, message: '連線正常', updatedAt: readMeta_().updatedAt, protected: !!password });
+    }
 
     return jsonOut({ ok: false, error: '不認得的動作：' + req.action });
   } catch (err) {
     return jsonOut({ ok: false, error: String(err) });
   }
+}
+
+// =====================================================================
+// 同步密碼
+// =====================================================================
+
+function syncPassword_() {
+  return PropertiesService.getScriptProperties().getProperty(PASSWORD_PROP) || '';
+}
+
+/** 還沒設密碼時一律放行（跟舊版行為一樣）；設了之後必須完全相符 */
+function checkKey_(given, password) {
+  if (!password) return true;
+  return String(given || '') === password;
+}
+
+function denied_() {
+  return {
+    ok: false,
+    auth: true,
+    error: '同步密碼不對。請到網頁的「雲端同步設定」填入試算表「旅遊工具 → 設定同步密碼」設的那一組。'
+  };
 }
 
 // =====================================================================
@@ -83,6 +127,41 @@ function load_() {
     rows[key] = readSheet_(SHEETS[key]);
   });
   return { ok: true, updatedAt: meta.updatedAt, device: meta.device, rows: rows };
+}
+
+/** 旅伴打開分享連結時讀的：只有那一趟旅程的行程、支出、還款 */
+function loadShared_(key) {
+  var rows = {};
+  SHARED_SHEETS.forEach(function (k) { rows[k] = readSheet_(SHEETS[k]); });
+  var picked = shareRows_(rows, key);
+  if (!picked) {
+    return { ok: false, notFound: true, error: '這個分享連結已經停用了，或是網址不完整。請跟分享給你的人要一個新的連結。' };
+  }
+  return { ok: true, updatedAt: readMeta_().updatedAt, rows: picked };
+}
+
+/**
+ * 從各分頁的列裡挑出「分享代號」相符的那一趟旅程。找不到就回傳 null。
+ * 純函式（不碰試算表），所以可以在終端機測試。
+ */
+function shareRows_(rows, key) {
+  key = String(key || '').trim();
+  if (key.length < 16) return null;      // 太短的一律不認，避免被亂猜
+  var trip = (rows.trips || []).filter(function (r) {
+    return String(r[SHARE_KEY_COL] || '').trim() === key;
+  })[0];
+  if (!trip) return null;
+
+  var name = String(trip[0] || '').trim();
+  function mine(r) { return String(r[0] || '').trim() === name; }
+
+  var tripRow = trip.slice(0, SHARE_KEY_COL);   // 代號本身不回傳給旅伴
+  return {
+    trips: [tripRow],
+    items: (rows.items || []).filter(mine),
+    expenses: (rows.expenses || []).filter(mine),
+    payments: (rows.payments || []).filter(mine)
+  };
 }
 
 /** 讀出一張分頁的所有資料列（不含標題列），一律轉成文字 */
@@ -289,6 +368,48 @@ function jsonOut(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+/** 打開試算表時，在上方選單加一個「旅遊工具」 */
+function onOpen() {
+  SpreadsheetApp.getUi()
+    .createMenu('旅遊工具')
+    .addItem('設定同步密碼', 'menuSetPassword')
+    .addToUi();
+}
+
+/** 選單「旅遊工具 → 設定同步密碼」 */
+function menuSetPassword() {
+  var ui = SpreadsheetApp.getUi();
+  var props = PropertiesService.getScriptProperties();
+  var had = !!props.getProperty(PASSWORD_PROP);
+  var r = ui.prompt(
+    '設定同步密碼',
+    (had ? '目前已經有設密碼。輸入新的一組會取代舊的。\n' : '') +
+    '請輸入至少 8 個字的密碼。\n' +
+    '設好之後，每台裝置都要在網頁的「雲端同步設定」填入同一組，否則會連不上。\n' +
+    '（留空白按確定 = 取消密碼）',
+    ui.ButtonSet.OK_CANCEL
+  );
+  if (r.getSelectedButton() !== ui.Button.OK) return;
+
+  var pw = r.getResponseText().trim();
+  if (!pw) {
+    if (!had) return;
+    var sure = ui.alert('取消同步密碼',
+      '取消後，只要知道網址的人就能讀寫全部資料，自動更新的分享連結也會停止產生。確定嗎？',
+      ui.ButtonSet.YES_NO);
+    if (sure !== ui.Button.YES) return;
+    props.deleteProperty(PASSWORD_PROP);
+    ui.alert('已取消同步密碼。');
+    return;
+  }
+  if (pw.length < 8) {
+    ui.alert('密碼太短，至少要 8 個字。這次沒有改任何設定。');
+    return;
+  }
+  props.setProperty(PASSWORD_PROP, pw);
+  ui.alert('同步密碼已設定。\n\n接下來請到每一台裝置的網頁：設定 → 雲端同步 → 修改設定，填入同一組密碼。');
+}
+
 /**
  * 可以在 Apps Script 編輯器裡手動執行這一個，
  * 用來先把四張分頁和標題列建好、順便檢查權限有沒有給對。
@@ -296,5 +417,5 @@ function jsonOut(obj) {
 function 初始化試算表() {
   Object.keys(SHEETS).forEach(function (key) { getSheet_(SHEETS[key]); });
   writeMeta_(new Date().toISOString(), '初始化');
-  SpreadsheetApp.getActiveSpreadsheet().toast('四張分頁已建立完成', '旅遊規劃工具', 5);
+  SpreadsheetApp.getActiveSpreadsheet().toast('分頁已建立完成', '旅遊規劃工具', 5);
 }

@@ -193,58 +193,150 @@ window.App = window.App || {};
   }
 
   // ---------------------------------------------------------------
+  /**
+   * 分享。有開雲端同步就給「自動更新的連結」，沒開就給「快照連結」。
+   * 自動更新的連結需要試算表設了同步密碼 —— 否則旅伴拿到的 Apps Script 網址
+   * 就能讀寫你全部的資料（包括打包清單），所以沒設密碼時改給快照連結。
+   */
   function share() {
     var trip = S.currentTrip();
     if (!trip) return;
-    App.Share.makeUrl(trip).then(function (url) {
-      var warn = url.length > 8000
-        ? '<div class="notice notice-warn">這趟行程的內容比較多，連結非常長。部分通訊軟體可能會截斷它。真的太長的話，建議改用「備份檔」傳給同行的人。</div>'
-        : '';
-      var box = U.el(
-        '<div class="modal-back">' +
-          '<div class="modal">' +
-            '<div class="modal-head"><h3>分享這趡行程</h3>' +
-              '<button class="icon-btn" data-act="x" title="關閉" aria-label="關閉">' + U.icon('close') + '</button></div>' +
-            '<div class="modal-body">' +
-              '<p class="muted">把下面這串網址傳給同行的人，他們點開就能看到<strong>行程</strong>和<strong>自己的分帳金額</strong>（不能修改）。打包清單不會分享出去。</p>' +
-              warn +
-              '<textarea class="share-url" readonly rows="4"></textarea>' +
-              '<div class="notice">' +
-                '<strong>這是當下的快照。</strong>之後你改了行程，要再產生一次新的連結傳給大家。<br>' +
-                '網址 # 後面的內容不會傳到任何伺服器，連 GitHub 都看不到你的行程內容。' +
-              '</div>' +
-            '</div>' +
-            '<div class="modal-foot"><span class="spacer"></span>' +
-              '<button class="btn btn-ghost" data-act="x">關閉</button>' +
-              '<button class="btn btn-primary" data-act="copy">複製連結</button>' +
-            '</div>' +
-          '</div>' +
-        '</div>'
-      );
-      box.querySelector('.share-url').value = url;
-      box.addEventListener('click', function (e) {
-        // 往上找到按鈕本身：按鈕裡可能放了 SVG 圖示，直接讀 e.target 會抓不到
-        var b = e.target.closest ? e.target.closest('[data-act]') : null;
-        var a = b && b.getAttribute('data-act');
-        if (e.target === box || a === 'x') box.remove();
-        if (a === 'copy') {
-          U.copyText(url).then(function () {
-            U.toast('連結已複製');
-          }, function () {
-            U.toast('複製失敗，請手動選取上面的文字', 'bad');
-          });
+    if (!App.Cloud.isOn()) return shareSnapshot(trip);
+
+    U.toast('產生連結中…');
+    App.Cloud.ping().then(function (res) {
+      if (!res.ok) throw new Error(res.error || '試算表沒有正常回應');
+      if (!res.protected) {
+        return offerSnapshot(trip, '雲端還沒設定同步密碼',
+          '要先幫試算表設一組同步密碼，才能產生「自動更新的連結」。\n' +
+          '步驟：打開你的 Google 試算表 → 上方選單「旅遊工具 → 設定同步密碼」，' +
+          '再到這裡的「設定 → 雲端同步 → 修改設定」填入同一組。\n' +
+          '（看不到「旅遊工具」選單的話，代表 Apps Script 還沒更新成新版，步驟見使用說明。）\n\n' +
+          '這次可以先用「快照連結」：內容是現在這一刻的行程，之後改了要重傳。');
+      }
+      var isNew = !trip.shareKey;
+      if (isNew) {
+        trip.shareKey = App.Share.newShareKey();
+        S.save({ localOnly: true });
+      }
+      // 一定要先把代號存上雲端，旅伴打開時試算表才找得到這趟旅程
+      return App.Cloud.push(S.allTrips()).then(function (r) {
+        if (r && r.conflict) {
+          if (isNew) { delete trip.shareKey; S.save({ localOnly: true }); }
+          App.onCloudConflict(r);
+          U.toast('雲端有更新的版本，先處理完再分享一次', 'bad');
+          return;
         }
+        render();
+        shareBox(trip, App.Share.makeLiveUrl(App.Cloud.getConfig().url, trip.shareKey), true);
       });
-      document.body.appendChild(box);
-      box.querySelector('.share-url').select();
+    }).catch(function (err) {
+      offerSnapshot(trip, '連不上雲端',
+        '產生自動更新的連結時連不上試算表：' + err.message + '\n\n' +
+        '這次可以先用「快照連結」：內容是現在這一刻的行程，之後改了要重傳。');
+    });
+  }
+
+  function offerSnapshot(trip, title, message) {
+    return U.confirmAsk(title, message, '改用快照連結').then(function (ok) {
+      if (ok) shareSnapshot(trip);
+    });
+  }
+
+  function shareSnapshot(trip) {
+    App.Share.makeUrl(trip).then(function (url) {
+      shareBox(trip, url, false);
     }, function (err) {
       U.toast('產生連結失敗：' + err.message, 'bad');
     });
   }
 
+  function shareBox(trip, url, live) {
+    var warn = url.length > 8000
+      ? '<div class="notice notice-warn">這趟行程的內容比較多，連結非常長。部分通訊軟體可能會截斷它。真的太長的話，建議改用「備份檔」傳給同行的人。</div>'
+      : '';
+    var intro = '把下面這串網址傳給同行的人，他們點開就能看到<strong>行程</strong>和<strong>自己的分帳金額</strong>（不能修改）。打包清單不會分享出去。';
+    var note = live
+      ? '<div class="notice">' +
+          '<strong>這個連結會自動更新。</strong>之後你改了行程，同步到雲端後，他們重新打開同一個連結就會看到最新的，不用重傳。<br>' +
+          '不想再分享時按「停用連結」，之前傳出去的連結就打不開了。' +
+        '</div>'
+      : '<div class="notice">' +
+          '<strong>這是當下的快照。</strong>之後你改了行程，要再產生一次新的連結傳給大家。<br>' +
+          '網址 # 後面的內容不會傳到任何伺服器，連 GitHub 都看不到你的行程內容。' +
+        '</div>';
+    var box = U.el(
+      '<div class="modal-back">' +
+        '<div class="modal">' +
+          '<div class="modal-head"><h3>分享這趟行程</h3>' +
+            '<button class="icon-btn" data-act="x" title="關閉" aria-label="關閉">' + U.icon('close') + '</button></div>' +
+          '<div class="modal-body">' +
+            '<p class="muted">' + intro + '</p>' +
+            warn +
+            '<textarea class="share-url" readonly rows="' + (live ? 3 : 4) + '"></textarea>' +
+            note +
+          '</div>' +
+          '<div class="modal-foot">' +
+            (live ? '<button class="btn btn-danger-ghost" data-act="stop">停用連結</button>' : '') +
+            '<span class="spacer"></span>' +
+            '<button class="btn btn-ghost" data-act="x">關閉</button>' +
+            '<button class="btn btn-primary" data-act="copy">複製連結</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>'
+    );
+    box.querySelector('.share-url').value = url;
+    box.addEventListener('click', function (e) {
+      // 往上找到按鈕本身：按鈕裡可能放了 SVG 圖示，直接讀 e.target 會抓不到
+      var b = e.target.closest ? e.target.closest('[data-act]') : null;
+      var a = b && b.getAttribute('data-act');
+      if (e.target === box || a === 'x') box.remove();
+      if (a === 'copy') {
+        U.copyText(url).then(function () {
+          U.toast('連結已複製');
+        }, function () {
+          U.toast('複製失敗，請手動選取上面的文字', 'bad');
+        });
+      }
+      if (a === 'stop') {
+        box.remove();
+        stopSharing(trip);
+      }
+    });
+    document.body.appendChild(box);
+    box.querySelector('.share-url').select();
+  }
+
+  /** 停用自動更新的連結：清掉代號並同步，試算表就找不到這趟旅程了 */
+  function stopSharing(trip) {
+    U.confirmDanger('停用分享連結',
+      '停用後，之前傳出去的連結就打不開了。\n之後要再分享，會產生一個新的連結，要重新傳給大家。',
+      '停用').then(function (ok) {
+      if (!ok) return;
+      var oldKey = trip.shareKey;
+      delete trip.shareKey;
+      S.save({ localOnly: true });
+      App.Cloud.push(S.allTrips()).then(function (r) {
+        if (r && r.conflict) {
+          trip.shareKey = oldKey;
+          S.save({ localOnly: true });
+          App.onCloudConflict(r);
+          U.toast('雲端有更新的版本，先處理完再停用一次', 'bad');
+          return;
+        }
+        U.toast('已停用，舊的連結打不開了');
+        render();
+      }, function (err) {
+        // 本機已經清掉代號，下次同步成功時雲端也會跟著清掉
+        U.toast('還沒同步到雲端：' + err.message + '。連上網路後會自動完成停用。', 'bad');
+        App.Cloud.scheduleSave();
+      });
+    });
+  }
+
   function adopt() {
     if (!sharedTrip) return;
-    if (!U.ask('要把「' + sharedTrip.name + '」複製一份到這台裝置嗎？\n複製後就能自己編輯，不會影響分享你的人。')) return;
+    if (!U.ask('要把「' + sharedTrip.name + '」複製一份到這台裝置嗎？\n複製後就能自己編輯，不會影響分享你的人。\n（複製的這一份不會再跟著對方更新。）')) return;
     S.adoptTrip(sharedTrip);
     location.hash = '';
     location.reload();
@@ -325,13 +417,21 @@ window.App = window.App || {};
       if (act === 'settings') App.Settings.open();
     });
 
-    App.Share.readFromUrl().then(function (trip) {
-      if (trip) {
-        sharedTrip = trip;
+    // 自動更新的連結要連到試算表讀資料，會等一兩秒，先讓旅伴知道正在讀
+    if (App.Share.isLiveLink()) {
+      document.getElementById('view').innerHTML = U.empty('正在讀取分享的行程…');
+    }
+
+    App.Share.readFromUrl().then(function (shared) {
+      if (shared) {
+        sharedTrip = shared.trip;
         readOnly = true;
         current = 'itinerary';
         document.getElementById('readonlyBar').hidden = false;
-        document.getElementById('readonlyName').textContent = trip.name;
+        document.getElementById('readonlyName').textContent = shared.trip.name;
+        document.getElementById('readonlyStamp').textContent = shared.live
+          ? stampText(shared.updatedAt)
+          : '';
         render();
         return;
       }
@@ -340,9 +440,22 @@ window.App = window.App || {};
       // 開啟網頁時先把雲端最新的資料抓下來
       if (App.Cloud.isOn()) pullOnStart();
     }, function (err) {
-      U.toast('這個分享連結讀不出來：' + err.message, 'bad');
       render();
+      U.modal({
+        title: '這個分享連結打不開',
+        submitText: '知道了',
+        noCancel: true,
+        fields: [{ name: '_n', type: 'note', label: '', hint: err.message }]
+      });
     });
+  }
+
+  /** 唯讀提示列上的「資料更新於 10/27 14:05」 */
+  function stampText(iso) {
+    var d = iso ? new Date(iso) : null;
+    if (!d || isNaN(d.getTime())) return '';
+    function two(n) { return (n < 10 ? '0' : '') + n; }
+    return '資料更新於 ' + (d.getMonth() + 1) + '/' + d.getDate() + ' ' + two(d.getHours()) + ':' + two(d.getMinutes()) + '。';
   }
 
   /**

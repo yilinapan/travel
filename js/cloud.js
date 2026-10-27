@@ -13,7 +13,7 @@ App.Cloud = (function () {
   var S = App.Store, U = App.UI;
   var CFG_KEY = 'travel.cloud.v1';
 
-  var cfg = { url: '', device: '', lastUpdatedAt: '', enabled: false };
+  var cfg = { url: '', key: '', device: '', lastUpdatedAt: '', enabled: false };
   var state = { status: 'off', message: '', busy: false };
   var saveTimer = null;
 
@@ -41,11 +41,23 @@ App.Cloud = (function () {
   function getState() { return state; }
   function isOn() { return !!(cfg.enabled && cfg.url); }
 
-  function setConfig(url, device) {
-    cfg.url = (url || '').trim();
+  function setConfig(url, device, key) {
+    var newUrl = (url || '').trim();
+    // 換了一張試算表、或原本是關閉的，才當作「第一次連線」（會先問過再合併）。
+    // 同步開著、只是補填密碼或改裝置名稱的話，不可以跳出「兩邊都有資料要不要合併」
+    // —— 選錯會把旅程複製成兩份。
+    if (newUrl !== cfg.url || !cfg.enabled) cfg.lastUpdatedAt = '';
+    cfg.url = newUrl;
+    cfg.key = (key || '').trim();      // 同步密碼；試算表沒設密碼時留空白
     cfg.device = (device || '').trim() || guessDeviceName();
     cfg.enabled = !!cfg.url;
-    cfg.lastUpdatedAt = '';
+    state.status = isOn() ? 'idle' : 'off';
+    saveConfig();
+  }
+
+  /** 測試連線失敗時，把設定還原成改之前的樣子 */
+  function restoreConfig(prev) {
+    cfg = Object.assign({}, prev);
     state.status = isOn() ? 'idle' : 'off';
     saveConfig();
   }
@@ -175,7 +187,8 @@ App.Cloud = (function () {
         t.endDate || '',
         t.baseCurrency || 'TWD',
         (t.members || []).map(function (m) { return m.name; }).join(','),
-        (t.currencies || []).map(function (c) { return c.code + '=' + c.rate; }).join(',')
+        (t.currencies || []).map(function (c) { return c.code + '=' + c.rate; }).join(','),
+        t.shareKey || ''                // 自動更新的分享連結用的代號；空白 = 沒有分享
       ]);
 
       (t.days || []).forEach(function (d, di) {
@@ -295,6 +308,8 @@ App.Cloud = (function () {
       t.startDate = String(r[1] || '').trim();
       t.endDate = String(r[2] || '').trim();
       t.baseCurrency = String(r[3] || 'TWD').trim() || 'TWD';
+      var shareKey = String(r[6] || '').trim();
+      if (shareKey) t.shareKey = shareKey;
       splitList(r[4]).forEach(function (n) { ensureMember(t, n); });
       splitList(r[5]).forEach(function (pair) {
         var p = pair.split('=');
@@ -448,6 +463,7 @@ App.Cloud = (function () {
    * 而 Apps Script 不會回應預檢請求，用 application/json 反而會失敗。
    */
   function post(body) {
+    if (cfg.key) body.key = cfg.key;
     return fetch(cfg.url, {
       method: 'POST',
       headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -479,7 +495,8 @@ App.Cloud = (function () {
   function pull() {
     if (!isOn()) return Promise.reject(new Error('還沒設定雲端同步'));
     setStatus('loading', '讀取中…');
-    return fetch(cfg.url, { method: 'GET', redirect: 'follow' })
+    var url = cfg.key ? withParam(cfg.url, 'key', cfg.key) : cfg.url;
+    return fetch(url, { method: 'GET', redirect: 'follow' })
       .then(readJson)
       .then(function (res) {
         if (!res.ok) throw new Error(res.error || '讀取失敗');
@@ -492,6 +509,31 @@ App.Cloud = (function () {
       .catch(function (err) {
         setStatus('error', err.message);
         throw err;
+      });
+  }
+
+  function withParam(url, name, value) {
+    return url + (url.indexOf('?') === -1 ? '?' : '&') + name + '=' + encodeURIComponent(value);
+  }
+
+  /**
+   * 旅伴打開「自動更新的分享連結」時用：只讀那一趟旅程。
+   * 不需要也不會送出同步密碼；試算表那邊只回傳行程、支出、還款，不含打包清單。
+   */
+  function fetchShared(scriptUrl, shareKey) {
+    return fetch(withParam(scriptUrl, 'share', shareKey), { method: 'GET', redirect: 'follow' })
+      .then(readJson)
+      .then(function (res) {
+        if (!res.ok) {
+          // 舊版的 Apps Script 不認得 share，會要求密碼或直接回傳全部 —— 兩種都不能用
+          throw new Error(res.error || '讀取失敗');
+        }
+        if (!res.rows || res.rows.checklist) throw new Error('分享你的人需要先更新雲端的 Apps Script。');
+        var trip = fromRows(res.rows).trips[0];
+        if (!trip) throw new Error('這個分享連結已經停用了。');
+        delete trip.shareKey;
+        trip.checklist = [];
+        return { trip: trip, updatedAt: res.updatedAt || '' };
       });
   }
 
@@ -551,11 +593,11 @@ App.Cloud = (function () {
   }
 
   return {
-    loadConfig: loadConfig, getConfig: getConfig, setConfig: setConfig,
+    loadConfig: loadConfig, getConfig: getConfig, setConfig: setConfig, restoreConfig: restoreConfig,
     disable: disable, isOn: isOn, getState: getState,
     toRows: toRows, fromRows: fromRows,
     typeLabel: typeLabel, typeKey: typeKey,
-    ping: ping, pull: pull, push: push, forcePush: forcePush,
+    ping: ping, pull: pull, push: push, forcePush: forcePush, fetchShared: fetchShared,
     scheduleSave: scheduleSave
   };
 })();

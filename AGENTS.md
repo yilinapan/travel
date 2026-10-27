@@ -80,8 +80,8 @@ travel/
 ├── js/
 │   ├── settle.js         分帳計算（純函式，不碰畫面 → 好測試）
 │   ├── store.js          localStorage 讀寫、旅程 CRUD、備份匯出匯入
-│   ├── cloud.js          Google Sheets 同步：資料⇄表格列的轉換、衝突偵測
-│   ├── share.js          唯讀分享連結（資料壓縮進網址的 # 片段；只帶行程、分帳和還款，不帶打包清單）
+│   ├── cloud.js          Google Sheets 同步：資料⇄表格列的轉換、衝突偵測、同步密碼、讀取分享的旅程
+│   ├── share.js          唯讀分享連結：自動更新的（#live=，從試算表讀）與快照的（#view=，資料壓縮進網址）。都不含打包清單
 │   ├── ui.js             共用元件：表單視窗、提示泡泡、浮動訊息、SVG 圖示
 │   ├── trips.js          「旅程」分頁
 │   ├── itinerary.js      「行程」分頁
@@ -89,7 +89,7 @@ travel/
 │   ├── checklist.js      「打包」分頁
 │   ├── settings.js       設定面板（雲端同步、備份還原）
 │   └── app.js            分頁切換、頁首、分享、唯讀模式、雲端啟動流程
-├── apps-script/Code.gs   貼到 Google Apps Script 的橋接程式
+├── apps-script/Code.gs   貼到 Google Apps Script 的橋接程式（同步密碼、分享讀取）
 ├── images/               行程示意圖
 ├── tests/                測試（見第 6 節）
 └── docs/
@@ -110,6 +110,7 @@ travel/
 ```js
 {
   id, name, startDate, endDate,          // 'YYYY-MM-DD'
+  shareKey,                               // 選填。自動更新的分享連結代號，存在試算表「旅程」G 欄
   baseCurrency: 'TWD',
   currencies: [{ code: 'JPY', rate: 0.21 }],   // rate = 1 外幣 等於多少基準幣別
   members:    [{ id, name }],
@@ -212,7 +213,7 @@ travel/
 ## 6. 測試
 
 ```bash
-node tests/run.js        # 終端機，82 項
+node tests/run.js        # 終端機，107 項
 ```
 
 或雙擊 `tests/test.html`（瀏覽器版，不含結構檢查）。
@@ -220,7 +221,8 @@ node tests/run.js        # 終端機，82 項
 | 檔案 | 測什麼 |
 |------|--------|
 | `settle.tests.js` | 分帳計算：均分、指定項目、還款、匯率、餘數、各種異常 |
-| `cloud.tests.js` | 資料⇄試算表的雙向轉換、容錯 |
+| `cloud.tests.js` | 資料⇄試算表的雙向轉換、容錯、分享連結的產生與解析 |
+| `apps-script.tests.js` | `Code.gs` 的純函式：分享代號只拿得到那一趟、拿不到打包清單；同步密碼檢查 |
 | `structure.tests.js` | **程式結構**：函式有沒有被誤刪、按鈕有沒有對應處理、有沒有誤用 `e.target` |
 
 結構檢查是因為實際出過事：整理程式時誤刪六個函式，畫面照常顯示、
@@ -260,6 +262,11 @@ gh api repos/yilinapan/travel/pages/builds/latest --jq '.status + " " + .commit'
 7. **localStorage 可能失敗** — 無痕視窗、空間滿了。`store.save()` 會提示使用者去備份
 8. **改了 `Code.gs` 要重新部署** — Apps Script 改完必須「部署 → 管理部署作業 → 新版本」，
    否則不會生效。網址不會變
+9. **分享的安全界線在 `Code.gs`** — 旅伴拿得到 Apps Script 網址，所以「旅伴看得到什麼」
+   由 `shareRows_` / `SHARED_SHEETS` 決定，不是網頁。新增分頁或欄位時，先想清楚該不該給旅伴看。
+   網頁只在試算表設了同步密碼（ping 回 `protected: true`）時才產生自動更新的連結
+10. **網頁可能比 `Code.gs` 新** — 網頁一合併就上線，`Code.gs` 要等使用者手動更新。
+    新網頁要能跟舊 `Code.gs` 一起運作（多送的欄位舊版會忽略），不可以讓同步壞掉
 
 ---
 

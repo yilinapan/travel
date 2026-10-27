@@ -214,6 +214,7 @@ App.Store = (function () {
   function adoptTrip(trip) {
     var copy = JSON.parse(JSON.stringify(trip));
     copy.id = uid('trip');
+    delete copy.shareKey;
     copy.createdAt = new Date().toISOString();
     copy.updatedAt = new Date().toISOString();
     migrateTrip(copy);
@@ -242,7 +243,11 @@ App.Store = (function () {
     if (mode === 'replace') {
       state.trips = incoming;
     } else {
-      incoming.forEach(function (t) { t.id = uid('trip'); state.trips.unshift(t); });
+      incoming.forEach(function (t) {
+        t.id = uid('trip');
+        delete t.shareKey;        // 加進來的是另一份，不可以跟原本那趟共用同一個分享連結
+        state.trips.unshift(t);
+      });
     }
     state.currentTripId = state.trips.length ? state.trips[0].id : null;
     save();

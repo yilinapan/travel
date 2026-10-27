@@ -432,6 +432,45 @@ function registerCloudTests(t, eq, App) {
     eq(shared.expenses.length > 0, true, '分帳要在');
   });
 
+  t('分享代號會存進試算表，讀回來還在', function () {
+    var trip = sampleTrip();
+    trip.shareKey = 'AbCdEfGhIjKlMnOpQrStUv';
+    var rows = Cloud.toRows([trip]);
+    eq(rows.trips[0][6], 'AbCdEfGhIjKlMnOpQrStUv', '旅程分頁第 7 欄');
+    eq(Cloud.fromRows(rows).trips[0].shareKey, 'AbCdEfGhIjKlMnOpQrStUv', '讀回來');
+    eq('shareKey' in roundTrip(sampleTrip()), false, '沒分享的旅程不會多出代號');
+  });
+
+  t('快照連結不會帶出分享代號', function () {
+    var trip = sampleTrip();
+    trip.shareKey = 'AbCdEfGhIjKlMnOpQrStUv';
+    eq('shareKey' in App.Share.stripForShare(trip), false, '不應有分享代號');
+  });
+
+  t('自動更新的連結：產生後可以拆回原本的網址和代號', function () {
+    var key = App.Share.newShareKey();
+    eq(key.length >= 16, true, '代號夠長');
+    eq(key === App.Share.newShareKey(), false, '每次都不一樣');
+
+    var script = 'https://script.google.com/macros/s/AKfycbx_Test-123/exec';
+    var url = App.Share.makeLiveUrl(script, key);
+    eq(url, 'https://yilinapan.github.io/travel/#live=AKfycbx_Test-123.' + key, '一般網址只放代號');
+    eq(App.Share.parseLive(url.slice(url.indexOf('#'))), { scriptUrl: script, shareKey: key }, '拆回來');
+
+    var odd = 'https://script.google.com/a/macros/example.com/s/AKfy123/exec';
+    var url2 = App.Share.makeLiveUrl(odd, key);
+    eq(App.Share.parseLive(url2.slice(url2.indexOf('#'))), { scriptUrl: odd, shareKey: key }, '公司帳號的網址也拆得回來');
+  });
+
+  t('自動更新的連結：格式不對或不是 Google 的網址一律不認', function () {
+    eq(App.Share.parseLive('#live=AKfy123'), null, '少了代號');
+    eq(App.Share.parseLive('#live=AKfy123.short'), null, '代號太短');
+    eq(App.Share.parseLive('#view=abc'), null, '快照連結');
+    var evil = 'https://evil.example.com/exec';
+    var b64 = btoa(evil).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    eq(App.Share.parseLive('#live=~' + b64 + '.AbCdEfGhIjKlMnOpQrStUv'), null, '別的網站');
+  });
+
   t('分享連結帶還款紀錄，對方看到的結算有扣掉已還的錢', function () {
     var trip = sampleTrip();
     trip.payments = [{ id: 'p1', date: '2026-03-02', fromId: 'm3', toId: 'm1', amount: 100, currency: 'JPY' }];

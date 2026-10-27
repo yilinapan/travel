@@ -81,7 +81,7 @@ travel/
 │   ├── settle.js         分帳計算（純函式，不碰畫面 → 好測試）
 │   ├── store.js          localStorage 讀寫、旅程 CRUD、備份匯出匯入
 │   ├── cloud.js          Google Sheets 同步：資料⇄表格列的轉換、衝突偵測
-│   ├── share.js          唯讀分享連結（資料壓縮進網址的 # 片段）
+│   ├── share.js          唯讀分享連結（資料壓縮進網址的 # 片段；只帶行程和分帳，不帶打包清單）
 │   ├── ui.js             共用元件：表單視窗、提示泡泡、浮動訊息、SVG 圖示
 │   ├── trips.js          「旅程」分頁
 │   ├── itinerary.js      「行程」分頁

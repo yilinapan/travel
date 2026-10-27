@@ -65,7 +65,10 @@ App.Share = (function () {
     });
   }
 
-  /** 分享時去掉用不到的欄位，讓連結短一點 */
+  /**
+   * 分享時去掉用不到的欄位，讓連結短一點。
+   * 打包清單是自己的事，不分享出去（對方只看得到行程和分帳）。
+   */
   function stripForShare(trip) {
     return {
       name: trip.name,
@@ -75,8 +78,7 @@ App.Share = (function () {
       currencies: trip.currencies,
       members: trip.members,
       days: trip.days,
-      expenses: trip.expenses,
-      checklist: trip.checklist
+      expenses: trip.expenses
     };
   }
 
@@ -99,5 +101,5 @@ App.Share = (function () {
     });
   }
 
-  return { encode: encode, decode: decode, makeUrl: makeUrl, readFromUrl: readFromUrl };
+  return { encode: encode, decode: decode, makeUrl: makeUrl, readFromUrl: readFromUrl, stripForShare: stripForShare };
 })();

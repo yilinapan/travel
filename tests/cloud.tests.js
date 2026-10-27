@@ -424,6 +424,13 @@ function registerCloudTests(t, eq, App) {
     eq(Cloud.fromRows(null).trips, [], 'null');
     eq(Cloud.toRows([]), { trips: [], items: [], expenses: [], payments: [], checklist: [] }, '空陣列');
   });
+
+  t('分享連結不帶打包清單，行程和分帳照常帶', function () {
+    var shared = App.Share.stripForShare(sampleTrip());
+    eq('checklist' in shared, false, '不應有打包清單');
+    eq(shared.days.length > 0, true, '行程要在');
+    eq(shared.expenses.length > 0, true, '分帳要在');
+  });
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = registerCloudTests;

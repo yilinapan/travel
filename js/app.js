@@ -182,7 +182,10 @@ window.App = window.App || {};
 
   function renderTabs() {
     var nav = document.getElementById('tabs');
-    var tabs = readOnly ? TABS.filter(function (t) { return t.key !== 'trips'; }) : TABS;
+    // 唯讀模式只看行程和分帳：打包清單不會分享出去
+    var tabs = readOnly
+      ? TABS.filter(function (t) { return t.key !== 'trips' && t.key !== 'checklist'; })
+      : TABS;
     nav.innerHTML = tabs.map(function (t) {
       return '<button class="tab' + (t.key === current ? ' on' : '') + '" data-tab="' + t.key + '">' +
         t.label + '</button>';
@@ -203,7 +206,7 @@ window.App = window.App || {};
             '<div class="modal-head"><h3>分享這趡行程</h3>' +
               '<button class="icon-btn" data-act="x" title="關閉" aria-label="關閉">' + U.icon('close') + '</button></div>' +
             '<div class="modal-body">' +
-              '<p class="muted">把下面這串網址傳給同行的人，他們點開就能看到<strong>行程</strong>和<strong>自己的分帳金額</strong>（不能修改）。</p>' +
+              '<p class="muted">把下面這串網址傳給同行的人，他們點開就能看到<strong>行程</strong>和<strong>自己的分帳金額</strong>（不能修改）。打包清單不會分享出去。</p>' +
               warn +
               '<textarea class="share-url" readonly rows="4"></textarea>' +
               '<div class="notice">' +

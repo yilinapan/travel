@@ -22,7 +22,7 @@ sandbox.navigator = { userAgent: 'node' };
 sandbox.alert = () => {};
 vm.createContext(sandbox);
 
-['js/settle.js', 'js/store.js', 'js/cloud.js'].forEach(f => {
+['js/settle.js', 'js/store.js', 'js/cloud.js', 'js/share.js'].forEach(f => {
   vm.runInContext(fs.readFileSync(path.join(root, f), 'utf8'), sandbox, { filename: f });
 });
 const App = sandbox.App;
